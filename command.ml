@@ -22,16 +22,18 @@ let parse str =
     end   
   | _ -> raise(Invalid)
 
-let rec execute_command () = 
+let rec execute_command st () = 
   match read_line () with
   | exception End_of_file -> ()
   | command -> 
     try match parse command with
       | Quit -> exit 0
-      | Go i -> print_endline (string_of_int i);
+      | Go i -> 
+        let new_state = State.move st i in
+        print_endline ("going " ^ (string_of_int i));
         print_string "> ";
-        execute_command()
+        execute_command new_state ()
     with 
     |Invalid -> print_endline "Invalid";
       print_string "> ";
-      execute_command()
+      execute_command st()

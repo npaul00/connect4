@@ -7,15 +7,24 @@ type position
 (** The type for the status of a position on the board. *)
 type status
 
-(** The type for a board. *)
+(** The type for the board. *)
 type board
+
+(** The abstract type of values representing the game state. *)
+type t
+
+val turn : t -> color
+
+val board : t -> board
+
+val init_state : t
 
 (** [display b] displays the board [b]. *)
 val display : board -> int -> unit
 
-(** [move b c col] is the state of board [b] after a player with color [col] 
-    puts a piece into column [c]. *)
-val move : board -> int -> color -> board
+(** [move t c] is the game state after the current player places a piece into
+    column [c] in the current state [t]. *)
+val move : t -> int -> t
 
 (** [check_win b col] checks if there are four pieces with color [col] in a row.
 *)
@@ -26,3 +35,4 @@ val empty_board : board -> int -> int -> board
 
 (** [empty] is an empty list of boards *)
 val empty : board
+

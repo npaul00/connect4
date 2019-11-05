@@ -7,4 +7,4 @@ type command =
 exception Invalid
 
 val parse: string -> command
-val execute_command: unit -> unit
+val execute_command: State.t -> unit -> unit
