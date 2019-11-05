@@ -57,59 +57,94 @@ let rec display b r =
   if r < 7 then begin display b (r + 1); print_row b b r 1; end;
   if r = 1 then print_string bot
 
-(** [get_pos b col] is a list of the positions that have a piece with color 
-    [col] in board [b]. *)
-let rec get_pos b col = 
-  match b with
-  | [] -> []
-  | (pos, Some c) :: t -> if c = col then pos :: get_pos t col 
-    else get_pos t col
-  | (pos, None) :: t -> get_pos t col
-
-(** [pos_status b (x,y) is the color of the piece on the board at position 
-    (x,y)] *)
-let rec pos_status b (x,y) =
-  match b with
-  | [] -> failwith "Not in board"
-  | ((a, b), Some c) :: t -> if a = x && b = y then Some c 
-    else pos_status t (x,y)
-  | ((a, b), None) :: t -> if a = x && b = y then None 
-    else pos_status t (x, y)
-
 let horiz (x, y) = 
   [(x, y); (x+1, y); (x+2, y); (x+3, y)] 
 
 let vert (x, y) = 
   [(x, y); (x, y+1); (x, y+2); (x, y+3)]
 
-let diag (x, y) = 
+let right_diag (x, y) = 
   [(x, y); (x+1, y+1); (x+2, y+2); (x+3, y+3)]
 
-let rec filter_positions lst =
-  match lst with
+let left_diag (x, y) = 
+  [(x, y); (x-1, y+1); (x-2, y+2); (x-3, y+3)]
+
+(** [get_pos b clr] is a list of the positions that have a piece with color 
+    [clr] in board [b]. *)
+let rec get_pos b clr = 
+  match b with
   | [] -> []
-  | (x, y) :: t -> if (x <= 4) && (y <= 3) then 
-      (x, y) :: filter_positions t else
-      filter_positions t
+  | (pos, Some c) :: t -> if c = clr then pos :: get_pos t clr 
+    else get_pos t clr
+  | (pos, None) :: t -> get_pos t clr
 
-(** not finished *)
-let four_diag b pos = 
-  match (diag pos) with
+(** [pos_status b (x,y) is the color of the piece on the board at position 
+    (x,y)] *)
+let rec pos_status b (x,y) =
+  match b with
+  | [] -> None
+  | ((a, b), Some c) :: t -> if a = x && b = y then Some c 
+    else pos_status t (x,y)
+  | ((a, b), None) :: t -> if a = x && b = y then None 
+    else pos_status t (x, y)
+
+(** [four_in_a_row lst b clr] is true if the four positions in [lst] have
+    the same color [clr].  *)
+let rec four_in_a_row lst b clr =
+  match lst with
+  | [] -> true
+  | pos :: t -> begin 
+      match pos_status b pos with
+      | None -> false
+      | Some c -> if c = clr then four_in_a_row t b clr else false  
+    end
+
+(** [check_right_diag b clr lst] checks if any right diagonal in board [b] has
+    four pieces of color [clr] in a row. *)
+let rec check_right_diag b clr lst =
+  match lst with
   | [] -> false
-  | pos :: t -> true
+  | (x, y) :: t -> if (four_in_a_row (right_diag (x, y)) b clr) then true 
+    else check_right_diag b clr t 
 
-let check_win t col =
-  failwith "Unimplemented"
+(** [check_left_diag b clr lst] checks if any left diagonal in board [b] has
+    four pieces of color [clr] in a row. *)
+let rec check_left_diag b clr lst = 
+  match lst with
+  | [] -> false
+  | (x, y) :: t -> if (four_in_a_row (left_diag (x, y)) b clr) then true 
+    else check_left_diag b clr t 
 
+(** [check_horiz b clr lst] checks if any horizontal sequence in board [b] has 
+    four pieces of color [clr] in a row. *)
+let rec check_horiz b clr lst = 
+  match lst with
+  | [] -> false
+  | (x, y) :: t -> if (four_in_a_row (horiz (x, y)) b clr) then true 
+    else check_horiz b clr t 
 
+(** [check_vert b clr lst] checks if any vertical sequence in board [b] has four 
+    pieces of color [clr] in a row. *)
+let rec check_vert b clr lst = 
+  match lst with
+  | [] -> false
+  | (x, y) :: t -> if (four_in_a_row (vert (x, y)) b clr) then true 
+    else check_vert b clr t 
+
+let check_win b clr =
+  let positions = get_pos b clr in
+  check_right_diag b clr positions ||
+  check_left_diag b clr positions ||
+  check_horiz b clr positions ||
+  check_vert b clr positions
 
 let other_color = function
-  |Red -> Black
-  |Black -> Red
+  | Red -> Black
+  | Black -> Red
 
 let color_to_string = function
-  |Red -> "Red"
-  |Black -> "Black"
+  | Red -> "Red"
+  | Black -> "Black"
 
 let rec pieces_in_col column board = 
   match board with

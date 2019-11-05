@@ -23,21 +23,23 @@ let parse str =
   | _ -> raise(Invalid)
 
 let rec execute_command st () = 
-  match read_line () with
-  | exception End_of_file -> ()
-  | command -> 
-    try match parse command with
-      | Quit -> exit 0
-      | Go i -> 
-        let new_state = State.move st i in
-        if new_state = st then print_endline("Invalid") 
-        else begin
-          State.display (State.board new_state) 1;
-          print_endline ("\n" ^ (State.color_to_string (State.turn new_state)) ^ "'s turn")
-        end;
+  if (State.check_win (State.board st) (State.other_color (State.turn st))) then print_string "You win!"
+  else
+    match read_line () with
+    | exception End_of_file -> ()
+    | command -> 
+      try match parse command with
+        | Quit -> exit 0
+        | Go i -> 
+          let new_state = State.move st i in
+          if new_state = st then print_endline("Invalid") 
+          else begin
+            State.display (State.board new_state) 1;
+            print_endline ("\n" ^ (State.color_to_string (State.turn new_state)) ^ "'s turn")
+          end;
+          print_string "> ";
+          execute_command new_state ()
+      with 
+      | Invalid -> print_endline "Invalid";
         print_string "> ";
-        execute_command new_state ()
-    with 
-    |Invalid -> print_endline "Invalid";
-      print_string "> ";
-      execute_command st()
+        execute_command st()
