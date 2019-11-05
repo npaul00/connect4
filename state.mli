@@ -36,3 +36,5 @@ val empty_board : board -> int -> int -> board
 (** [empty] is an empty list of boards *)
 val empty : board
 
+val drop_height : int -> board -> int
+
