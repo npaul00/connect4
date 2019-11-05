@@ -8,10 +8,14 @@ type t = {
   turn : color
 }
 
-let turn st = st.turn
-let board st = st.board
+let board t =
+  t.board
 
-let empty = []
+let turn t =
+  t.turn
+
+let empty = 
+  []
 
 let rec empty_board b r c = 
   if c > 7 && r < 6 then
@@ -37,25 +41,20 @@ let get_team s =
   | Some Black -> "O"
   | None -> " "
 
-(** [print_row b temp r c] is the unit that prints the piece at [r] and [c] *)
+(** [print_row b temp r c] is the unit that prints the piece at [r] and [c]*)
 let rec print_row b temp r c =
   match temp with
   | [] -> 
-    if (c > 7) then print_string "\n";
-    if (c > 7) then print_string line;
-    if (c > 7) then print_string "\n";
-    if (r < 7) && c > 7 then print_string "| ";
+    if (c > 7) then begin print_string "\n"; print_string line; print_string "\n"; 
+      if (r < 7) then print_string "| "; end 
   | ((x,y), s) :: t -> 
     if (x = c && y = r) then 
-      print_string ((get_team s) ^ " | ");
-    if (x = c && y = r) then print_row b b r (c + 1); 
-    if not (x = c && y = r) then  print_row b t r c
+      (print_string ((get_team s) ^ " | "); print_row b b r (c + 1);) 
+    else print_row b t r c
 
 let rec display b r = 
-  if r = 1 then print_string "\n";
-  if r = 1 then print_string "| ";
-  if r < 7 then display b (r + 1);
-  if r < 7 then print_row b b r 1;
+  if r = 1 then begin print_string "\n"; print_string "| "; end;
+  if r < 7 then begin display b (r + 1); print_row b b r 1; end;
   if r = 1 then print_string bot
 
 (** [get_pos b col] is a list of the positions that have a piece with color 
