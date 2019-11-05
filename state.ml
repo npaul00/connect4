@@ -45,10 +45,10 @@ let get_team s =
 let rec print_row b temp r c =
   match temp with
   | [] -> 
-    if (c > 7) then begin print_string "\n"; print_string line; print_string "\n"; 
-      if (r < 7) then print_string "| "; end 
+    if c > 7 then begin print_string "\n"; print_string line; print_string "\n"; 
+      if r < 7 then print_string "| "; end 
   | ((x,y), s) :: t -> 
-    if (x = c && y = r) then 
+    if x = c && y = r then 
       (print_string ((get_team s) ^ " | "); print_row b b r (c + 1);) 
     else print_row b t r c
 
