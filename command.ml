@@ -30,7 +30,8 @@ let rec execute_command st () =
       | Quit -> exit 0
       | Go i -> 
         let new_state = State.move st i in
-        print_endline ("going " ^ (string_of_int i));
+        State.display (State.board new_state) 1;
+        print_endline (" ");
         print_string "> ";
         execute_command new_state ()
     with 
