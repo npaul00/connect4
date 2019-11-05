@@ -3,16 +3,22 @@ type position = int * int
 type status = color option
 type board = (position * status) list
 
+let empty = 
+  []
+
 let rec empty_board b r c = 
   if c > 7 && r < 6 then
-    empty_board b (r+1) 0
+    empty_board b (r+1) 1
   else if c < 8 && r < 7 then
-    empty_board (((r,c), None)::b) r (c+1)
+    empty_board (((c,r), None)::b) r (c+1)
   else 
     b
 
-let print_line = 
-  print_string "--------------------------------------"
+let bot = "1 | 2 | 3 | 4 | 5 | 6 | 7 |"
+
+let line = 
+  print_string "\n";
+  "-----------------------------"
 
 let get_team s =
   match s with
@@ -22,19 +28,28 @@ let get_team s =
 
 let rec print_row b temp r c =
   match temp with
-  | [] -> if (c < 1) then 
-      print_string "/n | ";
-  | ((x,y), s) :: t -> if (x = c && y = r) then 
+  | [] -> 
+    if (c > 7) then print_string "\n";
+    if (c > 7) then print_string line;
+    if (c > 7) then print_string "\n";
+    if (r < 7) && c > 7 then print_string "| ";
+  | ((x,y), s) :: t -> 
+    (*print_string " x: ";print_int x;
+      print_string " c: ";print_int c;
+      print_string " y: ";print_int y;
+      print_string " r: ";print_int r;
+      print_string "\n ";*)
+    if (x = c && y = r) then 
       print_string ((get_team s) ^ " | ");
-    if (x = c && y = r) then print_row b b r (c + 1);
+    if (x = c && y = r) then print_row b b r (c + 1); 
     if not (x = c && y = r) then  print_row b t r c
 
 let rec display b r = 
-  print_line;
-  if r > 0 then print_row b b r 7;
-  if r > 0 then display b (r - 1)
-
-
+  if r = 1 then print_string "\n";
+  if r = 1 then print_string "| ";
+  if r < 7 then display b (r + 1);
+  if r < 7 then print_row b b r 1;
+  if r = 1 then print_string bot
 
 let move b c col = 
   failwith "Unimplemented"
