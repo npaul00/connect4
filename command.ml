@@ -18,12 +18,14 @@ let parse str =
         let num = int_of_string i in
         if (num>0 && num<8) then 
           Go num else raise(Invalid)
-      with exn -> raise(Invalid)
+      with exn -> raise (Invalid)
     end   
-  | _ -> raise(Invalid)
+  | _ -> raise (Invalid)
 
 let rec execute_command st () = 
-  if (State.check_win (State.board st) (State.other_color (State.turn st))) then print_string "You win!"
+  let last_clr = (State.other_color (State.turn st)) in
+  if (State.check_win (State.board st) last_clr) then print_string 
+      (State.color_to_string last_clr ^ " wins!")
   else
     match read_line () with
     | exception End_of_file -> ()
