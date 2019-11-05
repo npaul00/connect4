@@ -11,7 +11,7 @@ type status
 type board
 
 (** [display b] displays the board [b]. *)
-val display : board -> unit
+val display : board -> int -> unit
 
 (** [move b c col] is the state of board [b] after a player with color [col] 
     puts a piece into column [c]. *)
@@ -20,3 +20,9 @@ val move : board -> int -> color -> board
 (** [check_win b col] checks if there are four pieces with color [col] in a row.
 *)
 val check_win : board -> color -> bool
+
+(** [empty_board b r c] is an empty board with [r] rows and [c] columns*)
+val empty_board : board -> int -> int -> board
+
+(** [empty] is an empty list of boards *)
+val empty : board

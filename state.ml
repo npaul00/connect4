@@ -14,18 +14,21 @@ let rec empty_board b r c =
   else 
     b
 
+(** [bot] is the bottom row of a board *)
 let bot = "1 | 2 | 3 | 4 | 5 | 6 | 7 |"
 
+(** [line] is the line in between rows of a board*)
 let line = 
   print_string "\n";
   "-----------------------------"
-
+(** [get_team s] is the team or empty of [s] *)
 let get_team s =
   match s with
   | Some Red -> "X"
   | Some Black -> "O"
   | None -> " "
 
+(** [print_row b temp r c] is the unit that prints the piece at [r] and [c] *)
 let rec print_row b temp r c =
   match temp with
   | [] -> 
@@ -34,11 +37,6 @@ let rec print_row b temp r c =
     if (c > 7) then print_string "\n";
     if (r < 7) && c > 7 then print_string "| ";
   | ((x,y), s) :: t -> 
-    (*print_string " x: ";print_int x;
-      print_string " c: ";print_int c;
-      print_string " y: ";print_int y;
-      print_string " r: ";print_int r;
-      print_string "\n ";*)
     if (x = c && y = r) then 
       print_string ((get_team s) ^ " | ");
     if (x = c && y = r) then print_row b b r (c + 1); 
