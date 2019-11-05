@@ -107,6 +107,10 @@ let other_color = function
   |Red -> Black
   |Black -> Red
 
+let color_to_string = function
+  |Red -> "Red"
+  |Black -> "Black"
+
 let rec pieces_in_col column board = 
   match board with
   | [] -> []
@@ -127,5 +131,8 @@ let rec update x y col = function
       pair :: update x y col t
 
 let move t c = 
-  {board = update c (drop_height c t.board) t.turn t.board;
-   turn = other_color t.turn}
+  let height = drop_height c t.board in
+  if height < 7 then
+    {board = update c (drop_height c t.board) t.turn t.board;
+     turn = other_color t.turn}
+  else t

@@ -30,8 +30,11 @@ let rec execute_command st () =
       | Quit -> exit 0
       | Go i -> 
         let new_state = State.move st i in
-        State.display (State.board new_state) 1;
-        print_endline (" ");
+        if new_state = st then print_endline("Invalid") 
+        else begin
+          State.display (State.board new_state) 1;
+          print_endline ("\n" ^ (State.color_to_string (State.turn new_state)) ^ "'s turn")
+        end;
         print_string "> ";
         execute_command new_state ()
     with 

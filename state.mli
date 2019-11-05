@@ -38,3 +38,4 @@ val empty : board
 
 val drop_height : int -> board -> int
 
+val color_to_string : color -> string
