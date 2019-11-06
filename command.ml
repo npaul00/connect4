@@ -57,9 +57,15 @@ let rec execute_command st d () =
         end
         else execute_command new_state true ()
       | Help -> 
-        print_endline "Instructions: "; 
-        print_endline "xxxx";
-        execute_command st false ()
+        ANSITerminal.(print_string [yellow; Underlined] "Instructions: "); 
+        ANSITerminal.(print_string [yellow] "\n - Type 'go' followed by a column number to drop a piece of your color in that column.");
+        ANSITerminal.(print_string [yellow] "\nOnce a column is filled, you can no longer place pieces there.");
+        ANSITerminal.(print_string [yellow] "\n - Game continues until one player gets four of their colored pieces in a row,"); 
+        ANSITerminal.(print_string [yellow] "\neither horizontally, vertically, or diagonally.");
+        ANSITerminal.(print_string [yellow] "\n - Type 'quit' at any time to exit the game,");
+        ANSITerminal.(print_string [yellow] "\nor 'help' to bring up these instructions again.");
+        print_endline "";
+        execute_command st true ()
       | _ -> exit 0
     with 
     | Invalid -> 
