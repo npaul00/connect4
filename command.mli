@@ -4,6 +4,7 @@ type command =
   | Quit
   | One
   | Two
+  | Three
   | Help
 
 (**Raised when an invalid command is entered. *)

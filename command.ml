@@ -4,6 +4,7 @@ type command =
   | Quit
   | One
   | Two
+  | Three
   | Help
 
 exception Invalid
@@ -24,13 +25,14 @@ let parse str =
         if (num > 0 && num < 8) then Go num else raise Invalid
       with exn -> raise Invalid
     end  
-  | "h" :: [] -> Help
+  | "help" :: [] -> Help
   | _ -> raise Invalid
 
 let parse_menu str =
   match words (String.split_on_char ' ' (String.lowercase_ascii str)) with
   | "1" :: [] -> One
   | "2" :: [] -> Two
+  | "3" :: [] -> Three
   | "quit" :: [] -> Quit
   | _ -> raise Invalid
 
@@ -40,7 +42,9 @@ let rec execute_command st d () =
   let last_clr = State.other_color turn in
   if d then State.display board 1;
   if State.check_win board last_clr then 
-    print_endline ("\n" ^ State.color_to_string last_clr ^ " wins!")
+    ANSITerminal.
+      (print_string [Blink] 
+         ("\n" ^ State.color_to_string last_clr ^ " wins!\n"))
   else begin
     if d then print_endline ("\n" ^ State.color_to_string turn ^ "'s turn");
     print_string "> ";
@@ -72,9 +76,20 @@ let rec execute_menu_command () =
     | Two -> 
       ANSITerminal.(print_string [red] "Starting Two Player Mode");
       print_endline " ";
-      ANSITerminal.(print_string [cyan] "Type h for help at any time");
+      ANSITerminal.(print_string [cyan] "Type 'help' for help at any time");
       print_endline " ";
       execute_command State.init_state true ()
+    | Three -> 
+      print_endline " ";
+      ANSITerminal.(print_string [yellow; Underlined] "   Instructions   ");
+      print_endline " ";
+      ANSITerminal.(print_string [yellow] "To win, get four of your pieces in a row on the board. The sequence of four pieces can be horizontal, vertical, or diagonal.");
+      print_endline " ";
+      ANSITerminal.(print_string [yellow] "In one player mode, you play Connect Four with an A.I. Enter '1' to go to one player mode.");
+      print_endline " ";
+      ANSITerminal.(print_string [yellow] "In two player mode, two players can play Connect Four against each other. Enter '2' to go to two player mode.");
+      print_endline " ";
+      execute_menu_command ()
     | _ -> exit 0
   with
   | Invalid -> 
