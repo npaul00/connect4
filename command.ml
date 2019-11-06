@@ -81,19 +81,15 @@ let rec execute_menu_command () =
       execute_menu_command ()
     | Two -> 
       ANSITerminal.(print_string [red] "Starting Two Player Mode");
-      print_endline " ";
-      ANSITerminal.(print_string [cyan] "Type 'help' for help at any time");
+      ANSITerminal.(print_string [cyan] "\nType 'help' for help at any time");
       print_endline " ";
       execute_command State.init_state true ()
     | Three -> 
       print_endline " ";
       ANSITerminal.(print_string [yellow; Underlined] "   Instructions   ");
-      print_endline " ";
-      ANSITerminal.(print_string [yellow] "To win, get four of your pieces in a row on the board. The sequence of four pieces can be horizontal, vertical, or diagonal.");
-      print_endline " ";
-      ANSITerminal.(print_string [yellow] "In one player mode, you play Connect Four with an A.I. Enter '1' to go to one player mode.");
-      print_endline " ";
-      ANSITerminal.(print_string [yellow] "In two player mode, two players can play Connect Four against each other. Enter '2' to go to two player mode.");
+      ANSITerminal.(print_string [yellow] "\n - To win, get four of your pieces in a row on the board. The sequence of four pieces can be horizontal, vertical, or diagonal.");
+      ANSITerminal.(print_string [yellow] "\n - In one player mode, you play Connect Four with an A.I. Enter '1' to go to one player mode.");
+      ANSITerminal.(print_string [yellow] "\n - In two player mode, two players can play Connect Four against each other. Enter '2' to go to two player mode.");
       print_endline " ";
       execute_menu_command ()
     | _ -> exit 0
