@@ -37,9 +37,9 @@ let line =
 (** [get_team s] is the team or empty of [s] *)
 let get_team s =
   match s with
-  | Some Red -> "X"
-  | Some Black -> "O"
-  | None -> " "
+  | Some Red -> ANSITerminal.(print_string [red] "O")
+  | Some Black -> ANSITerminal.(print_string [cyan] "O")
+  | None -> print_string " "
 
 (** [print_row b temp r c] is the unit that prints the piece at [r] and [c]*)
 let rec print_row b temp r c =
@@ -49,7 +49,7 @@ let rec print_row b temp r c =
       if r < 7 then print_string "| "; end 
   | ((x,y), s) :: t -> 
     if x = c && y = r then 
-      (print_string ((get_team s) ^ " | "); print_row b b r (c + 1);) 
+      (get_team s; (print_string " | "); print_row b b r (c + 1);) 
     else print_row b t r c
 
 let rec display b r = 
