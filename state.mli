@@ -20,7 +20,7 @@ val turn : t -> color
 val board : t -> board
 
 (** [init_state] is the initial state of the game, with no pieces on the board, 
-    and it being Black's turn to play. *)
+    and it being Blue's turn to play. *)
 val init_state : t
 
 (** [display b i] displays the board [b]. *)
@@ -43,6 +43,6 @@ val empty : board
 (** [color_to_string clr] is the string representation of color [clr]. *)
 val color_to_string : color -> string
 
-(** [other_color clr] is [Black] if [clr] is [Red], and [Red] if [clr] is 
-    [Black]. *)
+(** [other_color clr] is [Blue] if [clr] is [Red], and [Red] if [clr] is 
+    [Blue]. *)
 val other_color : color -> color

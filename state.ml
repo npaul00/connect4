@@ -1,4 +1,4 @@
-type color = Red | Black
+type color = Red | Blue
 type position = int * int
 type status = color option
 type board = (position * status) list
@@ -25,7 +25,7 @@ let rec empty_board b r c =
   else 
     b
 
-let init_state = {board = (empty_board empty 1 1); turn = Black}
+let init_state = {board = (empty_board empty 1 1); turn = Blue}
 
 (** [bot] is the bottom row of a board *)
 let bot = "1 | 2 | 3 | 4 | 5 | 6 | 7 |"
@@ -38,7 +38,7 @@ let line =
 let get_team s =
   match s with
   | Some Red -> ANSITerminal.(print_string [red] "O")
-  | Some Black -> ANSITerminal.(print_string [cyan] "O")
+  | Some Blue -> ANSITerminal.(print_string [cyan] "O")
   | None -> print_string " "
 
 (** [print_row b temp r c] is the unit that prints the piece at [r] and [c]*)
@@ -139,12 +139,12 @@ let check_win b clr =
   check_vert b clr positions
 
 let other_color = function
-  | Red -> Black
-  | Black -> Red
+  | Red -> Blue
+  | Blue -> Red
 
 let color_to_string = function
   | Red -> "Red"
-  | Black -> "Black"
+  | Blue -> "Blue"
 
 let rec pieces_in_col column board = 
   match board with

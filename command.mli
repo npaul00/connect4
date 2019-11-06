@@ -2,6 +2,9 @@
 type command = 
   | Go of int
   | Quit
+  | One
+  | Two
+  | Help
 
 (**Raised when an invalid command is entered. *)
 exception Invalid
@@ -22,3 +25,5 @@ val parse: string -> command
    game state [n] and [execute_command n true ()] is called.
    If [parse i] raises [Invalid], [execute_command st false ()] is called.*)
 val execute_command: State.t -> bool -> unit -> unit
+
+val execute_menu_command: unit -> unit
