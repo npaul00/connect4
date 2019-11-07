@@ -57,29 +57,37 @@ let rec display b r =
   if r < 7 then begin display b (r + 1); print_row b b r 1; end;
   if r = 1 then print_string bot
 
+(** [horiz (x, y) is a list of the four coordinates to the right horizontally 
+    starting from (x, y). ] *)
 let horiz (x, y) = 
   [(x, y); (x+1, y); (x+2, y); (x+3, y)] 
 
+(** [vert (x, y) is a list of coordinates containing (x, y) and the three 
+    coordinates above (x, y). *)
 let vert (x, y) = 
   [(x, y); (x, y+1); (x, y+2); (x, y+3)]
 
+(** [right_diag (x, y) is a list of the four coordinates in the positive 
+    diagonal direction starting from (x, y). ] *)
 let right_diag (x, y) = 
   [(x, y); (x+1, y+1); (x+2, y+2); (x+3, y+3)]
 
+(** [left_diag (x, y) is a list of the four coordinates in the negative 
+    diagonal direction starting from (x, y). ] *)
 let left_diag (x, y) = 
   [(x, y); (x-1, y+1); (x-2, y+2); (x-3, y+3)]
 
-(** [get_pos b clr] is a list of the positions that have a piece with color 
+(** [pos_by_color b clr] is a list of the positions that have a piece with color 
     [clr] in board [b]. *)
-let rec get_pos b clr = 
+let rec pos_by_color b clr = 
   match b with
   | [] -> []
-  | (pos, Some c) :: t -> if c = clr then pos :: get_pos t clr 
-    else get_pos t clr
-  | (pos, None) :: t -> get_pos t clr
+  | (pos, Some c) :: t -> if c = clr then pos :: pos_by_color t clr 
+    else pos_by_color t clr
+  | (pos, None) :: t -> pos_by_color t clr
 
-(** [pos_status b (x,y) is the color of the piece on the board at position 
-    (x,y)] *)
+(** [pos_status b (x,y) is the [Some c] if c is the color of the piece on the 
+    board [b] at position (x,y), and [None] if there is no piece at (x,y). *)
 let rec pos_status b (x,y) =
   match b with
   | [] -> None
@@ -88,8 +96,8 @@ let rec pos_status b (x,y) =
   | ((a, b), None) :: t -> if a = x && b = y then None 
     else pos_status t (x, y)
 
-(** [four_in_a_row lst b clr] is true if the four positions in [lst] have
-    the same color [clr].  *)
+(** [four_in_a_row lst b clr] is true if the pieces in the coordinate positions 
+    in [lst] have the same color [clr]. *)
 let rec four_in_a_row lst b clr =
   match lst with
   | [] -> true
@@ -132,7 +140,7 @@ let rec check_vert b clr lst =
     else check_vert b clr t 
 
 let check_win b clr =
-  let positions = get_pos b clr in
+  let positions = pos_by_color b clr in
   check_right_diag b clr positions ||
   check_left_diag b clr positions ||
   check_horiz b clr positions ||
