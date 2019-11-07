@@ -1,4 +1,4 @@
-MODULES=command state main author
+MODULES=command state main authors
 OBJECTS=$(MODULES:=.cmo)
 MLS=$(MODULES:=.ml)
 MLIS=$(MODULES:=.mli)

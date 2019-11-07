@@ -10,21 +10,26 @@ type command =
 (**Raised when an invalid command is entered. *)
 exception Invalid
 
-(**[parse str] parses the player's input into a [command].
+(**[parse str] parses the player's input into a relevant [command] for 
+   during game play.
    Requires: [str] contains only (A-Z, a-z, 0-9), and space characters.
-   Raises: [Invalid] if the input doesn't match a [command] or if the int 
-   following go is not between 1 and 7.  *)
+   Raises: [Invalid] if the input doesn't match [Go of int], [Quit], or [Help]
+   or if the integer following go is not between 1 and 7. *)
 val parse: string -> command
 
-(**[execute_command st d ()] executes the command that the player's input parses 
-   to. First, it displays the game board of state [st] if [d] is true. 
-   Then, if the winning condition has been met, a winning message is displayed. 
-   Else, the player's input [i] is read, parsed, and executed. 
-   If [parse i] is [Quit], it exits the game engine.
-   If [parse i] is [Go c] and c is full, [execute_command st false () is called]
-   If [parse i] is [Go c] and c is not full, the move is executed to a new 
-   game state [n] and [execute_command n true ()] is called.
-   If [parse i] raises [Invalid], [execute_command st false ()] is called.*)
+(**[parse_menu str] parses the player's input into a relevant [command] for 
+   interacting with the start menu.
+   Requires: [str] contains only (A-Z, a-z, 0-9), and space characters.
+   Raises: [Invalid] if the input doesn't match [One], [Two], [Three], or 
+   [Quit]. *)
+val parse_menu: string -> command
+
+(**[execute_command st d ()] executes the player's input [i] during an active 
+   game by executing the command resulting from [parse i]. The game board of
+   state [st] is displayed if [d] is true. If the winning condition has been 
+   met, a winning message is displayed. *)
 val execute_command: State.t -> bool -> unit -> unit
 
+(**[execute_menu_command ()] executes the player's input [i] at the start menu
+   by executing the command resulting from [parse_menu i] *)
 val execute_menu_command: unit -> unit

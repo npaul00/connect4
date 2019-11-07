@@ -1,4 +1,4 @@
-
+(** [menu ()] is the display of options for the start menu. *)
 let menu () =
   ANSITerminal.(print_string [red; Underlined] "   Connect Four   ");
   ANSITerminal.(print_endline "\n\nSelect a Game Mode:");

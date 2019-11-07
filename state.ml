@@ -57,23 +57,23 @@ let rec display b r =
   if r < 7 then begin display b (r + 1); print_row b b r 1; end;
   if r = 1 then print_string bot
 
-(** [horiz (x, y) is a list of the four coordinates to the right horizontally 
-    starting from (x, y). ] *)
+(** [horiz (x, y)] is a list of the four coordinates to the right horizontally 
+    starting from (x, y). *)
 let horiz (x, y) = 
   [(x, y); (x+1, y); (x+2, y); (x+3, y)] 
 
-(** [vert (x, y) is a list of coordinates containing (x, y) and the three 
+(** [vert (x, y)] is a list of coordinates containing (x, y) and the three 
     coordinates above (x, y). *)
 let vert (x, y) = 
   [(x, y); (x, y+1); (x, y+2); (x, y+3)]
 
-(** [right_diag (x, y) is a list of the four coordinates in the positive 
-    diagonal direction starting from (x, y). ] *)
+(** [right_diag (x, y)] is a list of the four coordinates in the positive 
+    diagonal direction starting from (x, y). *)
 let right_diag (x, y) = 
   [(x, y); (x+1, y+1); (x+2, y+2); (x+3, y+3)]
 
-(** [left_diag (x, y) is a list of the four coordinates in the negative 
-    diagonal direction starting from (x, y). ] *)
+(** [left_diag (x, y)] is a list of the four coordinates in the negative 
+    diagonal direction starting from (x, y). *)
 let left_diag (x, y) = 
   [(x, y); (x-1, y+1); (x-2, y+2); (x-3, y+3)]
 
@@ -86,7 +86,7 @@ let rec pos_by_color b clr =
     else pos_by_color t clr
   | (pos, None) :: t -> pos_by_color t clr
 
-(** [pos_status b (x,y) is the [Some c] if c is the color of the piece on the 
+(** [pos_status b (x,y)] is the [Some c] if c is the color of the piece on the 
     board [b] at position (x,y), and [None] if there is no piece at (x,y). *)
 let rec pos_status b (x,y) =
   match b with
@@ -154,24 +154,30 @@ let color_to_string = function
   | Red -> "Red"
   | Blue -> "Blue"
 
-let rec pieces_in_col column board = 
-  match board with
+(**[pieces_in_col c b] is a list of all the rows in column [c] on board [b] that
+   contain pieces. *)
+let rec pieces_in_col c b = 
+  match b with
   | [] -> []
-  | ((col, row), Some c) :: t -> 
-    if col = column then row :: pieces_in_col column t
-    else pieces_in_col column t
-  | h :: t -> pieces_in_col column t
+  | ((col, row), Some clr) :: t -> 
+    if col = c then row :: pieces_in_col c t
+    else pieces_in_col c t
+  | h :: t -> pieces_in_col c t
 
-let drop_height column board =
-  match List.rev(List.sort compare (pieces_in_col column board)) with
+(**[drop_height c b] is the height at which a piece would be dropped if it were 
+   placed in column [c] on board [b]. If [c] is empty, [drop_height c b] is 1.*)
+let drop_height c b =
+  match List.rev(List.sort compare (pieces_in_col c b)) with
   | [] -> 1
   | h :: t -> h + 1
 
-let rec update x y col = function
+(**[update x y clr b] is [b] but with the value for the [x,y] key replaced with 
+   Some [clr]. *)
+let rec update x y clr = function
   | [] -> []
   | ((x', y'), _) as pair :: t -> 
-    if x' = x && y' = y then ((x, y), Some col) :: t else
-      pair :: update x y col t
+    if x' = x && y' = y then ((x, y), Some clr) :: t else
+      pair :: update x y clr t
 
 let move t c = 
   let height = drop_height c t.board in

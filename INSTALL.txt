@@ -1,2 +1,4 @@
-Instructions on how to install and build our system, 
-including any commands to install OPAM packages:
+Our game does not require anything additional to be installed other than the 
+standard CS3110 installations, which includes ansiterminal.
+
+Run 'make build' and then 'make play' to start the game engine.
