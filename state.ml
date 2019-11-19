@@ -215,19 +215,21 @@ let moves_that_block t =
       else moves_that_block_aux t ret tl
   in moves_that_block_aux t [] (possible_moves t)
 
-let will_win t c =
-  check_win (move t c).board Red
+let will_win t c clr =
+  check_win (move t c).board clr
 
 let moves_that_win t =
   let rec moves_that_win_aux t ret = function
     | [] -> ret
     | (x, y) :: tl -> 
-      if will_win t x then moves_that_win_aux t ((x, y) :: ret) tl
+      if will_win t x (t.turn) then moves_that_win_aux t ((x, y) :: ret) tl
       else moves_that_win_aux t ret tl
   in moves_that_win_aux t [] (possible_moves t)
 
 let will_cause_four t c =
-  check_win (move t c).board Blue
+  match moves_that_win (move t c) with
+  | [] -> false
+  | _ -> true
 
 let rec cpu_move_l_to_r t = function
   | (x, y) :: tl -> if will_cause_four t x then cpu_move_l_to_r t tl else x
