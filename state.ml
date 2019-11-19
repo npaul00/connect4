@@ -180,11 +180,30 @@ let rec update x y clr = function
     if x' = x && y' = y then ((x, y), Some clr) :: t else
       pair :: update x y clr t
 
+let rec anim t c low high =
+  if low <= high then 
+    begin 
+      display (update c high t.turn t.board) 1;
+      Unix.sleepf 0.5;
+      print_newline ();
+      anim t c low (high-1);  end
+  else 
+    ()
+
 let move t c = 
   let height = drop_height c t.board in
   if height < 7 then
     {board = update c (drop_height c t.board) t.turn t.board;
-     turn = other_color t.turn}
+     turn = other_color t.turn} 
+  else t
+
+
+let move_1 t c = 
+  let height = drop_height c t.board in
+  if height < 7 then
+    begin anim t c height 7;
+      {board = update c (drop_height c t.board) t.turn t.board;
+       turn = other_color t.turn} end
   else t
 
 (**[possible_moves_aux b c] is a list of the locations of the possible moves for
@@ -263,13 +282,6 @@ let cpu_move t =
       let movs = safe_moves t (possible_moves t) in 
       cpu_choose_move t (Random.int (List.length movs)) movs
 
-(* let rec count_pieces b =
-   match b with
-   | [] -> 0
-   | ((i,_), Some Red):: t -> if (i >= i_min && i < i_max) then 1 + count_pieces t 
-    else count_pieces t
-   | _:: t -> count_pieces t *)
-
 let rec sim_game t i moves =
   if check_win (board t) Red then
     1
@@ -301,6 +313,8 @@ let rec find_max lst (c, max) =
   | [] ->  c
   | (k, v)::t ->begin  if v > max then find_max t (c, v) 
       else find_max t (k, v) end
+
+
 
 
 

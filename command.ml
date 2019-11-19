@@ -1,4 +1,3 @@
-
 type command = 
   | Go of int
   | Quit

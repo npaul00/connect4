@@ -54,3 +54,5 @@ val cpu_move_l_to_r : t -> (int * int) list-> int
 
 val cpu_move : t -> int
 val sim_game : t -> int -> int-> int
+val drop_height : int -> board -> int
+val update : int -> int -> color -> board -> board
