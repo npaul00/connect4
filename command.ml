@@ -99,7 +99,7 @@ let rec one_play st d () =
         ("\n" ^ State.color_to_string turn ^ "'s turn (" ^ person_string ^")");
     match turn with 
     | State.Red -> 
-      Unix.sleepf 1.3;
+      Unix.sleepf 1.0;
       (*print_int (State.sim_game st 1 4);*)
       one_play (State.move st (State.cpu_move st)) true ();
     | State.Blue -> 
@@ -129,6 +129,7 @@ let rec execute_menu_command () =
       ANSITerminal.(print_string [red] "Starting One Player Mode");
       ANSITerminal.(print_string [cyan] "\nType 'help' for help at any time");
       print_endline " "; 
+      Random.self_init ();
       one_play State.init_state true ()
     | Two -> 
       ANSITerminal.(print_string [red] "Starting Two Player Mode");
