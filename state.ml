@@ -232,8 +232,19 @@ let will_cause_four t c =
   | _ -> true
 
 let rec cpu_move_l_to_r t = function
+  | (x, y) :: [] -> x
   | (x, y) :: tl -> if will_cause_four t x then cpu_move_l_to_r t tl else x
   | _ -> failwith "No possible moves"
+
+let rec safe_moves t = function
+  | [] -> []
+  | (x, y) :: tl -> 
+    if will_cause_four t x then safe_moves t tl 
+    else (x, y) :: safe_moves t tl
+
+let rec cpu_choose_move t i = function
+  | [] -> cpu_move_l_to_r t (possible_moves t)
+  | (x, y) :: tl -> if x = i then x else cpu_choose_move t i tl
 
 let cpu_move t =
   match moves_that_win t with
@@ -241,7 +252,9 @@ let cpu_move t =
   | [] -> 
     match moves_that_block t with 
     | (x, y) :: tl -> x
-    | [] -> cpu_move_l_to_r t (possible_moves t)
+    | [] -> 
+      let movs = safe_moves t (possible_moves t) in 
+      cpu_choose_move t (Random.int (List.length movs)) movs
 
 let rec check_full b =
   match b with
