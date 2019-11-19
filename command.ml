@@ -36,6 +36,7 @@ let parse_menu str =
   | "quit" :: [] -> Quit
   | _ -> raise Invalid
 
+
 let help_message () = 
   ANSITerminal.(print_string [yellow; Underlined] "Instructions: "); 
   ANSITerminal.(print_string [yellow] "\n - Type 'go' followed by a column number to drop a piece of your color in that column.");
@@ -96,8 +97,9 @@ let rec one_play st d () =
   else begin
     if d then print_endline ("\n" ^ State.color_to_string turn ^ "'s turn");
     match turn with 
-    | State.Red -> Unix.sleepf 1.3; 
-      one_play (State.move st (State.cpu_move st)) true ()
+    | State.Red -> (*Unix.sleepf 1.3; *)
+      print_int (State.sim_game st 1 4);
+      one_play (State.move st (State.cpu_move st)) true ();
     | State.Blue -> 
       print_string "> ";
       try match parse (read_line()) with

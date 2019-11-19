@@ -240,3 +240,44 @@ let cpu_move t =
     match moves_that_block t with 
     | (x, y) :: tl -> x
     | [] -> cpu_move_l_to_r t (possible_moves t)
+
+let rec check_full b =
+  match b with
+  | [] -> true
+  | (p, None):: t -> false
+  | h::t -> check_full t
+
+let rec sim_game t i moves =
+  if check_win (board t) Red then
+    1
+  else if check_win (board t) Blue then
+    0
+  else if check_full (board t) then
+    0
+  else if (drop_height i (board t) = 7) then
+    0
+  else if (moves = 0) then 
+    0
+  else  
+    let one = sim_game (move t i) 1 (moves-1) in
+    let two = sim_game (move t i) 2 (moves -1) in
+    let thr = sim_game (move t i) 3 (moves - 1) in
+    let four = sim_game (move t i) 4 (moves - 1) in
+    let five = sim_game (move t i) 5 (moves - 1) in
+    let six = sim_game (move t i) 6 (moves - 1) in
+    let svn = sim_game (move t i) 7 (moves - 1) in  
+    one + two + thr  + four + five + six + svn  
+
+let rec value_of_cols t c lst =
+  match sim_game (move t c) 1 4  with
+  | 0 -> value_of_cols t (c+1) lst
+  | _ -> (c, sim_game (move t c) 1 4)::(value_of_cols t (c+1) lst)
+
+let rec find_max lst (c, max) =
+  match lst with
+  | [] ->  c
+  | (k, v)::t ->begin  if v > max then find_max t (c, v) 
+      else find_max t (k, v) end
+
+
+
