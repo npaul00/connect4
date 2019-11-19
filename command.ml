@@ -97,7 +97,7 @@ let rec one_play st d () =
     if d then print_endline ("\n" ^ State.color_to_string turn ^ "'s turn");
     match turn with 
     | State.Red -> Unix.sleepf 1.3; 
-      one_play (State.move st 1) true ()
+      one_play (State.move st (State.cpu_move st)) true ()
     | State.Blue -> 
       print_string "> ";
       try match parse (read_line()) with

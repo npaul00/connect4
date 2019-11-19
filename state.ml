@@ -34,6 +34,7 @@ let bot = "1 | 2 | 3 | 4 | 5 | 6 | 7 |"
 let line = 
   print_string "\n";
   "-----------------------------"
+
 (** [get_team s] is the team or empty of [s] *)
 let get_team s =
   match s with
@@ -185,3 +186,57 @@ let move t c =
     {board = update c (drop_height c t.board) t.turn t.board;
      turn = other_color t.turn}
   else t
+
+(**[possible_moves_aux b c] is a list of the locations of the possible moves for
+   the current turn of state [t]. *)
+let possible_moves t =
+  let rec possible_moves_aux b c = 
+    if c <= 7 then
+      if (drop_height c b ) < 7 then
+        (c, drop_height c b) :: possible_moves_aux b (c+1)
+      else possible_moves_aux b (c+1)
+    else []
+  in possible_moves_aux t.board 1
+
+let state_w_other_color t = 
+  let board = t.board in
+  let turn = t.turn in
+  {board = board; turn = other_color turn}
+
+let block_four t c =
+  let state_if_red_went = move (state_w_other_color t) c in
+  check_win state_if_red_went.board Blue
+
+let moves_that_block t =
+  let rec moves_that_block_aux t ret = function
+    | [] -> ret
+    | (x, y) :: tl -> 
+      if block_four t x then moves_that_block_aux t ((x, y) :: ret) tl
+      else moves_that_block_aux t ret tl
+  in moves_that_block_aux t [] (possible_moves t)
+
+let will_win t c =
+  check_win (move t c).board Red
+
+let moves_that_win t =
+  let rec moves_that_win_aux t ret = function
+    | [] -> ret
+    | (x, y) :: tl -> 
+      if will_win t x then moves_that_win_aux t ((x, y) :: ret) tl
+      else moves_that_win_aux t ret tl
+  in moves_that_win_aux t [] (possible_moves t)
+
+let will_cause_four t c =
+  check_win (move t c).board Blue
+
+let rec cpu_move_l_to_r t = function
+  | (x, y) :: tl -> if will_cause_four t x then cpu_move_l_to_r t tl else x
+  | _ -> failwith "No possible moves"
+
+let cpu_move t =
+  match moves_that_win t with
+  | (x, y) :: tl -> x
+  | [] -> 
+    match moves_that_block t with 
+    | (x, y) :: tl -> x
+    | [] -> cpu_move_l_to_r t (possible_moves t)

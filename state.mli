@@ -46,3 +46,7 @@ val color_to_string : color -> string
 (** [other_color clr] is [Blue] if [clr] is [Red], and [Red] if [clr] is 
     [Blue]. *)
 val other_color : color -> color
+
+val cpu_move_l_to_r : t -> (int * int) list-> int
+
+val cpu_move : t -> int
