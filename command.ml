@@ -90,9 +90,8 @@ let rec one_play st d () =
   let last_clr = State.other_color turn in
   if d then State.display board 1;
   if State.check_win board last_clr then 
-    ANSITerminal.
-      (print_string [Blink] 
-         ("\n" ^ State.color_to_string last_clr ^ " wins!\n"))
+    ANSITerminal.(print_string [Blink] 
+                    ("\n" ^ State.color_to_string last_clr ^ " wins!\n"))
   else begin
     if d then print_endline ("\n" ^ State.color_to_string turn ^ "'s turn");
     print_string "> ";
@@ -103,7 +102,13 @@ let rec one_play st d () =
           print_endline "That column is full, try another!";
           one_play st false ()
         end
-        else one_play new_state true ()
+        else 
+        if (State.check_win (State.board new_state) turn) then
+          ANSITerminal.(print_string [Blink] 
+                          ("\n" ^ State.color_to_string turn ^ " wins!\n"))
+        else 
+          one_play (State.move new_state 1) true ()
+
       | Help -> 
         help_message ();
         one_play st true ()
