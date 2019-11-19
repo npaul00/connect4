@@ -24,11 +24,17 @@ val parse: string -> command
    [Quit]. *)
 val parse_menu: string -> command
 
-(**[execute_command st d ()] executes the player's input [i] during an active 
+(**[one_play st d ()] executes the player's input [i] during a one player 
    game by executing the command resulting from [parse i]. The game board of
    state [st] is displayed if [d] is true. If the winning condition has been 
    met, a winning message is displayed. *)
-val execute_command: State.t -> bool -> unit -> unit
+val one_play: State.t -> bool -> unit -> unit
+
+(**[two_play st d ()] executes the player's input [i] during a two player 
+   game by executing the command resulting from [parse i]. The game board of
+   state [st] is displayed if [d] is true. If the winning condition has been 
+   met, a winning message is displayed. *)
+val two_play: State.t -> bool -> unit -> unit
 
 (**[execute_menu_command ()] executes the player's input [i] at the start menu
    by executing the command resulting from [parse_menu i] *)
