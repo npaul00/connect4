@@ -90,33 +90,32 @@ let rec one_play st d () =
   let last_clr = State.other_color turn in
   if d then State.display board 1;
   if State.check_win board last_clr then 
-    ANSITerminal.(print_string [Blink] 
-                    ("\n" ^ State.color_to_string last_clr ^ " wins!\n"))
+    ANSITerminal.
+      (print_string [Blink] 
+         ("\n" ^ State.color_to_string last_clr ^ " wins!\n"))
   else begin
     if d then print_endline ("\n" ^ State.color_to_string turn ^ "'s turn");
-    print_string "> ";
-    try match parse (read_line()) with
-      | Go i -> 
-        let new_state = State.move st i in
-        if new_state = st then begin
-          print_endline "That column is full, try another!";
-          one_play st false ()
-        end
-        else 
-        if (State.check_win (State.board new_state) turn) then
-          ANSITerminal.(print_string [Blink] 
-                          ("\n" ^ State.color_to_string turn ^ " wins!\n"))
-        else 
-          one_play (State.move new_state 1) true ()
-
-      | Help -> 
-        help_message ();
-        one_play st true ()
-      | _ -> exit 0
-    with 
-    | Invalid -> 
-      print_endline "Invalid move! Hint: type 'go' and a column number";
-      one_play st false ()
+    match turn with 
+    | State.Red -> Unix.sleepf 1.3; 
+      one_play (State.move st 1) true ()
+    | State.Blue -> 
+      print_string "> ";
+      try match parse (read_line()) with
+        | Go i -> 
+          let new_state = State.move st i in
+          if new_state = st then begin
+            print_endline "That column is full, try another!";
+            one_play st false ()
+          end
+          else one_play new_state true ()
+        | Help -> 
+          help_message ();
+          one_play st true ()
+        | _ -> exit 0
+      with 
+      | Invalid -> 
+        print_endline "Invalid move! Hint: type 'go' and a column number";
+        one_play st false ()
   end
 
 let rec execute_menu_command () =

@@ -1,5 +1,5 @@
 (** The type for the color of a piece. *)
-type color
+type color = Red | Blue
 
 (** The type for the (x,y) coordinate position on the board. *)
 type position
