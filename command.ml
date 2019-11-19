@@ -36,6 +36,23 @@ let parse_menu str =
   | "quit" :: [] -> Quit
   | _ -> raise Invalid
 
+let help_message () = 
+  ANSITerminal.(print_string [yellow; Underlined] "Instructions: "); 
+  ANSITerminal.(print_string [yellow] "\n - Type 'go' followed by a column number to drop a piece of your color in that column.");
+  ANSITerminal.(print_string [yellow] "\nOnce a column is filled, you can no longer place pieces there.");
+  ANSITerminal.(print_string [yellow] "\n - Game continues until one player gets four of their colored pieces in a row,"); 
+  ANSITerminal.(print_string [yellow] "\neither horizontally, vertically, or diagonally.");
+  ANSITerminal.(print_string [yellow] "\n - Type 'quit' at any time to exit the game,");
+  ANSITerminal.(print_string [yellow] "\nor 'help' to bring up these instructions again.")
+
+let instructions_message () =
+  print_endline " ";
+  ANSITerminal.(print_string [yellow; Underlined] "   Instructions   ");
+  ANSITerminal.(print_string [yellow] "\n - To win, get four of your pieces in a row on the board. The sequence of four pieces can be horizontal, vertical, or diagonal.");
+  ANSITerminal.(print_string [yellow] "\n - In one player mode, you play Connect Four with an A.I. Enter '1' to go to one player mode.");
+  ANSITerminal.(print_string [yellow] "\n - In two player mode, two players can play Connect Four against each other. Enter '2' to go to two player mode.");
+  print_endline " "
+
 let rec execute_command st d () = 
   let turn = State.turn st in
   let board = State.board st in
@@ -57,13 +74,7 @@ let rec execute_command st d () =
         end
         else execute_command new_state true ()
       | Help -> 
-        ANSITerminal.(print_string [yellow; Underlined] "Instructions: "); 
-        ANSITerminal.(print_string [yellow] "\n - Type 'go' followed by a column number to drop a piece of your color in that column.");
-        ANSITerminal.(print_string [yellow] "\nOnce a column is filled, you can no longer place pieces there.");
-        ANSITerminal.(print_string [yellow] "\n - Game continues until one player gets four of their colored pieces in a row,"); 
-        ANSITerminal.(print_string [yellow] "\neither horizontally, vertically, or diagonally.");
-        ANSITerminal.(print_string [yellow] "\n - Type 'quit' at any time to exit the game,");
-        ANSITerminal.(print_string [yellow] "\nor 'help' to bring up these instructions again.");
+        help_message ();
         print_endline "";
         execute_command st true ()
       | _ -> exit 0
@@ -85,12 +96,7 @@ let rec execute_menu_command () =
       print_endline " ";
       execute_command State.init_state true ()
     | Three -> 
-      print_endline " ";
-      ANSITerminal.(print_string [yellow; Underlined] "   Instructions   ");
-      ANSITerminal.(print_string [yellow] "\n - To win, get four of your pieces in a row on the board. The sequence of four pieces can be horizontal, vertical, or diagonal.");
-      ANSITerminal.(print_string [yellow] "\n - In one player mode, you play Connect Four with an A.I. Enter '1' to go to one player mode.");
-      ANSITerminal.(print_string [yellow] "\n - In two player mode, two players can play Connect Four against each other. Enter '2' to go to two player mode.");
-      print_endline " ";
+      instructions_message ();
       execute_menu_command ()
     | _ -> exit 0
   with
