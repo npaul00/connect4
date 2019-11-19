@@ -61,9 +61,8 @@ let rec two_play st d () =
   let last_clr = State.other_color turn in
   if d then State.display board 1;
   if State.check_win board last_clr then 
-    ANSITerminal.
-      (print_string [Blink] 
-         ("\n" ^ State.color_to_string last_clr ^ " wins!\n"))
+    ANSITerminal.(print_string [Blink] 
+                    ("\n" ^ State.color_to_string last_clr ^ " wins!\n"))
   else begin
     if d then print_endline ("\n" ^ State.color_to_string turn ^ "'s turn");
     print_string "> ";
@@ -90,14 +89,16 @@ let rec one_play st d () =
   let board = State.board st in
   let last_clr = State.other_color turn in
   if d then State.display board 1;
+  let person_string = (if turn = State.Red then "Computer" else "You") in
   if State.check_win board last_clr then 
-    ANSITerminal.
-      (print_string [Blink] 
-         ("\n" ^ State.color_to_string last_clr ^ " wins!\n"))
+    if last_clr = State.Red then 
+      ANSITerminal.(print_string [Blink] ("\nComputer wins!\n"))
+    else ANSITerminal.(print_string [Blink] ("\nYou win!\n"))
   else begin
-    if d then print_endline ("\n" ^ State.color_to_string turn ^ "'s turn");
+    if d then print_endline 
+        ("\n" ^ State.color_to_string turn ^ "'s turn (" ^ person_string ^")");
     match turn with 
-    | State.Red -> (*Unix.sleepf 1.3; *)
+    | State.Red -> (*Unix.sleepf 1.3;*)
       print_int (State.sim_game st 1 4);
       one_play (State.move st (State.cpu_move st)) true ();
     | State.Blue -> 
@@ -124,7 +125,9 @@ let rec execute_menu_command () =
   print_string "\n> ";
   try match parse_menu (read_line()) with
     | One -> 
-      print_endline "One player mode not implemented yet, please try another."; 
+      ANSITerminal.(print_string [red] "Starting One Player Mode");
+      ANSITerminal.(print_string [cyan] "\nType 'help' for help at any time");
+      print_endline " "; 
       one_play State.init_state true ()
     | Two -> 
       ANSITerminal.(print_string [red] "Starting Two Player Mode");
