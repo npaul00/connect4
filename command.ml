@@ -98,8 +98,9 @@ let rec one_play st d () =
     if d then print_endline 
         ("\n" ^ State.color_to_string turn ^ "'s turn (" ^ person_string ^")");
     match turn with 
-    | State.Red -> (*Unix.sleepf 1.3;*)
-      print_int (State.sim_game st 1 4);
+    | State.Red -> 
+      Unix.sleepf 1.3;
+      (*print_int (State.sim_game st 1 4);*)
       one_play (State.move st (State.cpu_move st)) true ();
     | State.Blue -> 
       print_string "> ";

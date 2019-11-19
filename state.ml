@@ -232,32 +232,36 @@ let will_cause_four t c =
   | _ -> true
 
 let rec cpu_move_l_to_r t = function
+  | (x, y) :: [] -> x
   | (x, y) :: tl -> if will_cause_four t x then cpu_move_l_to_r t tl else x
   | _ -> failwith "No possible moves"
 
-(** returns true if the board is full*)
+let rec safe_moves t = function
+  | [] -> []
+  | (x, y) :: tl -> 
+    if will_cause_four t x then safe_moves t tl 
+    else (x, y) :: safe_moves t tl
+
+let rec cpu_choose_move t i = function
+  | [] -> cpu_move_l_to_r t (possible_moves t)
+  | (x, y) :: tl -> if x = i then x else cpu_choose_move t i tl
+
+let cpu_move t =
+  match moves_that_win t with
+  | (x, y) :: tl -> x
+  | [] -> 
+    match moves_that_block t with 
+    | (x, y) :: tl -> x
+    | [] -> 
+      let movs = safe_moves t (possible_moves t) in 
+      cpu_choose_move t (Random.int (List.length movs)) movs
+
 let rec check_full b =
   match b with
   | [] -> true
-  | (_, None):: t -> false
-  | _::t -> check_full t
+  | (p, None):: t -> false
+  | h::t -> check_full t
 
-(** returns the total amount of pieces placed*)
-let rec count_pieces b =
-  match b with
-  | [] -> 0
-  | (_, None):: t -> count_pieces t
-  | (_, Some clr):: t -> 1 + count_pieces t
-
-(** returns the amount of red pieces from [i_min] to [i_max] columns*)
-let rec count_red b i_min i_max =
-  match b with
-  | [] -> 0
-  | ((i,_), Some Red):: t -> if (i >= i_min && i < i_max) then 1 + count_pieces t 
-    else count_pieces t
-  | _::t -> count_pieces t
-
-(*Ignore *)
 let rec sim_game t i moves =
   if check_win (board t) Red then
     1
@@ -269,44 +273,26 @@ let rec sim_game t i moves =
     0
   else if (moves = 0) then 
     0
-  else
-    let add = if ((count_red (board t) 1 4) > (count_red (board t) 4 7)) 
-      then 0 else 3 in
-    let one = sim_game (move t i) (1+add) (moves-1) in
-    let two = sim_game (move t i) (2+add) (moves -1) in
-    let thr = sim_game (move t i) (3+add) (moves - 1) in
-    let four = sim_game (move t i) (4+add) (moves - 1) in
-    one + two + thr  + four  
+  else  
+    let one = sim_game (move t i) 1 (moves-1) in
+    let two = sim_game (move t i) 2 (moves -1) in
+    let thr = sim_game (move t i) 3 (moves - 1) in
+    let four = sim_game (move t i) 4 (moves - 1) in
+    let five = sim_game (move t i) 5 (moves - 1) in
+    let six = sim_game (move t i) 6 (moves - 1) in
+    let svn = sim_game (move t i) 7 (moves - 1) in  
+    one + two + thr  + four + five + six + svn  
 
-(*IGNORE *)
 let rec value_of_cols t c lst =
-  let moves = (count_pieces (board t))/10 + 4 in 
-  if c < 8 then
-    begin match sim_game (move t c) 1 moves  with
-      | 0 -> value_of_cols t (c + 1) lst
-      | _ -> (c, sim_game (move t c) 1 moves)::(value_of_cols t (c+1) lst) end
-  else []
+  match sim_game (move t c) 1 4  with
+  | 0 -> value_of_cols t (c+1) lst
+  | _ -> (c, sim_game (move t c) 1 4)::(value_of_cols t (c+1) lst)
 
-(* IGNORE*)
 let rec find_max lst (c, max) =
   match lst with
   | [] ->  c
-  | (k, v)::t -> 1
-(* begin  if v > max then find_max t (c, v) 
-    else find_max t (k, v) end *)
-
-let cpu_move t =
-  match moves_that_win t with
-  | (x, y) :: tl -> x
-  | [] -> 
-    match moves_that_block t with 
-    | (x, y) :: tl -> x
-    | [] -> cpu_move_l_to_r t (possible_moves t)
-(* begin if (find_max (value_of_cols t 1 []) (0, 0)) = 0 then  
-    else begin print_string "USED";
-      find_max (value_of_cols t 1 []) (0, 0) end
-   end *)
-
+  | (k, v)::t ->begin  if v > max then find_max t (c, v) 
+      else find_max t (k, v) end
 
 
 
