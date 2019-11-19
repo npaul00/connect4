@@ -43,7 +43,8 @@ let help_message () =
   ANSITerminal.(print_string [yellow] "\n - Game continues until one player gets four of their colored pieces in a row,"); 
   ANSITerminal.(print_string [yellow] "\neither horizontally, vertically, or diagonally.");
   ANSITerminal.(print_string [yellow] "\n - Type 'quit' at any time to exit the game,");
-  ANSITerminal.(print_string [yellow] "\nor 'help' to bring up these instructions again.")
+  ANSITerminal.(print_string [yellow] "\nor 'help' to bring up these instructions again.");
+  print_endline ""
 
 let instructions_message () =
   print_endline " ";
@@ -74,14 +75,7 @@ let rec two_play st d () =
         end
         else two_play new_state true ()
       | Help -> 
-        ANSITerminal.(print_string [yellow; Underlined] "Instructions: "); 
-        ANSITerminal.(print_string [yellow] "\n - Type 'go' followed by a column number to drop a piece of your color in that column.");
-        ANSITerminal.(print_string [yellow] "\nOnce a column is filled, you can no longer place pieces there.");
-        ANSITerminal.(print_string [yellow] "\n - Game continues until one player gets four of their colored pieces in a row,"); 
-        ANSITerminal.(print_string [yellow] "\neither horizontally, vertically, or diagonally.");
-        ANSITerminal.(print_string [yellow] "\n - Type 'quit' at any time to exit the game,");
-        ANSITerminal.(print_string [yellow] "\nor 'help' to bring up these instructions again.");
-        print_endline "";
+        help_message ();
         two_play st true ()
       | _ -> exit 0
     with 
@@ -112,7 +106,6 @@ let rec one_play st d () =
         else one_play new_state true ()
       | Help -> 
         help_message ();
-        print_endline "";
         one_play st true ()
       | _ -> exit 0
     with 
