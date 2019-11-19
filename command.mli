@@ -6,9 +6,13 @@ type command =
   | Two
   | Three
   | Help
+  | AgainYes
+  | AgainNo
 
 (**Raised when an invalid command is entered. *)
 exception Invalid
+
+val menu: unit -> unit
 
 (**[parse str] parses the player's input into a relevant [command] for 
    during game play.

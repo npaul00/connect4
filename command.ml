@@ -6,8 +6,21 @@ type command =
   | Two
   | Three
   | Help
+  | AgainYes
+  | AgainNo
 
 exception Invalid
+
+(** [menu ()] is the display of options for the start menu. *)
+let menu () =
+  ANSITerminal.(print_string [red; Underlined] "   Connect Four   ");
+  ANSITerminal.(print_endline "\n\nSelect a Game Mode:");
+  ANSITerminal.(print_string [cyan] " (1) ");
+  ANSITerminal.(print_endline "One Player");
+  ANSITerminal.(print_string [cyan] " (2) ");
+  ANSITerminal.(print_endline "Two Player");
+  ANSITerminal.(print_string [cyan] " (3) ");
+  ANSITerminal.(print_endline "Instructions")
 
 (**[words lst] is a list of the words (i.e. consecutive sequences of non-space
    characters) in [lst]. *)
@@ -26,6 +39,8 @@ let parse str =
       with exn -> raise Invalid
     end  
   | "help" :: [] -> Help
+  | "yes" :: [] -> AgainYes
+  | "no" :: [] -> AgainNo
   | _ -> raise Invalid
 
 let parse_menu str =
@@ -55,14 +70,24 @@ let instructions_message () =
   ANSITerminal.(print_string [yellow] "\n - In two player mode, two players can play Connect Four against each other. Enter '2' to go to two player mode.");
   print_endline " "
 
-let rec two_play st d () = 
+let rec play_again () =
+  try match parse (read_line ()) with
+    | AgainYes -> menu (); execute_menu_command ()
+    | AgainNo -> exit 0
+    | _ -> print_endline "Invalid command! Hint: type 'yes' or 'no'."; play_again ()
+  with
+  | Invalid -> print_endline "Invalid command! Hint: type 'yes' or 'no'."; play_again ()
+
+and two_play st d () = 
   let turn = State.turn st in
   let board = State.board st in
   let last_clr = State.other_color turn in
   if d then State.display board 1;
   if State.check_win board last_clr then 
-    ANSITerminal.(print_string [Blink] 
-                    ("\n" ^ State.color_to_string last_clr ^ " wins!\n"))
+    (ANSITerminal.(print_string [Blink] 
+                     ("\n" ^ State.color_to_string last_clr ^ " wins!\nWould you like to play again?")); play_again ())
+  else if (State.check_full board) then
+    (ANSITerminal.(print_string [Blink] ("\nIt's a tie!\nWould you like to play again?")); play_again ())
   else begin
     if d then print_endline ("\n" ^ State.color_to_string turn ^ "'s turn");
     print_string "> ";
@@ -84,7 +109,7 @@ let rec two_play st d () =
       two_play st false ()
   end
 
-let rec one_play st d () = 
+and one_play st d () = 
   let turn = State.turn st in
   let board = State.board st in
   let last_clr = State.other_color turn in
@@ -92,8 +117,10 @@ let rec one_play st d () =
   let person_string = (if turn = State.Red then "Computer" else "You") in
   if State.check_win board last_clr then 
     if last_clr = State.Red then 
-      ANSITerminal.(print_string [Blink] ("\nComputer wins!\n"))
-    else ANSITerminal.(print_string [Blink] ("\nYou win!\n"))
+      (ANSITerminal.(print_string [Blink] ("\nComputer wins!\nWould you like to play again?")); play_again ())
+    else (ANSITerminal.(print_string [Blink] ("\nYou win!\nWould you like to play again?")); play_again ())
+  else if (State.check_full board) then
+    ANSITerminal.(print_string [Blink] (("\nIt's a tie!\nWould you like to play again?")); play_again ())
   else begin
     if d then print_endline 
         ("\n" ^ State.color_to_string turn ^ "'s turn (" ^ person_string ^")");
@@ -122,7 +149,7 @@ let rec one_play st d () =
         one_play st false ()
   end
 
-let rec execute_menu_command () =
+and execute_menu_command () =
   print_string "\n> ";
   try match parse_menu (read_line()) with
     | One -> 

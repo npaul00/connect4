@@ -242,6 +242,13 @@ let rec safe_moves t = function
     if will_cause_four t x then safe_moves t tl 
     else (x, y) :: safe_moves t tl
 
+(** returns true if the board is full*)
+let rec check_full b =
+  match b with
+  | [] -> true
+  | (_, None):: t -> false
+  | _:: t -> check_full t
+
 let rec cpu_choose_move t i = function
   | [] -> cpu_move_l_to_r t (possible_moves t)
   | (x, y) :: tl -> if x = i then x else cpu_choose_move t i tl
@@ -256,11 +263,12 @@ let cpu_move t =
       let movs = safe_moves t (possible_moves t) in 
       cpu_choose_move t (Random.int (List.length movs)) movs
 
-let rec check_full b =
-  match b with
-  | [] -> true
-  | (p, None):: t -> false
-  | h::t -> check_full t
+(* let rec count_pieces b =
+   match b with
+   | [] -> 0
+   | ((i,_), Some Red):: t -> if (i >= i_min && i < i_max) then 1 + count_pieces t 
+    else count_pieces t
+   | _:: t -> count_pieces t *)
 
 let rec sim_game t i moves =
   if check_win (board t) Red then
