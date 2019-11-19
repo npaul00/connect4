@@ -2,10 +2,12 @@ type color = Red | Blue
 type position = int * int
 type status = color option
 type board = (position * status) list
+type num_wins = int * int
 
 type t = {
   board : board;
-  turn : color
+  turn : color;
+  wins : num_wins
 }
 
 let board t =
@@ -14,18 +16,29 @@ let board t =
 let turn t =
   t.turn
 
+let wins t =
+  t.wins
+
 let empty = 
   []
+
+let red_wins t =
+  match t.wins with
+  | (r, b) -> r
+
+let blue_wins t =
+  match t.wins with
+  | (r, b) -> b
 
 let rec empty_board b r c = 
   if c > 7 && r < 6 then
     empty_board b (r+1) 1
   else if c < 8 && r < 7 then
-    empty_board (((c,r), None)::b) r (c+1)
+    empty_board (((c,r), None) :: b) r (c+1)
   else 
     b
 
-let init_state = {board = (empty_board empty 1 1); turn = Blue}
+let init_state = {board = (empty_board empty 1 1); turn = Blue; wins = (0,0)}
 
 (** [bot] is the bottom row of a board *)
 let bot = "1 | 2 | 3 | 4 | 5 | 6 | 7 |"
@@ -147,6 +160,25 @@ let check_win b clr =
   check_horiz b clr positions ||
   check_vert b clr positions
 
+let winning_player t = 
+  if (check_win t.board Red) then Some Red
+  else if (check_win t.board Blue) then Some Blue
+  else None 
+
+let update_wins t =
+  match winning_player t, t.wins with
+  | Some Red, (red, blue) -> 
+    {board = (empty_board empty 1 1); turn = Blue; wins = (red + 1, blue)} 
+  | Some Blue, (red, blue) -> 
+    {board = (empty_board empty 1 1); turn = Blue; wins = (red, blue + 1)} 
+  | None, _ -> t
+
+let update_wins_tuple t wins =
+  match winning_player t, wins with
+  | Some Red, (red, blue) -> (red+1, blue)
+  | Some Blue, (red, blue) -> (red, blue+1)
+  | None, _ -> wins
+
 let other_color = function
   | Red -> Blue
   | Blue -> Red
@@ -182,9 +214,11 @@ let rec update x y clr = function
 
 let move t c = 
   let height = drop_height c t.board in
+  let old_wins = t.wins in
   if height < 7 then
     {board = update c (drop_height c t.board) t.turn t.board;
-     turn = other_color t.turn}
+     turn = other_color t.turn;
+     wins = update_wins_tuple t old_wins}
   else t
 
 (**[possible_moves_aux b c] is a list of the locations of the possible moves for
@@ -201,7 +235,8 @@ let possible_moves t =
 let state_w_other_color t = 
   let board = t.board in
   let turn = t.turn in
-  {board = board; turn = other_color turn}
+  let wins = t.wins in
+  {board = board; turn = other_color turn; wins = wins}
 
 let block_four t c =
   let state_if_red_went = move (state_w_other_color t) c in
@@ -299,7 +334,7 @@ let rec value_of_cols t c lst =
 let rec find_max lst (c, max) =
   match lst with
   | [] ->  c
-  | (k, v)::t ->begin  if v > max then find_max t (c, v) 
+  | (k, v) :: t -> begin if v > max then find_max t (c, v) 
       else find_max t (k, v) end
 
 

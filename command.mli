@@ -8,10 +8,13 @@ type command =
   | Help
   | AgainYes
   | AgainNo
+  | Stats
+  | MainMenu
 
 (**Raised when an invalid command is entered. *)
 exception Invalid
 
+(** [menu ()] is the display of options for the start menu. *)
 val menu: unit -> unit
 
 (**[parse str] parses the player's input into a relevant [command] for 
@@ -42,4 +45,4 @@ val two_play: State.t -> bool -> unit -> unit
 
 (**[execute_menu_command ()] executes the player's input [i] at the start menu
    by executing the command resulting from [parse_menu i] *)
-val execute_menu_command: unit -> unit
+val execute_menu_command: unit -> State.t -> unit

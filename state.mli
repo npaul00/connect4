@@ -13,11 +13,23 @@ type board
 (** The abstract type of values representing the game state. *)
 type t
 
+(** The type for the number of wins for the red and blue players respectively. *)
+type num_wins
+
 (** [turn t] is the color of whose turn it is to play in state [t]. *)
 val turn : t -> color
 
 (** [board t] is the game board of state [t]. *)
 val board : t -> board
+
+(** [wins t] is the number of wins for the red and blue players in [t]. *)
+val wins : t -> num_wins
+
+(** [red_wins t] is the number of wins for the red player in [t]. *)
+val red_wins : t -> int
+
+(** [blue_wins t] is the number of wins for the blue player in [t]. *)
+val blue_wins : t -> int
 
 (** [init_state] is the initial state of the game, with no pieces on the board, 
     and it being Blue's turn to play. *)
@@ -32,6 +44,13 @@ val move : t -> int -> t
 
 (** [check_win b clr] checks if there are 4 pieces with color [clr] in a row. *)
 val check_win : board -> color -> bool
+
+(** [winning_player t] is Some [clr] if that color won, or [None] if no one is 
+    winning. *)
+val winning_player : t -> color option
+
+(** [update_wins t wins] is the game state after someone wins. *)
+val update_wins : t -> t
 
 (** [empty_board b r c] creates an empty board with 6 rows and 7 columns, 
     starting with the slot at row [r] and column [c] on initial board [b].*)
