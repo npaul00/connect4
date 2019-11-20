@@ -19,6 +19,9 @@ let turn t =
 let wins t =
   t.wins
 
+let set_turn t clr =
+  {board = board t; turn = clr; wins = wins t}
+
 let empty = 
   []
 
@@ -385,5 +388,54 @@ let cpu_move_easy t =
       let movs = safe_moves t (possible_moves t) in 
       cpu_choose_move t (Random.int (List.length movs)) movs
 
+let new_color wins = 
+  match wins with
+  | (a, b) -> if (a + b) mod 2 = 0 then Blue else Red 
 
 
+
+(* let rec count_moves b clr =
+   match b with 
+   | [] -> 0
+   | (_, Some c)::t -> if c = clr then (1 + count_moves t clr) 
+    else count_moves t clr
+   | _::t -> count_moves t clr
+
+   let playable b c =
+   drop_height c b != 7
+
+   let will_win t c = 
+   check_win (board (move t c)) (turn t)
+
+   let rec search_win st c clr =
+
+   if playable (board st) c && will_win st 1 then 22 - count_moves (board st) clr
+   else if (c>7) then 50
+   else search_win st (c+1) clr
+
+   let rec get_score min max st clr = 
+   let board = board st in 
+   if check_full board then 0
+   else
+   if search_win st 1 clr < 50 then search_win st 1 clr  
+   else 
+    next_move min max st clr 4 
+
+
+   and next_move min max st clr i =
+   let next_i = if i = 4 then 3
+    else if i = 3 then 5
+    else if i = 5 then 2
+    else if i = 2 then 6
+    else if i = 6 then 1 
+    else if i = 1 then 7
+    else 8 in
+   if i < 8 then
+    let color = if clr = Red then Blue else Red in
+    if playable (board st) i &&  -1 * (get_score (-1 * min) (-1 * max) (move st i) color) >= max then 
+      -1 * (get_score (-1 * min) (-1 * max) (move st i) color)
+    else if playable (board st) i && -1 * (get_score (-1 * min) (-1 * max) (move st i) color) > min then
+      next_move (-1 * (get_score (-1 * min) (-1 * max) (move st i) color)) max st clr next_i
+    else next_move min max st clr next_i
+   else
+    min *)

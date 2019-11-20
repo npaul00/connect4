@@ -19,6 +19,9 @@ type num_wins
 (** [turn t] is the color of whose turn it is to play in state [t]. *)
 val turn : t -> color
 
+(** [set_turn t clr] is the state [t] at color [clr] *)
+val set_turn : t -> color -> t 
+
 (** [board t] is the game board of state [t]. *)
 val board : t -> board
 
@@ -77,6 +80,11 @@ val check_full : board -> bool
 val cpu_move_l_to_r : t -> (int * int) list-> int
 
 val cpu_move : t -> int
+
+val cpu_move_easy : t -> int
+
 val sim_game : t -> int -> int-> int
 val drop_height : int -> board -> int
 val update : int -> int -> color -> board -> board
+
+val new_color : num_wins -> color

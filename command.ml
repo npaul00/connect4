@@ -126,7 +126,10 @@ and play_again () st one_two =
   ANSITerminal.(print_string [yellow] "\n   yes | no | menu | stats"); 
   print_endline "";
   try match parse (read_line ()), one_two with
-    | AgainYes, i -> if i = 2 then two_play st true () else one_play st true ()
+    | AgainYes, i -> if i = 2 then 
+        two_play (State.set_turn st (State.new_color (State.wins st))) true () 
+      else
+        cpu_play (State.set_turn st (State.new_color (State.wins st))) true () i 
     | AgainNo, i -> exit 0
     | Quit, i -> exit 0
     | Stats, i -> stats_messages () st; print_endline ""; play_again () st i
@@ -155,7 +158,7 @@ and two_play st d () =
     print_string "> ";
     try match parse (read_line()) with
       | Go i -> 
-        let new_state = State.move_anim st i in
+        let new_state = State.move st i in
         if new_state = st then begin
           print_endline "That column is full, try another!";
           two_play st false ()
@@ -173,7 +176,11 @@ and two_play st d () =
       two_play st false ()
   end
 
-and medium_ai st d () = 
+and cpu_play st d () i = 
+  let op = if i = 1 then (State.cpu_move_easy)
+    else if i = 3 then (State.cpu_move)
+    else (State.cpu_move) in
+
   let turn = State.turn st in
   let board = State.board st in
   let last_clr = State.other_color turn in
@@ -195,33 +202,34 @@ and medium_ai st d () =
     | State.Red -> 
       Unix.sleepf 1.0;
       (*print_int (State.sim_game st 1 4);*)
-      medium_ai (State.move_anim st (State.cpu_move st)) true ();
+      cpu_play (State.move st (op st)) true () i;
     | State.Blue -> 
       print_string "> ";
       try match parse (read_line()) with
         | Go i -> 
-          let new_state = State.move_anim st i in
+          let new_state = State.move st i in
           if new_state = st then begin
             print_endline "That column is full, try another!";
-            medium_ai st false ()
+            cpu_play st false () i
           end
-          else medium_ai new_state true ()
+          else cpu_play new_state true () i
         | Help -> 
           help_message ();
-          medium_ai st true ()
+          cpu_play st true () i
         | Stats -> stats_messages () st;
-          medium_ai st true ()
+          cpu_play st true () i
         | _ -> exit 0
       with 
       | Invalid -> 
         print_endline "Invalid move! Hint: type 'go' and a column number";
-        medium_ai st false ()
+        cpu_play st false () i
   end
+
 
 and one_play st d () = 
   try match parse (read_line ()) with
-    | Easy -> print_endline "Unimplemented! Please check back later."; one_play st d ()
-    | Medium -> medium_ai st d ()
+    | Easy -> cpu_play st d () 1
+    | Medium -> cpu_play st d () 3
     | Hard -> print_endline "Unimplemented! Please check back later."; one_play st d ()
     | Quit -> exit 0
     | _ -> print_endline "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; one_play st d ()
