@@ -77,14 +77,21 @@ val other_color : color -> color
 (** [check_full b] is if board [b] is full. *)
 val check_full : board -> bool
 
+(** [cpu_move_l_to_r t] is *)
 val cpu_move_l_to_r : t -> (int * int) list-> int
 
+(** [cpu_move t] is move chosen by the medium bot *)
 val cpu_move : t -> int
 
+(** [cpu_move t] is move chosen by the easy bot *)
 val cpu_move_easy : t -> int
 
-val sim_game : t -> int -> int-> int
+(** [drop_height c b] is the highest open spot in column [c] on board [b] *)
 val drop_height : int -> board -> int
+
+(** [update x y clr] is the board but with a piece in [x], [y] with color 
+    [clr] *)
 val update : int -> int -> color -> board -> board
 
+(** [new_color wins] is the new starting color of a new game*)
 val new_color : num_wins -> color

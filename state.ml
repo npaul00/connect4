@@ -156,6 +156,7 @@ let rec check_vert b clr lst =
   | (x, y) :: t -> if (four_in_a_row (vert (x, y)) b clr) then true 
     else check_vert b clr t 
 
+(** [check_win b clr] is true if [clr] is winning and false otherwise*)
 let check_win b clr =
   let positions = pos_by_color b clr in
   check_right_diag b clr positions ||
@@ -163,11 +164,13 @@ let check_win b clr =
   check_horiz b clr positions ||
   check_vert b clr positions
 
+(** [winning_player t] is the winner at state [t] *)
 let winning_player t = 
   if (check_win t.board Red) then Some Red
   else if (check_win t.board Blue) then Some Blue
   else None 
 
+(** [update_wins t] is [t] but with updated win stats*)
 let update_wins t =
   match winning_player t, t.wins with
   | Some Red, (red, blue) -> 
@@ -176,6 +179,7 @@ let update_wins t =
     {board = (empty_board empty 1 1); turn = Blue; wins = (red, blue + 1)} 
   | None, _ -> t
 
+(** [update_wins_tuple t wins] is [t] with [wins] for the wins field*)
 let update_wins_tuple t wins =
   match winning_player t, wins with
   | Some Red, (red, blue) -> (red+1, blue)
@@ -215,6 +219,8 @@ let rec update x y clr = function
     if x' = x && y' = y then ((x, y), Some clr) :: t else
       pair :: update x y clr t
 
+(** [anim t c low high] is an animation for a piece falling from [high] to [low]
+    in column [c] at state [t] *)
 let rec anim t c low high =
   if low <= high then 
     begin 
@@ -327,9 +333,7 @@ let rec safe_moves t = function
    found by choosing the [ith] element of [lst], a list of possible positions.*)
 let rec cpu_choose_move t i lst = 
   let rec cpu_choose_move_aux t' i' count' = function 
-    | (x, y) :: tl -> 
-      if count' = i' then x 
-      else cpu_choose_move_aux t' i' (count'+1) tl
+    | (x, y) :: tl -> if count' = i' then x else cpu_choose_move_aux t' i' (count'+1) tl
     | [] -> failwith "No possible moves"
   in cpu_choose_move_aux t i 0 lst
 
@@ -344,42 +348,9 @@ let cpu_move t =
       let p_moves = possible_moves t in
       let s_moves = safe_moves t p_moves in 
       match s_moves with
-      | (x, y) :: tl -> 
-        cpu_choose_move t (Random.int (List.length s_moves)) s_moves
+      | (x, y) :: tl -> cpu_choose_move t (Random.int (List.length s_moves)) s_moves
       | [] -> cpu_choose_move t (Random.int (List.length p_moves)) p_moves
 
-
-let rec sim_game t i moves =
-  if check_win (board t) Red then
-    1
-  else if check_win (board t) Blue then
-    0
-  else if check_full (board t) then
-    0
-  else if (drop_height i (board t) = 7) then
-    0
-  else if (moves = 0) then 
-    0
-  else  
-    let one = sim_game (move t i) 1 (moves-1) in
-    let two = sim_game (move t i) 2 (moves -1) in
-    let thr = sim_game (move t i) 3 (moves - 1) in
-    let four = sim_game (move t i) 4 (moves - 1) in
-    let five = sim_game (move t i) 5 (moves - 1) in
-    let six = sim_game (move t i) 6 (moves - 1) in
-    let svn = sim_game (move t i) 7 (moves - 1) in  
-    one + two + thr  + four + five + six + svn  
-
-let rec value_of_cols t c lst =
-  match sim_game (move t c) 1 4  with
-  | 0 -> value_of_cols t (c+1) lst
-  | _ -> (c, sim_game (move t c) 1 4)::(value_of_cols t (c+1) lst)
-
-let rec find_max lst (c, max) =
-  match lst with
-  | [] ->  c
-  | (k, v) :: t -> begin if v > max then find_max t (c, v) 
-      else find_max t (k, v) end
 
 let cpu_move_easy t =
   match moves_that_win t with
@@ -388,8 +359,8 @@ let cpu_move_easy t =
     match moves_that_block t with 
     | (x, y) :: tl -> x
     | [] -> 
-      let p_moves = possible_moves t in
-      cpu_choose_move t (Random.int (List.length p_moves)) p_moves
+      let movs = safe_moves t (possible_moves t) in 
+      cpu_choose_move t (Random.int (List.length movs)) movs
 
 let new_color wins = 
   match wins with
@@ -442,3 +413,36 @@ let new_color wins =
     else next_move min max st clr next_i
    else
     min *)
+
+(* 
+let rec sim_game t i moves =
+  if check_win (board t) Red then
+    1
+  else if check_win (board t) Blue then
+    0
+  else if check_full (board t) then
+    0
+  else if (drop_height i (board t) = 7) then
+    0
+  else if (moves = 0) then 
+    0
+  else  
+    let one = sim_game (move t i) 1 (moves-1) in
+    let two = sim_game (move t i) 2 (moves -1) in
+    let thr = sim_game (move t i) 3 (moves - 1) in
+    let four = sim_game (move t i) 4 (moves - 1) in
+    let five = sim_game (move t i) 5 (moves - 1) in
+    let six = sim_game (move t i) 6 (moves - 1) in
+    let svn = sim_game (move t i) 7 (moves - 1) in  
+    one + two + thr  + four + five + six + svn  
+
+let rec value_of_cols t c lst =
+  match sim_game (move t c) 1 4  with
+  | 0 -> value_of_cols t (c+1) lst
+  | _ -> (c, sim_game (move t c) 1 4)::(value_of_cols t (c+1) lst)
+
+let rec find_max lst (c, max) =
+  match lst with
+  | [] ->  c
+  | (k, v) :: t -> begin if v > max then find_max t (c, v) 
+      else find_max t (k, v) end *)

@@ -60,11 +60,13 @@ let parse_menu str =
   | "quit" :: [] -> Quit
   | _ -> raise Invalid
 
+(** [greater wins t] prints who has the most wins in state [t]*)
 let greater_wins t =
   if (State.red_wins t > State.blue_wins t) then Some "red" 
   else if (State.red_wins t < State.blue_wins t) then Some "blue"
   else None
 
+(** [red_blue_stats r b] prints the stats between team [r] and team [b]*)
 let red_blue_stats r b = 
   let total = float_of_int (r + b) in
   let red = float_of_int r in
@@ -74,6 +76,7 @@ let red_blue_stats r b =
   ANSITerminal.(print_string [red] ("\nRed stats:" ^ red_stats ^ "%"));
   ANSITerminal.(print_string [cyan] ("\nBlue stats:" ^ blue_stats ^ "%"))
 
+(** [stats_messages st] prints all stats at [st]*)
 let stats_messages () st =
   let r = State.red_wins st in
   let b = State.blue_wins st in 
@@ -120,6 +123,9 @@ let rec difficulty_msg st d () =
   print_endline "";
   one_play st d ()
 
+(** [play again () st one_two] asks the user if they want to play again and 
+    starts a new game if the anser is yes. [one_two] is 1 for one player easy 
+    mode, 2 for two player, 3 for medium one player, 4 for hard one player*)
 and play_again () st one_two =
   print_endline "Would you like to play again?";
   ANSITerminal.(print_string [yellow] "\n   yes | no | menu | stats"); 
@@ -141,6 +147,8 @@ and play_again () st one_two =
     print_endline "Invalid command! Hint: type 'yes', 'no', or 'menu' for the main menu."; 
     play_again () st one_two
 
+(** [two_play st d] is the start of a two player game in state [st] and displays 
+    the board if [d] is true*)
 and two_play st d () = 
   let turn = State.turn st in
   let board = State.board st in
@@ -177,6 +185,8 @@ and two_play st d () =
       two_play st false ()
   end
 
+(** [cpu_play st d () i] is one player mode at difficulty [i] and prints if [d] 
+    is true *)
 and cpu_play st d () i = 
   let op = if i = 1 then (State.cpu_move_easy)
     else if i = 3 then (State.cpu_move)
@@ -227,7 +237,8 @@ and cpu_play st d () i =
         cpu_play st false () i
   end
 
-
+(** [one_play st d ()] is the start of one player mode and asks the user for a 
+    difficulty*)
 and one_play st d () = 
   try match parse (read_line ()) with
     | Easy -> cpu_play st d () 1
