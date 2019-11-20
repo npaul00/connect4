@@ -74,24 +74,28 @@ let red_blue_stats r b =
   let red_stats = (red /. total *. 100.0) |> int_of_float |> string_of_int in
   let blue_stats = (blue /. total *. 100.0) |> int_of_float |> string_of_int in
   ANSITerminal.(print_string [red] ("\nRed stats:" ^ red_stats ^ "%"));
-  ANSITerminal.(print_string [cyan] ("\nBlue stats:" ^ blue_stats ^ "%"))
+  print_endline "";
+  ANSITerminal.(print_string [cyan] ("\nBlue stats:" ^ blue_stats ^ "%"));
+  print_endline ""
 
 (** [stats_messages st] prints all stats at [st]*)
 let stats_messages () st =
   let r = State.red_wins st in
   let b = State.blue_wins st in 
   ANSITerminal.(print_string [magenta; Underlined; Bold] "   STATS   ");
-  ANSITerminal.(print_string [red; Underlined] "\nRed:"); 
-  print_string (" " ^ (r |> string_of_int));
-  ANSITerminal.(print_string [cyan; Underlined] "\nBlue:"); 
+  print_endline "";
+  ANSITerminal.(print_string [red; Underlined] "Red:"); 
+  print_endline (" " ^ (r |> string_of_int));
+  ANSITerminal.(print_string [cyan; Underlined] "Blue:"); 
   print_string (" " ^ (b |> string_of_int));
   red_blue_stats r b;
+  print_endline "";
   match greater_wins st with
   | Some clr -> 
-    ANSITerminal.(print_string [yellow; Bold] ("\n" ^ clr ^ " is winning!")); 
+    ANSITerminal.(print_string [yellow; Bold] (clr ^ " is winning!")); 
     print_endline ""
   | None -> 
-    ANSITerminal.(print_string [yellow; Bold] "\nIt's a tie!");
+    ANSITerminal.(print_string [yellow; Bold] "It's a tie!");
     print_endline ""
 
 let help_message () = 
