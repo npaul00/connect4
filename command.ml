@@ -62,8 +62,8 @@ let parse_menu str =
 
 (** [greater wins t] prints who has the most wins in state [t]*)
 let greater_wins t =
-  if (State.red_wins t > State.blue_wins t) then Some "red" 
-  else if (State.red_wins t < State.blue_wins t) then Some "blue"
+  if (State.red_wins t > State.blue_wins t) then Some "Red" 
+  else if (State.red_wins t < State.blue_wins t) then Some "Blue"
   else None
 
 (** [red_blue_stats r b] prints the stats between team [r] and team [b]*)
@@ -73,9 +73,13 @@ let red_blue_stats r b =
   let blue = float_of_int b in
   let red_stats = (red /. total *. 100.0) |> int_of_float |> string_of_int in
   let blue_stats = (blue /. total *. 100.0) |> int_of_float |> string_of_int in
-  ANSITerminal.(print_string [red] ("\nRed stats:" ^ red_stats ^ "%"));
   print_endline "";
-  ANSITerminal.(print_string [cyan] ("\nBlue stats:" ^ blue_stats ^ "%"));
+  print_endline "";
+  ANSITerminal.(print_string [yellow; Underlined; Bold] ("Win Percentage"));
+  ANSITerminal.(print_string [red] ("\nRed: "));
+  print_string (red_stats ^ "%");
+  ANSITerminal.(print_string [cyan] ("\nBlue: "));
+  print_string (blue_stats ^ "%");
   print_endline ""
 
 (** [stats_messages st] prints all stats at [st]*)
@@ -84,9 +88,11 @@ let stats_messages () st =
   let b = State.blue_wins st in 
   ANSITerminal.(print_string [magenta; Underlined; Bold] "   STATS   ");
   print_endline "";
-  ANSITerminal.(print_string [red; Underlined] "Red:"); 
+  ANSITerminal.(print_string [yellow; Underlined; Bold] "Score"); 
+  print_endline "";
+  ANSITerminal.(print_string [red] "Red:"); 
   print_endline (" " ^ (r |> string_of_int));
-  ANSITerminal.(print_string [cyan; Underlined] "Blue:"); 
+  ANSITerminal.(print_string [cyan] "Blue:"); 
   print_string (" " ^ (b |> string_of_int));
   red_blue_stats r b;
   print_endline "";
@@ -142,10 +148,10 @@ and play_again () st one_two =
   print_endline "";
   print_string "> ";
   try match parse (read_line ()), one_two with
-    | AgainYes, i -> if i = 2 then 
-        two_play st true () 
-      else
-        cpu_play st true () i 
+    | AgainYes, i ->
+      if i = 1 then cpu_play st true () 1 
+      else if i = 3 then cpu_play st true () 3 
+      else two_play st true () 
     | AgainNo, i -> exit 0
     | Quit, i -> exit 0
     | Stats, i -> stats_messages () st; print_endline ""; play_again () st i
@@ -176,8 +182,8 @@ and two_play st d () =
     if d then print_endline ("\n" ^ State.color_to_string turn ^ "'s turn");
     print_string "> ";
     try match parse (read_line()) with
-      | Go i -> 
-        let new_state = State.move st i in
+      | Go col -> 
+        let new_state = State.move_anim st col in
         if new_state = st then begin
           print_endline "That column is full, try another!";
           two_play st false ()
@@ -225,12 +231,12 @@ and cpu_play st d () i =
     | State.Red -> 
       Unix.sleepf 1.0;
       (*print_int (State.sim_game st 1 4);*)
-      cpu_play (State.move st (op st)) true () i;
+      cpu_play (State.move_anim st (op st)) true () i;
     | State.Blue -> 
       print_string "> ";
       try match parse (read_line()) with
-        | Go i -> 
-          let new_state = State.move st i in
+        | Go col -> 
+          let new_state = State.move_anim st col in
           if new_state = st then begin
             print_endline "That column is full, try another!";
             cpu_play st false () i
