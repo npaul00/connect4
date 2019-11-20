@@ -314,12 +314,6 @@ let will_cause_four t c =
   let new_st = move t c in
   will_win new_st c (new_st.turn)
 
-(**[cpu_move_l_to_r t lst] selects a column for the current player of [t] to 
-   move from [lst], a list of possible moves, based on a left to right order. *)
-let rec cpu_move_l_to_r t = function
-  | (x, y) :: [] -> x
-  | _ -> failwith "No possible moves"
-
 (**[safe_moves t lst] is a list of positions from [lst] that wouldn't cause the 
    current player of [t] to allow the opponent to win next turn by placing a 
    piece on top of theirs. *)

@@ -77,9 +77,6 @@ val other_color : color -> color
 (** [check_full b] is if board [b] is full. *)
 val check_full : board -> bool
 
-(** [cpu_move_l_to_r t] is *)
-val cpu_move_l_to_r : t -> (int * int) list-> int
-
 (** [cpu_move t] is move chosen by the medium bot *)
 val cpu_move : t -> int
 
