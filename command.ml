@@ -110,7 +110,7 @@ let instructions_message () =
   ANSITerminal.(print_string [yellow] "\n - In two player mode, two players can play Connect Four against each other. Enter '2' to go to two player mode.");
   print_endline " "
 
-let difficulty_msg () =
+let rec difficulty_msg st d () =
   ANSITerminal.(print_string [yellow; Bold] "\n  CHOOSE DIFFICULTY  ");
   print_endline "";
   ANSITerminal.(print_string [yellow; Background Blue] "\n        Easy");
@@ -118,9 +118,10 @@ let difficulty_msg () =
   ANSITerminal.(print_string [yellow; Background Blue] "\n       Medium");
   print_endline "";
   ANSITerminal.(print_string [yellow; Background Blue] "\n        Hard");
-  print_endline ""
+  print_endline "";
+  one_play st d ()
 
-let rec play_again () st one_two =
+and play_again () st one_two =
   print_endline "Would you like to play again?";
   ANSITerminal.(print_string [yellow] "\n   yes | no | menu | stats"); 
   print_endline "";
@@ -172,54 +173,55 @@ and two_play st d () =
       two_play st false ()
   end
 
+and medium_ai st d () = 
+  let turn = State.turn st in
+  let board = State.board st in
+  let last_clr = State.other_color turn in
+  if d then State.display board 1;
+  let person_string = (if turn = State.Red then "Computer" else "You") in
+  if State.check_win board last_clr then 
+    if last_clr = State.Red then 
+      (ANSITerminal.(print_string [Blink] ("\nComputer wins!\n")); 
+       play_again () (State.update_wins st) 1)
+    else (ANSITerminal.(print_string [Blink] ("\nYou win!\n")); 
+          play_again () (State.update_wins st) 1)
+  else if (State.check_full board) then
+    (ANSITerminal.(print_string [Blink] ("\nIt's a tie!\n")); 
+     play_again () st 1)
+  else begin
+    if d then print_endline 
+        ("\n" ^ State.color_to_string turn ^ "'s turn (" ^ person_string ^")");
+    match turn with 
+    | State.Red -> 
+      Unix.sleepf 1.0;
+      (*print_int (State.sim_game st 1 4);*)
+      medium_ai (State.move st (State.cpu_move st)) true ();
+    | State.Blue -> 
+      print_string "> ";
+      try match parse (read_line()) with
+        | Go i -> 
+          let new_state = State.move st i in
+          if new_state = st then begin
+            print_endline "That column is full, try another!";
+            medium_ai st false ()
+          end
+          else medium_ai new_state true ()
+        | Help -> 
+          help_message ();
+          medium_ai st true ()
+        | Stats -> stats_messages () st;
+          medium_ai st true ()
+        | _ -> exit 0
+      with 
+      | Invalid -> 
+        print_endline "Invalid move! Hint: type 'go' and a column number";
+        medium_ai st false ()
+  end
+
 and one_play st d () = 
-  difficulty_msg (); 
   try match parse (read_line ()) with
     | Easy -> print_endline "Unimplemented! Please check back later."; one_play st d ()
-    | Medium -> 
-      (let turn = State.turn st in
-       let board = State.board st in
-       let last_clr = State.other_color turn in
-       if d then State.display board 1;
-       let person_string = (if turn = State.Red then "Computer" else "You") in
-       if State.check_win board last_clr then 
-         if last_clr = State.Red then 
-           (ANSITerminal.(print_string [Blink] ("\nComputer wins!\n")); 
-            play_again () (State.update_wins st) 1)
-         else (ANSITerminal.(print_string [Blink] ("\nYou win!\n")); 
-               play_again () (State.update_wins st) 1)
-       else if (State.check_full board) then
-         (ANSITerminal.(print_string [Blink] ("\nIt's a tie!\n")); 
-          play_again () st 1)
-       else begin
-         if d then print_endline 
-             ("\n" ^ State.color_to_string turn ^ "'s turn (" ^ person_string ^")");
-         match turn with 
-         | State.Red -> 
-           Unix.sleepf 1.0;
-           (*print_int (State.sim_game st 1 4);*)
-           one_play (State.move st (State.cpu_move st)) true ();
-         | State.Blue -> 
-           print_string "> ";
-           try match parse (read_line()) with
-             | Go i -> 
-               let new_state = State.move st i in
-               if new_state = st then begin
-                 print_endline "That column is full, try another!";
-                 one_play st false ()
-               end
-               else one_play new_state true ()
-             | Help -> 
-               help_message ();
-               one_play st true ()
-             | Stats -> stats_messages () st;
-               one_play st true ()
-             | _ -> exit 0
-           with 
-           | Invalid -> 
-             print_endline "Invalid move! Hint: type 'go' and a column number";
-             one_play st false ()
-       end)
+    | Medium -> medium_ai st d ()
     | Hard -> print_endline "Unimplemented! Please check back later."; one_play st d ()
     | Quit -> exit 0
     | _ -> print_endline "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; one_play st d ()
@@ -234,7 +236,8 @@ and execute_menu_command () =
       ANSITerminal.(print_string [cyan] "\nType 'help' for help at any time");
       print_endline " "; 
       Random.self_init ();
-      one_play State.init_state true () 
+      difficulty_msg State.init_state true () 
+    (* one_play State.init_state true ()  *)
     | Two -> 
       ANSITerminal.(print_string [red] "Starting Two Player Mode");
       ANSITerminal.(print_string [cyan] "\nType 'help' for help at any time");
