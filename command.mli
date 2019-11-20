@@ -10,6 +10,9 @@ type command =
   | AgainNo
   | Stats
   | MainMenu
+  | Easy
+  | Medium
+  | Hard
 
 (**Raised when an invalid command is entered. *)
 exception Invalid
