@@ -231,6 +231,19 @@ let move t c =
      wins = update_wins_tuple t old_wins}
   else t
 
+
+(** returns true if the board is full*)
+let rec check_full b =
+  match b with
+  | [] -> true
+  | (_, None):: t -> false
+  | _:: t -> check_full t
+
+(**[state_w_other_color t] is the state with the same board as [t.board] 
+   but with the turn changed to the other color. *)
+let state_w_other_color t = 
+  {board = t.board; turn = other_color t.turn; wins = t.wins}
+
 (**[possible_moves_aux b c] is a list of the locations of the possible moves for
    the current turn of state [t]. *)
 let possible_moves t =
@@ -242,62 +255,69 @@ let possible_moves t =
     else []
   in possible_moves_aux t.board 1
 
-let state_w_other_color t = 
-  let board = t.board in
-  let turn = t.turn in
-  let wins = t.wins in
-  {board = board; turn = other_color turn; wins = wins}
-
+(**[block_four t c] is the boolean value of whether the current player of [t] 
+   would block a potential 4 in a row of the opponent by putting a piece in 
+   column [c]. *)
 let block_four t c =
-  let state_if_red_went = move (state_w_other_color t) c in
-  check_win state_if_red_went.board Blue
+  let state_if_other_went = move (state_w_other_color t) c in
+  check_win state_if_other_went.board (other_color t.turn)
 
+(**[moves_that_block t] is a list of the positions where [t.turn] can go to 
+   block a potential 4 in a row of the opponent. *)
 let moves_that_block t =
-  let rec moves_that_block_aux t ret = function
-    | [] -> ret
+  let rec moves_that_block_aux t = function
+    | [] -> []
     | (x, y) :: tl -> 
-      if block_four t x then moves_that_block_aux t ((x, y) :: ret) tl
-      else moves_that_block_aux t ret tl
-  in moves_that_block_aux t [] (possible_moves t)
+      if block_four t x then (x, y) :: moves_that_block_aux t tl
+      else moves_that_block_aux t tl
+  in moves_that_block_aux t (possible_moves t)
 
+(**[will_win t c clr] is the boolean value of whether [clr] will win if the 
+   current player of [t] places a piece in column [c]. *)
 let will_win t c clr =
   check_win (move t c).board clr
 
+(**[moves_that_win t] is a list of positions where the current player of [t] 
+   would win if they placed a piece there. *)
 let moves_that_win t =
-  let rec moves_that_win_aux t ret = function
-    | [] -> ret
+  let rec moves_that_win_aux t = function
+    | [] -> []
     | (x, y) :: tl -> 
-      if will_win t x (t.turn) then moves_that_win_aux t ((x, y) :: ret) tl
-      else moves_that_win_aux t ret tl
-  in moves_that_win_aux t [] (possible_moves t)
+      if will_win t x t.turn then (x, y) :: moves_that_win_aux t tl
+      else moves_that_win_aux t tl
+  in moves_that_win_aux t (possible_moves t)
 
+(**[will_cause_four t c] is the boolean value of whether the current player of 
+   [t] placing a piece in column [c] would allow the opponent to get 4 in a row 
+   by placing a piece on top of that one. *)
 let will_cause_four t c =
-  match moves_that_win (move t c) with
-  | [] -> false
-  | _ -> true
+  let new_st = move t c in
+  will_win new_st c (new_st.turn)
 
+(**[cpu_move_l_to_r t lst] selects a column for the current player of [t] to 
+   move from [lst], a list of possible moves, based on a left to right order. *)
 let rec cpu_move_l_to_r t = function
   | (x, y) :: [] -> x
-  | (x, y) :: tl -> if will_cause_four t x then cpu_move_l_to_r t tl else x
   | _ -> failwith "No possible moves"
 
+(**[safe_moves t lst] is a list of positions from [lst] that wouldn't cause the 
+   current player of [t] to allow the opponent to win next turn by placing a 
+   piece on top of theirs. *)
 let rec safe_moves t = function
   | [] -> []
   | (x, y) :: tl -> 
     if will_cause_four t x then safe_moves t tl 
     else (x, y) :: safe_moves t tl
 
-(** returns true if the board is full*)
-let rec check_full b =
-  match b with
-  | [] -> true
-  | (_, None):: t -> false
-  | _:: t -> check_full t
+(**[cpu_choose_move t i count lst] is the column the computer should play in, 
+   found by choosing the [ith] element of [lst], a list of possible positions.*)
+let rec cpu_choose_move t i lst = 
+  let rec cpu_choose_move_aux t' i' count' = function 
+    | (x, y) :: tl -> if count' = i' then x else cpu_choose_move_aux t' i' (count'+1) tl
+    | [] -> failwith "No possible moves"
+  in cpu_choose_move_aux t i 0 lst
 
-let rec cpu_choose_move t i = function
-  | [] -> cpu_move_l_to_r t (possible_moves t)
-  | (x, y) :: tl -> if x = i then x else cpu_choose_move t i tl
-
+(**[cpu_move t] is the column that the computer should place a piece in. *)
 let cpu_move t =
   match moves_that_win t with
   | (x, y) :: tl -> x
@@ -305,8 +325,12 @@ let cpu_move t =
     match moves_that_block t with 
     | (x, y) :: tl -> x
     | [] -> 
-      let movs = safe_moves t (possible_moves t) in 
-      cpu_choose_move t (Random.int (List.length movs)) movs
+      let p_moves = possible_moves t in
+      let s_moves = safe_moves t p_moves in 
+      match s_moves with
+      | (x, y) :: tl -> cpu_choose_move t (Random.int (List.length s_moves)) s_moves
+      | [] -> cpu_choose_move t (Random.int (List.length p_moves)) p_moves
+
 
 let rec sim_game t i moves =
   if check_win (board t) Red then
