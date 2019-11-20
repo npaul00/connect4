@@ -1,4 +1,3 @@
-
 type command = 
   | Go of int
   | Quit
@@ -114,7 +113,7 @@ let rec play_again () st one_two =
     | AgainNo, i -> exit 0
     | Quit, i -> exit 0
     | Stats, i -> stats_messages () st; print_endline ""; play_again () st i
-    | MainMenu, i -> menu (); execute_menu_command () st
+    | MainMenu, i -> menu (); execute_menu_command () 
     | _, i -> print_endline 
                 "Invalid command! Hint: type 'yes', 'no', or 'menu' for the main menu."; play_again () st i
   with
@@ -197,7 +196,7 @@ and one_play st d () =
         one_play st false ()
   end
 
-and execute_menu_command () st =
+and execute_menu_command () =
   print_string "\n> ";
   try match parse_menu (read_line()) with
     | One -> 
@@ -213,8 +212,7 @@ and execute_menu_command () st =
       two_play State.init_state true () 
     | Three -> 
       instructions_message ();
-      execute_menu_command () st
-    | Stats -> stats_messages () st; menu (); execute_menu_command () st
+      execute_menu_command ()
     | _ -> exit 0
   with
   | Invalid -> 
@@ -223,4 +221,4 @@ and execute_menu_command () st =
     print_string " for One Player Mode or ";
     ANSITerminal.(print_string [cyan] "2");
     print_endline " for Two Player Mode";
-    execute_menu_command () st
+    execute_menu_command ()

@@ -45,4 +45,4 @@ val two_play: State.t -> bool -> unit -> unit
 
 (**[execute_menu_command ()] executes the player's input [i] at the start menu
    by executing the command resulting from [parse_menu i] *)
-val execute_menu_command: unit -> State.t -> unit
+val execute_menu_command: unit -> unit
