@@ -2,7 +2,7 @@ type color = Red | Blue
 type position = int * int
 type status = color option
 type board = (position * status) list
-type num_wins = int * int
+type num_wins = int * int * int
 
 type t = {
   board : board;
@@ -27,11 +27,15 @@ let empty =
 
 let red_wins t =
   match t.wins with
-  | (r, b) -> r
+  | (r, _, _) -> r
 
 let blue_wins t =
   match t.wins with
-  | (r, b) -> b
+  | (_, b, _) -> b
+
+let num_ties t = 
+  match t.wins with
+  | (_, _, ties) -> ties
 
 let rec empty_board b r c = 
   if c > 7 && r < 6 then
@@ -41,7 +45,8 @@ let rec empty_board b r c =
   else 
     b
 
-let init_state = {board = (empty_board empty 1 1); turn = Blue; wins = (0,0)}
+let init_state = 
+  {board = (empty_board empty 1 1); turn = Blue; wins = (0, 0, 0)}
 
 (** [bot] is the bottom row of a board *)
 let bot = "1 | 2 | 3 | 4 | 5 | 6 | 7 |"
@@ -170,21 +175,30 @@ let winning_player t =
   else if (check_win t.board Blue) then Some Blue
   else None 
 
-(** [update_wins t] is [t] but with updated win stats*)
+let new_color wins = 
+  match wins with
+  | (a, b, t) -> if (a + b + t) mod 2 = 0 then Blue else Red 
+
+(** [update_wins t] is the state made by resetting [t], with an empty board, the
+    other player starting, and the win counts updated.*)
 let update_wins t =
   match winning_player t, t.wins with
-  | Some Red, (red, blue) -> 
-    {board = (empty_board empty 1 1); turn = Blue; wins = (red + 1, blue)} 
-  | Some Blue, (red, blue) -> 
-    {board = (empty_board empty 1 1); turn = Blue; wins = (red, blue + 1)} 
-  | None, _ -> t
+  | Some Red, (red, blue, ties) -> 
+    let u_wins = (red + 1, blue, ties) in
+    {board = (empty_board empty 1 1); turn = new_color u_wins; wins = u_wins} 
+  | Some Blue, (red, blue, ties) -> 
+    let u_wins = (red, blue + 1, ties) in
+    {board = (empty_board empty 1 1); turn = new_color u_wins; wins = u_wins} 
+  | None, (red, blue, ties) -> 
+    let u_wins = (red, blue, ties + 1) in
+    {board = (empty_board empty 1 1); turn = new_color u_wins; wins = u_wins} 
 
 (** [update_wins_tuple t wins] is [t] with [wins] for the wins field*)
 let update_wins_tuple t wins =
   match winning_player t, wins with
-  | Some Red, (red, blue) -> (red+1, blue)
-  | Some Blue, (red, blue) -> (red, blue+1)
-  | None, _ -> wins
+  | Some Red, (red, blue, ties) -> (red + 1, blue, ties)
+  | Some Blue, (red, blue, ties) -> (red, blue + 1, ties)
+  | None, (red, blue, ties) -> (red, blue, ties + 1)
 
 let other_color = function
   | Red -> Blue
@@ -233,22 +247,20 @@ let rec anim t c low high =
 
 let move t c = 
   let height = drop_height c t.board in
-  let old_wins = t.wins in
   if height < 7 then
-    {board = update c (drop_height c t.board) t.turn t.board;
+    {board = update c height t.turn t.board;
      turn = other_color t.turn;
-     wins = update_wins_tuple t old_wins}
+     wins = t.wins}
   else t
 
 let move_anim t c = 
   let height = drop_height c t.board in
-  let old_wins = t.wins in
   if height < 7 then
     begin 
       anim t c height 7;
-      {board = update c (drop_height c t.board) t.turn t.board;
+      {board = update c height t.turn t.board;
        turn = other_color t.turn;
-       wins = update_wins_tuple t old_wins} end
+       wins = t.wins} end
   else t
 
 
@@ -270,8 +282,8 @@ let possible_moves t =
   let rec possible_moves_aux b c = 
     if c <= 7 then
       if (drop_height c b ) < 7 then
-        (c, drop_height c b) :: possible_moves_aux b (c+1)
-      else possible_moves_aux b (c+1)
+        (c, drop_height c b) :: possible_moves_aux b (c + 1)
+      else possible_moves_aux b (c + 1)
     else []
   in possible_moves_aux t.board 1
 
@@ -279,6 +291,7 @@ let possible_moves t =
    would block a potential 4 in a row of the opponent by putting a piece in 
    column [c]. *)
 let block_four t c =
+  (not (check_win (move t c).board (other_color t.turn))) &&
   let state_if_other_went = move (state_w_other_color t) c in
   check_win state_if_other_went.board (other_color t.turn)
 
@@ -323,28 +336,61 @@ let rec safe_moves t = function
     if will_cause_four t x then safe_moves t tl 
     else (x, y) :: safe_moves t tl
 
+let will_eliminate_potential t c = 
+  block_four (move t c) c
+
+let rec safer_moves t = function
+  | [] -> []
+  | (x, y) :: tl ->
+    if will_eliminate_potential t x then safer_moves t tl
+    else (x, y) :: safer_moves t tl
+
 (**[cpu_choose_move t i count lst] is the column the computer should play in, 
    found by choosing the [ith] element of [lst], a list of possible positions.*)
 let rec cpu_choose_move t i lst = 
   let rec cpu_choose_move_aux t' i' count' = function 
-    | (x, y) :: tl -> if count' = i' then x else cpu_choose_move_aux t' i' (count'+1) tl
+    | (x, y) :: tl -> 
+      if count' = i' then x else cpu_choose_move_aux t' i' (count'+1) tl
     | [] -> failwith "No possible moves"
   in cpu_choose_move_aux t i 0 lst
 
+let rec num_pieces_on_board = function
+  | [] -> 0
+  | ((x, y), Some clr) :: tl -> 1 + num_pieces_on_board tl
+  | ((x, y), None) :: tl -> num_pieces_on_board tl
+
+let rec piece_on_board = function
+  | ((x, y), Some clr) :: tl -> x
+  | ((x, y), None) :: tl -> piece_on_board tl
+  | [] -> (-1)
+
+let next_to loc =
+  if loc = (-1) then 4 else
+  if loc < 4 then loc + 1 else
+  if loc > 4 then loc - 1 else
+    let rand = Random.int 2 in
+    if rand = 0 then loc - 1 else loc + 1
+
 (**[cpu_move t] is the column that the computer should place a piece in. *)
 let cpu_move t =
-  match moves_that_win t with
-  | (x, y) :: tl -> x
-  | [] -> 
-    match moves_that_block t with 
+  if num_pieces_on_board t.board <= 1 then next_to (piece_on_board t.board) else
+    match moves_that_win t with
     | (x, y) :: tl -> x
     | [] -> 
-      let p_moves = possible_moves t in
-      let s_moves = safe_moves t p_moves in 
-      match s_moves with
-      | (x, y) :: tl -> cpu_choose_move t (Random.int (List.length s_moves)) s_moves
-      | [] -> cpu_choose_move t (Random.int (List.length p_moves)) p_moves
-
+      match moves_that_block t with 
+      | (x, y) :: tl -> x
+      | [] -> 
+        let p_moves = possible_moves t in
+        let s_moves = safe_moves t p_moves in 
+        let safer = safer_moves t s_moves in
+        match safer with
+        | (x, y) :: tl -> 
+          cpu_choose_move t (Random.int (List.length safer)) safer
+        | [] ->
+          match s_moves with
+          | (x, y) :: tl -> 
+            cpu_choose_move t (Random.int (List.length s_moves)) s_moves
+          | [] -> cpu_choose_move t (Random.int (List.length p_moves)) p_moves
 
 let cpu_move_easy t =
   match moves_that_win t with
@@ -353,12 +399,8 @@ let cpu_move_easy t =
     match moves_that_block t with 
     | (x, y) :: tl -> x
     | [] -> 
-      let movs = safe_moves t (possible_moves t) in 
-      cpu_choose_move t (Random.int (List.length movs)) movs
-
-let new_color wins = 
-  match wins with
-  | (a, b) -> if (a + b) mod 2 = 0 then Blue else Red 
+      let p_moves = possible_moves t in
+      cpu_choose_move t (Random.int (List.length p_moves)) p_moves
 
 
 
