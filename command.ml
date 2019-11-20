@@ -58,7 +58,6 @@ let parse_menu str =
   | "2" :: [] -> Two
   | "3" :: [] -> Three
   | "quit" :: [] -> Quit
-  | "stats" :: [] -> Stats
   | _ -> raise Invalid
 
 let greater_wins t =
@@ -169,6 +168,8 @@ and two_play st d () =
         two_play st true ()
       | Stats -> stats_messages () st; 
         two_play st true ()
+      | MainMenu -> menu (); execute_menu_command () 
+      | Easy | Medium | Hard -> print_endline "Invalid move! Hint: type 'go' and a column number"; two_play st d ()
       | _ -> exit 0
     with 
     | Invalid -> 
@@ -180,7 +181,6 @@ and cpu_play st d () i =
   let op = if i = 1 then (State.cpu_move_easy)
     else if i = 3 then (State.cpu_move)
     else (State.cpu_move) in
-
   let turn = State.turn st in
   let board = State.board st in
   let last_clr = State.other_color turn in
@@ -218,6 +218,8 @@ and cpu_play st d () i =
           cpu_play st true () i
         | Stats -> stats_messages () st;
           cpu_play st true () i
+        | MainMenu -> menu (); execute_menu_command () 
+        | Easy | Medium | Hard -> print_endline "Invalid move! Hint: type 'go' and a column number"; cpu_play st d () i
         | _ -> exit 0
       with 
       | Invalid -> 
