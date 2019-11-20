@@ -327,7 +327,9 @@ let rec safe_moves t = function
    found by choosing the [ith] element of [lst], a list of possible positions.*)
 let rec cpu_choose_move t i lst = 
   let rec cpu_choose_move_aux t' i' count' = function 
-    | (x, y) :: tl -> if count' = i' then x else cpu_choose_move_aux t' i' (count'+1) tl
+    | (x, y) :: tl -> 
+      if count' = i' then x 
+      else cpu_choose_move_aux t' i' (count'+1) tl
     | [] -> failwith "No possible moves"
   in cpu_choose_move_aux t i 0 lst
 
@@ -342,7 +344,8 @@ let cpu_move t =
       let p_moves = possible_moves t in
       let s_moves = safe_moves t p_moves in 
       match s_moves with
-      | (x, y) :: tl -> cpu_choose_move t (Random.int (List.length s_moves)) s_moves
+      | (x, y) :: tl -> 
+        cpu_choose_move t (Random.int (List.length s_moves)) s_moves
       | [] -> cpu_choose_move t (Random.int (List.length p_moves)) p_moves
 
 
@@ -385,8 +388,8 @@ let cpu_move_easy t =
     match moves_that_block t with 
     | (x, y) :: tl -> x
     | [] -> 
-      let movs = safe_moves t (possible_moves t) in 
-      cpu_choose_move t (Random.int (List.length movs)) movs
+      let p_moves = possible_moves t in
+      cpu_choose_move t (Random.int (List.length p_moves)) p_moves
 
 let new_color wins = 
   match wins with
