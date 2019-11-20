@@ -155,7 +155,7 @@ and two_play st d () =
     print_string "> ";
     try match parse (read_line()) with
       | Go i -> 
-        let new_state = State.move st i in
+        let new_state = State.move_anim st i in
         if new_state = st then begin
           print_endline "That column is full, try another!";
           two_play st false ()
@@ -195,12 +195,12 @@ and medium_ai st d () =
     | State.Red -> 
       Unix.sleepf 1.0;
       (*print_int (State.sim_game st 1 4);*)
-      medium_ai (State.move st (State.cpu_move st)) true ();
+      medium_ai (State.move_anim st (State.cpu_move st)) true ();
     | State.Blue -> 
       print_string "> ";
       try match parse (read_line()) with
         | Go i -> 
-          let new_state = State.move st i in
+          let new_state = State.move_anim st i in
           if new_state = st then begin
             print_endline "That column is full, try another!";
             medium_ai st false ()

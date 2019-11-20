@@ -231,6 +231,17 @@ let move t c =
      wins = update_wins_tuple t old_wins}
   else t
 
+let move_anim t c = 
+  let height = drop_height c t.board in
+  let old_wins = t.wins in
+  if height < 7 then
+    begin 
+      anim t c height 7;
+      {board = update c (drop_height c t.board) t.turn t.board;
+       turn = other_color t.turn;
+       wins = update_wins_tuple t old_wins} end
+  else t
+
 
 (** returns true if the board is full*)
 let rec check_full b =
@@ -364,7 +375,15 @@ let rec find_max lst (c, max) =
   | (k, v) :: t -> begin if v > max then find_max t (c, v) 
       else find_max t (k, v) end
 
-
+let cpu_move_easy t =
+  match moves_that_win t with
+  | (x, y) :: tl -> x
+  | [] -> 
+    match moves_that_block t with 
+    | (x, y) :: tl -> x
+    | [] -> 
+      let movs = safe_moves t (possible_moves t) in 
+      cpu_choose_move t (Random.int (List.length movs)) movs
 
 
 
