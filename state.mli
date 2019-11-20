@@ -42,6 +42,11 @@ val display : board -> int -> unit
     column [c] in the current state [t]. *)
 val move : t -> int -> t
 
+(** [move t c] is the game state after the current player places a piece into
+    column [c] in the current state [t] with a fall animation. *)
+val move_anim : t -> int -> t
+
+
 (** [check_win b clr] checks if there are 4 pieces with color [clr] in a row. *)
 val check_win : board -> color -> bool
 
