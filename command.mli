@@ -44,7 +44,7 @@ val one_play: State.t -> bool -> unit -> unit
    game by executing the command resulting from [parse i]. The game board of
    state [st] is displayed if [d] is true. If the winning condition has been 
    met, a winning message is displayed. *)
-val two_play: State.t -> bool -> unit -> unit
+val two_play: State.t -> bool -> int -> unit -> unit
 
 (**[execute_menu_command ()] executes the player's input [i] at the start menu
    by executing the command resulting from [parse_menu i] *)

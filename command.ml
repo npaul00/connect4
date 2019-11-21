@@ -149,9 +149,9 @@ and play_again () st one_two =
   print_string "> ";
   try match parse (read_line ()), one_two with
     | AgainYes, i ->
-      if i = 1 then cpu_play st true () 1 
-      else if i = 3 then cpu_play st true () 3 
-      else two_play st true () 
+      if i = 1 then cpu_play st true 0 () 1 
+      else if i = 3 then cpu_play st true 0 () 3 
+      else two_play st true 0 () 
     | AgainNo, i -> exit 0
     | Quit, i -> exit 0
     | Stats, i -> stats_messages () st; print_endline ""; play_again () st i
@@ -161,12 +161,13 @@ and play_again () st one_two =
       play_again () st i
   with
   | Invalid -> 
-    print_endline "Invalid command! Hint: type 'yes', 'no', or 'menu' for the main menu."; 
+    print_endline 
+      "Invalid command! Hint: type 'yes', 'no', or 'menu' for the main menu."; 
     play_again () st one_two
 
 (** [two_play st d] is the start of a two player game in state [st] and displays 
     the board if [d] is true*)
-and two_play st d () = 
+and two_play st d last () = 
   let turn = State.turn st in
   let board = State.board st in
   let last_clr = State.other_color turn in
@@ -178,35 +179,46 @@ and two_play st d () =
   else if (State.check_full board) then
     (ANSITerminal.(print_string [Blink] ("\nIt's a tie!\n")); 
      play_again () (State.update_wins st) 2)
+
   else begin
-    if d then print_endline ("\n" ^ State.color_to_string turn ^ "'s turn");
+    if d then begin
+      if last <> 0 then begin
+        print_string 
+          ( "\nLast move: " ^ (State.color_to_string last_clr) ^ " in column " 
+            ^ string_of_int last);
+      end;
+      print_endline ("\n" ^ State.color_to_string turn ^ "'s turn")
+    end;
     print_string "> ";
     try match parse (read_line()) with
       | Go col -> 
         let new_state = State.move_anim st col in
         if new_state = st then begin
           print_endline "That column is full, try another!";
-          two_play st false ()
+          two_play st false last ()
         end
-        else two_play new_state true ()
+        else begin
+          two_play new_state true col ()
+        end
       | Help -> 
         help_message ();
-        two_play st true ()
+        two_play st true last ()
       | Stats -> stats_messages () st; 
-        two_play st true ()
+        two_play st true last ()
       | MainMenu -> print_endline ""; menu (); execute_menu_command () 
-      | Easy | Medium | Hard -> print_endline "Invalid move! Hint: type 'go' and a column number"; 
-        two_play st d ()
+      | Easy | Medium | Hard -> 
+        print_endline "Invalid move! Hint: type 'go' and a column number"; 
+        two_play st d last ()
       | _ -> exit 0
     with 
     | Invalid -> 
       print_endline "Invalid move! Hint: type 'go' and a column number";
-      two_play st false ()
+      two_play st false last ()
   end
 
 (** [cpu_play st d () i] is one player mode at difficulty [i] and prints if [d] 
     is true *)
-and cpu_play st d () i = 
+and cpu_play st d last () i = 
   let op = if i = 1 then (State.cpu_move_easy)
     else if i = 3 then (State.cpu_move)
     else (State.cpu_move) in
@@ -225,36 +237,48 @@ and cpu_play st d () i =
     (ANSITerminal.(print_string [Blink] ("\nIt's a tie!\n")); 
      play_again () (State.update_wins st) i)
   else begin
-    if d then print_endline 
+    if d then begin
+      if last <> 0 then begin
+        let last_person_string = 
+          (if turn = State.Blue then "Computer" else "You") in
+        print_string ("\nLast move: " ^ (State.color_to_string last_clr) ^ 
+                      " (" ^ last_person_string ^ ") in column " ^ 
+                      string_of_int last)
+      end;
+      print_string 
         ("\n" ^ State.color_to_string turn ^ "'s turn (" ^ person_string ^")");
+    end;
     match turn with 
     | State.Red -> 
+      print_endline "";
       Unix.sleepf 1.0;
       (*print_int (State.sim_game st 1 4);*)
-      cpu_play (State.move_anim st (op st)) true () i;
+      let move_col = op st in
+      cpu_play (State.move_anim st move_col) true (move_col) () i;
     | State.Blue -> 
-      print_string "> ";
+      print_string "\n> ";
       try match parse (read_line()) with
         | Go col -> 
           let new_state = State.move_anim st col in
           if new_state = st then begin
-            print_endline "That column is full, try another!";
-            cpu_play st false () i
+            print_string "That column is full, try another!";
+            cpu_play st false last () i
           end
-          else cpu_play new_state true () i
+          else cpu_play new_state true col () i
         | Help -> 
           help_message ();
-          cpu_play st true () i
+          cpu_play st true last () i
         | Stats -> stats_messages () st;
-          cpu_play st true () i
+          cpu_play st true last () i
         | MainMenu -> print_endline ""; menu (); execute_menu_command () 
-        | Easy | Medium | Hard -> print_endline "Invalid move! Hint: type 'go' and a column number"; 
-          cpu_play st d () i
+        | Easy | Medium | Hard -> 
+          print_string "Invalid move! Hint: type 'go' and a column number"; 
+          cpu_play st d last () i
         | _ -> exit 0
       with 
       | Invalid -> 
-        print_endline "Invalid move! Hint: type 'go' and a column number";
-        cpu_play st false () i
+        print_string "Invalid move! Hint: type 'go' and a column number";
+        cpu_play st false last () i
   end
 
 (** [one_play st d ()] is the start of one player mode and asks the user for a 
@@ -263,19 +287,21 @@ and one_play st d () =
   try match parse (read_line ()) with
     | Easy -> 
       starting_one_msg ();
-      cpu_play st d () 1
+      cpu_play st d 0 () 1
     | Medium -> 
       starting_one_msg ();
-      cpu_play st d () 3
+      cpu_play st d 0 () 3
     | Hard -> print_endline "Unimplemented! Please check back later."; 
       print_string "> ";
       one_play st d ()
     | Quit -> exit 0
-    | _ -> print_endline "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
+    | _ -> print_endline 
+             "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
       print_string "> ";
       one_play st d ()
   with
-  | Invalid -> print_endline "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
+  | Invalid -> print_endline 
+                 "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
     print_string "> ";
     one_play st d ()
 
@@ -285,12 +311,12 @@ and execute_menu_command () =
     | One -> 
       Random.self_init ();
       difficulty_msg State.init_state true () 
-    (* one_play State.init_state true ()  *)
+    (* one_play State.init_state true 0 ()  *)
     | Two -> 
       ANSITerminal.(print_string [red] "Starting Two Player Mode");
       ANSITerminal.(print_string [cyan] "\nType 'help' for help at any time");
       print_endline " ";
-      two_play State.init_state true () 
+      two_play State.init_state true 0 () 
     | Three -> 
       instructions_message ();
       execute_menu_command ()
@@ -299,7 +325,9 @@ and execute_menu_command () =
   | Invalid -> 
     print_string "Invalid. Please enter "; 
     ANSITerminal.(print_string [cyan] "1");
-    print_string " for One Player Mode or ";
+    print_string " for One Player Mode, ";
     ANSITerminal.(print_string [cyan] "2");
-    print_endline " for Two Player Mode";
+    print_endline " for Two Player Mode, or ";
+    ANSITerminal.(print_string [cyan] "3");
+    print_string " to view the instructions";
     execute_menu_command ()
