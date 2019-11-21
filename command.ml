@@ -165,8 +165,9 @@ and play_again () st one_two =
       "Invalid command! Hint: type 'yes', 'no', or 'menu' for the main menu."; 
     play_again () st one_two
 
-(** [two_play st d] is the start of a two player game in state [st] and displays 
-    the board if [d] is true*)
+(** [two_play st d last ()] is the start of a two player game in state [st] and 
+    displays the board if [d] is true. [last] is the column of the most recent 
+    piece played, and is 0 if no pieces have been played.*)
 and two_play st d last () = 
   let turn = State.turn st in
   let board = State.board st in
@@ -216,8 +217,9 @@ and two_play st d last () =
       two_play st false last ()
   end
 
-(** [cpu_play st d () i] is one player mode at difficulty [i] and prints if [d] 
-    is true *)
+(** [cpu_play st d last () i] is one player mode at difficulty [i] and prints if 
+    [d] is true. [last] is the column of the most recent piece played, and is 0 
+    if no pieces have been played.*)
 and cpu_play st d last () i = 
   let op = if i = 1 then (State.cpu_move_easy)
     else if i = 3 then (State.cpu_move)

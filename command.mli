@@ -40,7 +40,7 @@ val parse_menu: string -> command
    met, a winning message is displayed. *)
 val one_play: State.t -> bool -> unit -> unit
 
-(**[two_play st d ()] executes the player's input [i] during a two player 
+(**[two_play st d last ()] executes the player's input [i] during a two player 
    game by executing the command resulting from [parse i]. The game board of
    state [st] is displayed if [d] is true. If the winning condition has been 
    met, a winning message is displayed. *)
