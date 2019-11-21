@@ -26,7 +26,7 @@ finalcheck: check
 	bash finalcheck.sh
 
 zip:
-	zip project.zip *.ml* _tags Makefile
+	zip project.zip *.ml* _tags Makefile INSTALL.txt
 	
 docs: docs-public docs-private
 	
