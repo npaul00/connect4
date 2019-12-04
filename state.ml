@@ -361,82 +361,55 @@ let new_color wins =
   | (a, b) -> if (a + b) mod 2 = 0 then Blue else Red 
 
 
-
-(* let rec count_moves b clr =
-   match b with 
-   | [] -> 0
-   | (_, Some c)::t -> if c = clr then (1 + count_moves t clr) 
+(** [count_moves b clr] is the amount of times a [clr] piece has been placed in
+    [b] *)
+let rec count_moves b clr =
+  match b with 
+  | [] -> 0
+  | (_, Some c)::t -> if c = clr then (1 + count_moves t clr) 
     else count_moves t clr
-   | _::t -> count_moves t clr
+  | _::t -> count_moves t clr
 
-   let playable b c =
-   drop_height c b != 7
+(** [playable b c] is true if column [c] in [b] isn't full and false otherwise*)
+let playable b c =
+  drop_height c b != 7
 
-   let will_win t c = 
-   check_win (board (move t c)) (turn t)
+(** [will_win t c] is true if placing a piece in [c] will yield to [t] winning*)
+let will_win t c = 
+  check_win (board (move t c)) (turn t)
 
-   let rec search_win st c clr =
+(** [search_win st c clr] is < 50 if there is a winning move*)
+let rec search_win st c clr =
+  if playable (board st) c && will_win st 1 then 22 - count_moves (board st) clr
+  else if (c>7) then 50
+  else search_win st (c+1) clr
 
-   if playable (board st) c && will_win st 1 then 22 - count_moves (board st) clr
-   else if (c>7) then 50
-   else search_win st (c+1) clr
-
-   let rec get_score min max st clr = 
-   let board = board st in 
-   if check_full board then 0
-   else
-   if search_win st 1 clr < 50 then search_win st 1 clr  
-   else 
+(** [get_score min max st clr] is the best score among each move for [clr] in 
+    [st]*)
+let rec get_score min max st clr = 
+  let board = board st in 
+  if check_full board then 0
+  else
+  if search_win st 1 clr < 50 then search_win st 1 clr  
+  else 
     next_move min max st clr 4 
 
-
-   and next_move min max st clr i =
-   let next_i = if i = 4 then 3
+(** [next_move min max st clr i] is the next move for [clr] in [st] 
+    while searching with a depth of [i]*)
+and next_move min max st clr i =
+  let next_i = if i = 4 then 3
     else if i = 3 then 5
     else if i = 5 then 2
     else if i = 2 then 6
     else if i = 6 then 1 
     else if i = 1 then 7
     else 8 in
-   if i < 8 then
+  if i < 8 then
     let color = if clr = Red then Blue else Red in
     if playable (board st) i &&  -1 * (get_score (-1 * min) (-1 * max) (move st i) color) >= max then 
       -1 * (get_score (-1 * min) (-1 * max) (move st i) color)
     else if playable (board st) i && -1 * (get_score (-1 * min) (-1 * max) (move st i) color) > min then
       next_move (-1 * (get_score (-1 * min) (-1 * max) (move st i) color)) max st clr next_i
     else next_move min max st clr next_i
-   else
-    min *)
-
-(* 
-let rec sim_game t i moves =
-  if check_win (board t) Red then
-    1
-  else if check_win (board t) Blue then
-    0
-  else if check_full (board t) then
-    0
-  else if (drop_height i (board t) = 7) then
-    0
-  else if (moves = 0) then 
-    0
-  else  
-    let one = sim_game (move t i) 1 (moves-1) in
-    let two = sim_game (move t i) 2 (moves -1) in
-    let thr = sim_game (move t i) 3 (moves - 1) in
-    let four = sim_game (move t i) 4 (moves - 1) in
-    let five = sim_game (move t i) 5 (moves - 1) in
-    let six = sim_game (move t i) 6 (moves - 1) in
-    let svn = sim_game (move t i) 7 (moves - 1) in  
-    one + two + thr  + four + five + six + svn  
-
-let rec value_of_cols t c lst =
-  match sim_game (move t c) 1 4  with
-  | 0 -> value_of_cols t (c+1) lst
-  | _ -> (c, sim_game (move t c) 1 4)::(value_of_cols t (c+1) lst)
-
-let rec find_max lst (c, max) =
-  match lst with
-  | [] ->  c
-  | (k, v) :: t -> begin if v > max then find_max t (c, v) 
-      else find_max t (k, v) end *)
+  else
+    min
