@@ -415,6 +415,15 @@ let rec count_moves b =
 let playable b c =
   drop_height c b != 7
 
+let next_col = function
+  | 4 -> 3
+  | 3 -> 5
+  | 5 -> 2
+  | 2 -> 6
+  | 6 -> 1
+  | 1 -> 7
+  | _ -> 8
+
 let rec get_score st = 
   if check_full st.board then 0 else
     match moves_that_win st with
@@ -434,8 +443,20 @@ and calc_scores st b_score =
     else calc_scores_aux st (c+1) score
   in calc_scores_aux st 1 b_score
 
+type visited = (board * int) list
 
-let rec get_score2 st alpha beta = 
+let put vis k v =
+  if List.length vis > 1000 then
+    match List.rev vis with
+    | h :: tl -> (k, v) :: (List.rev tl)
+    | [] -> (k, v) :: []
+  else (k, v) :: vis
+
+let get vis k = List.assoc k vis
+
+let contain vis k = List.mem_assoc k vis
+
+let rec get_score2 st alpha beta vis = 
   if check_full st.board then 0 else
     match moves_that_win st with
     | h :: tl -> (43 - (count_moves st.board))/2
@@ -443,19 +464,21 @@ let rec get_score2 st alpha beta =
       let max = (41 - (count_moves st.board))/2 in
       let bm = if beta > max then max else beta in
       if alpha >= bm then bm else
-        calc_scores2 st alpha bm
+        calc_scores2 st alpha bm vis
 
-and calc_scores2 st a bm =
-  let rec calc_scores2_aux st c alpha beta = 
-    if c>7 then alpha else
+and calc_scores2 st a bm vis =
+  let rec calc_scores2_aux st c alpha beta vis = 
+    if c > 7 then alpha else
     if playable st.board c then
       let new_st = move st c in
-      let score = -(get_score2 new_st (-beta) (-alpha)) in
+      let score = if contain vis new_st.board then get vis new_st.board else
+          -(get_score2 new_st (-beta) (-alpha) vis) in
       if score >= beta then score else
-      if score > alpha then calc_scores2_aux st (c+1) score beta else
-        calc_scores2_aux st (c+1) alpha beta
-    else calc_scores2_aux st (c+1) alpha beta
-  in calc_scores2_aux st 1 a bm
+      if score > alpha then 
+        calc_scores2_aux st (next_col c) score beta (put vis new_st.board score) 
+      else calc_scores2_aux st (next_col c) alpha beta (put vis new_st.board score)
+    else calc_scores2_aux st (next_col c) alpha beta vis
+  in calc_scores2_aux st 4 a bm vis
 
 
 
