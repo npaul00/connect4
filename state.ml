@@ -403,32 +403,50 @@ let cpu_move_easy t =
       cpu_choose_move t (Random.int (List.length p_moves)) p_moves
 
 
-(** [count_moves b clr] is the amount of times a [clr] piece has been placed in
-    [b] *)
-let rec count_moves b clr =
+
+(** [count_moves b] is the amount of times a piece has been placed in [b] *)
+let rec count_moves b =
   match b with 
   | [] -> 0
-  | (_, Some c)::t -> if c = clr then (1 + count_moves t clr) 
-    else count_moves t clr
-  | _::t -> count_moves t clr
+  | (_, Some c)::t -> 1 + count_moves t
+  | _::t -> count_moves t
 
 (** [playable b c] is true if column [c] in [b] isn't full and false otherwise*)
 let playable b c =
   drop_height c b != 7
 
-(** [will_win t c] is true if placing a piece in [c] will yield to [t] winning*)
-let will_win t c = 
-  check_win (board (move t c)) (turn t)
+let rec get_score st = 
+  if check_full st.board then 0 else
+    match moves_that_win st with
+    | h :: tl -> (43 - (count_moves st.board))/2
+    | [] -> 
+      let best_score = -42 in
+      calc_scores st best_score
 
+and calc_scores st b_score =
+  let rec calc_scores_aux st c score = 
+    if c>7 then score else
+    if playable st.board c then
+      let new_st = move st c in
+      let new_score = -get_score new_st in
+      if new_score > score then calc_scores_aux st (c+1) new_score else
+        calc_scores_aux st (c+1) score
+    else calc_scores_aux st (c+1) score
+  in calc_scores_aux st 1 b_score
+
+
+
+
+(*
 (** [search_win st c clr] is < 50 if there is a winning move*)
 let rec search_win st c clr =
-  if playable (board st) c && will_win st 1 then 22 - count_moves (board st) clr
+  if playable (board st) c && will_win st c then 22 - count_moves (board st) clr
   else if (c>7) then 50
   else search_win st (c+1) clr
 
 (** [get_score min max st clr] is the best score among each move for [clr] in 
     [st]*)
-let rec get_score min max st clr = 
+let rec get_score0 min max st clr = 
   let board = board st in 
   if check_full board then 0
   else
@@ -448,10 +466,13 @@ and next_move min max st clr i =
     else 8 in
   if i < 8 then
     let color = if clr = Red then Blue else Red in
-    if playable (board st) i &&  -1 * (get_score (-1 * min) (-1 * max) (move st i) color) >= max then 
-      -1 * (get_score (-1 * min) (-1 * max) (move st i) color)
-    else if playable (board st) i && -1 * (get_score (-1 * min) (-1 * max) (move st i) color) > min then
-      next_move (-1 * (get_score (-1 * min) (-1 * max) (move st i) color)) max st clr next_i
+    if playable (board st) i &&  -1 * (get_score0 (-1 * min) (-1 * max) (move st i) color) >= max then 
+      -1 * (get_score0 (-1 * min) (-1 * max) (move st i) color)
+    else if playable (board st) i && -1 * (get_score0 (-1 * min) (-1 * max) (move st i) color) > min then
+      next_move (-1 * (get_score0 (-1 * min) (-1 * max) (move st i) color)) max st clr next_i
     else next_move min max st clr next_i
   else
     min
+*)
+
+
