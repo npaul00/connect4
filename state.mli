@@ -80,8 +80,11 @@ val check_full : board -> bool
 (** [cpu_move t] is move chosen by the medium bot *)
 val cpu_move : t -> int
 
-(** [cpu_move t] is move chosen by the easy bot *)
+(** [cpu_move_easy t] is move chosen by the easy bot *)
 val cpu_move_easy : t -> int
+
+(** [cpu_move_hard t] is move chosen by the hard bot *)
+val cpu_move_hard : t -> int
 
 (** [drop_height c b] is the highest open spot in column [c] on board [b] *)
 val drop_height : int -> board -> int

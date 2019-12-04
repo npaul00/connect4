@@ -193,7 +193,7 @@ and two_play st d last () =
     print_string "> ";
     try match parse (read_line()) with
       | Go col -> 
-        let new_state = State.move_anim st col in
+        let new_state = State.move st col in
         if new_state = st then begin
           print_endline "That column is full, try another!";
           two_play st false last ()
@@ -223,6 +223,7 @@ and two_play st d last () =
 and cpu_play st d last () i = 
   let op = if i = 1 then (State.cpu_move_easy)
     else if i = 3 then (State.cpu_move)
+    else if i = 4 then (State.cpu_move_hard)
     else (State.cpu_move) in
   let turn = State.turn st in
   let board = State.board st in
@@ -256,12 +257,12 @@ and cpu_play st d last () i =
       Unix.sleepf 1.0;
       (*print_int (State.sim_game st 1 4);*)
       let move_col = op st in
-      cpu_play (State.move_anim st move_col) true (move_col) () i;
+      cpu_play (State.move st move_col) true (move_col) () i;
     | State.Blue -> 
       print_string "\n> ";
       try match parse (read_line()) with
         | Go col -> 
-          let new_state = State.move_anim st col in
+          let new_state = State.move st col in
           if new_state = st then begin
             print_string "That column is full, try another!";
             cpu_play st false last () i
@@ -293,9 +294,9 @@ and one_play st d () =
     | Medium -> 
       starting_one_msg ();
       cpu_play st d 0 () 3
-    | Hard -> print_endline "Unimplemented! Please check back later."; 
-      print_string "> ";
-      one_play st d ()
+    | Hard -> 
+      starting_one_msg ();
+      cpu_play st d 0 () 4
     | Quit -> exit 0
     | _ -> print_endline 
              "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 

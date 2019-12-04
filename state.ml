@@ -45,8 +45,25 @@ let rec empty_board b r c =
   else 
     b
 
+let rec half_board b r c = 
+  if c > 7 && r < 6 then
+    half_board b (r+1) 1
+  else if c < 8 && r < 7 then
+    if c mod 2 = 0 && r < 3 then 
+      half_board (((c,r), Some Blue) :: b) r (c+1)
+    else if r < 3 then 
+      half_board (((c,r), Some Red) :: b) r (c+1)
+    else if r == 3 && c mod 2 = 0 then
+      half_board (((c,r), Some Red) :: b) r (c+1)
+    else if r == 3  then
+      half_board (((c,r), Some Blue) :: b) r (c+1)
+    else 
+      half_board (((c,r), None) :: b) r (c+1)
+  else 
+    b
+
 let init_state = 
-  {board = (empty_board empty 1 1); turn = Blue; wins = (0, 0, 0)}
+  {board = (half_board empty 1 1); turn = Blue; wins = (0, 0, 0)}
 
 (** [bot] is the bottom row of a board *)
 let bot = "1 | 2 | 3 | 4 | 5 | 6 | 7 |"
@@ -443,20 +460,7 @@ and calc_scores st b_score =
     else calc_scores_aux st (c+1) score
   in calc_scores_aux st 1 b_score
 
-type visited = (board * int) list
-
-let put vis k v =
-  if List.length vis > 1000 then
-    match List.rev vis with
-    | h :: tl -> (k, v) :: (List.rev tl)
-    | [] -> (k, v) :: []
-  else (k, v) :: vis
-
-let get vis k = List.assoc k vis
-
-let contain vis k = List.mem_assoc k vis
-
-let rec get_score2 st alpha beta vis = 
+let rec get_score1 st alpha beta = 
   if check_full st.board then 0 else
     match moves_that_win st with
     | h :: tl -> (43 - (count_moves st.board))/2
@@ -464,23 +468,117 @@ let rec get_score2 st alpha beta vis =
       let max = (41 - (count_moves st.board))/2 in
       let bm = if beta > max then max else beta in
       if alpha >= bm then bm else
-        calc_scores2 st alpha bm vis
+        calc_scores1 st alpha bm
 
-and calc_scores2 st a bm vis =
-  let rec calc_scores2_aux st c alpha beta vis = 
+and calc_scores1 st a bm =
+  let rec calc_scores1_aux st c alpha beta = 
     if c > 7 then alpha else
     if playable st.board c then
       let new_st = move st c in
-      let score = if contain vis new_st.board then get vis new_st.board else
-          -(get_score2 new_st (-beta) (-alpha) vis) in
+      let score = -(get_score1 new_st (-beta) (-alpha)) in
       if score >= beta then score else
       if score > alpha then 
-        calc_scores2_aux st (next_col c) score beta (put vis new_st.board score) 
-      else calc_scores2_aux st (next_col c) alpha beta (put vis new_st.board score)
-    else calc_scores2_aux st (next_col c) alpha beta vis
-  in calc_scores2_aux st 4 a bm vis
+        calc_scores1_aux st (next_col c) score beta 
+      else calc_scores1_aux st (next_col c) alpha beta
+    else calc_scores1_aux st (next_col c) alpha beta
+  in calc_scores1_aux st 4 a bm
+
+type visited = (board * int) list
+
+let put vis k v =
+  if List.length vis > 10000 then
+    match List.rev vis with
+    | h :: tl -> (k, v) :: (List.rev tl)
+    | [] -> (k, v) :: []
+  else (k, v) :: vis
+
+let get vis k = List.assoc k vis
+
+let contain vis k = List.mem_assoc k vis 
+
+let rec get_score2 st alpha beta vis : (int * int) = 
+  if check_full st.board then (1, 0) else
+    match moves_that_win st with
+    | (x, y) :: tl -> (x, (43 - (count_moves st.board))/2)
+    | [] -> 
+      let max = (41 - (count_moves st.board))/2 in
+      let bm = if beta > max then max else beta in
+      if alpha >= bm then (1, bm) else
+        calc_scores2 st alpha bm vis
 
 
+and calc_scores2 st a bm vis =
+  let rec calc_scores2_aux st c alpha beta vis col = 
+    if c > 7 then (col, alpha) else
+    if playable st.board c then
+      let new_st = move st c in
+      let score = if contain vis new_st.board then get vis new_st.board else
+          let neg = begin
+            match (get_score2 new_st (-beta) (-alpha) vis) with
+            | (cc, ss) -> (cc, -ss)
+          end
+          in 
+          match neg with
+          | (c', s') -> s'
+      in
+      if score >= beta then (c, score) else
+      if score > alpha then 
+        calc_scores2_aux st (next_col c) score beta (put vis new_st.board score) c 
+      else calc_scores2_aux st (next_col c) alpha beta (put vis new_st.board score) col
+    else calc_scores2_aux st (next_col c) alpha beta vis col
+  in calc_scores2_aux st 4 a bm vis 4
+
+
+let rec solve st weak =
+  let min = if weak then -1 else -(42 - (count_moves st.board))/2 in
+  let max = if weak then 1 else (43 - (count_moves st.board))/2 in
+
+  let rec solve_aux min' max' c = 
+    if min' >= max' then (c, min') else
+      let med = min' + (max' - min')/2 in
+      let med' = if med <= 0 && min'/2 < med then min'/2
+        else if med >= 0 && max/2 > med then max/2 
+        else med in
+      let (col, r) = get_score3 st med' (med'+1) [] in
+      if r <= med' then solve_aux min' r col else
+        solve_aux r max' col
+
+  in solve_aux min max 4
+
+and get_score3 st alpha beta vis : (int * int) = 
+  if check_full st.board then (1, 0) else
+    match moves_that_win st with
+    | (x, y) :: tl -> (x, (43 - (count_moves st.board))/2)
+    | [] -> 
+      let max = (41 - (count_moves st.board))/2 in
+      let bm = if beta > max then max else beta in
+      if alpha >= bm then (3, bm) else
+        calc_scores3 st alpha bm vis
+
+
+and calc_scores3 st a bm vis =
+  let rec calc_scores3_aux st c alpha beta vis col = 
+    if c > 7 then (col, alpha) else
+    if playable st.board c then
+      let new_st = move st c in
+      let score = if contain vis new_st.board then get vis new_st.board else
+          let neg = begin
+            match (get_score3 new_st (-beta) (-alpha) vis) with
+            | (cc, ss) -> (cc, -ss)
+          end
+          in 
+          match neg with
+          | (c', s') -> s'
+      in
+      if score >= beta then (c, score) else
+      if score > alpha then 
+        calc_scores3_aux st (next_col c) score beta (put vis new_st.board score) c 
+      else calc_scores3_aux st (next_col c) alpha beta (put vis new_st.board score) col
+    else calc_scores3_aux st (next_col c) alpha beta vis col
+  in calc_scores3_aux st 4 a bm vis 4
+
+let cpu_move_hard st =
+  let (out, _) = solve st false in out
 
 (*
 (** [search_win st c clr] is < 50 if there is a winning move*)
