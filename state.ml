@@ -539,20 +539,20 @@ let rec solve st weak =
       let med' = if med <= 0 && min'/2 < med then min'/2
         else if med >= 0 && max/2 > med then max/2 
         else med in
-      let (col, r) = get_score3 st med' (med'+1) [] in
+      let (col, r) = get_score3 st med' (med'+1) [] c in
       if r <= med' then solve_aux min' r col else
         solve_aux r max' col
 
   in solve_aux min max 4
 
-and get_score3 st alpha beta vis : (int * int) = 
+and get_score3 st alpha beta vis col = 
   if check_full st.board then (1, 0) else
     match moves_that_win st with
     | (x, y) :: tl -> (x, (43 - (count_moves st.board))/2)
     | [] -> 
       let max = (41 - (count_moves st.board))/2 in
       let bm = if beta > max then max else beta in
-      if alpha >= bm then (3, bm) else
+      if alpha >= bm then (col, bm) else
         calc_scores3 st alpha bm vis
 
 
@@ -563,7 +563,7 @@ and calc_scores3 st a bm vis =
       let new_st = move st c in
       let score = if contain vis new_st.board then get vis new_st.board else
           let neg = begin
-            match (get_score3 new_st (-beta) (-alpha) vis) with
+            match (get_score3 new_st (-beta) (-alpha) vis col) with
             | (cc, ss) -> (cc, -ss)
           end
           in 
