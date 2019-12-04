@@ -428,12 +428,34 @@ and calc_scores st b_score =
     if c>7 then score else
     if playable st.board c then
       let new_st = move st c in
-      let new_score = -get_score new_st in
+      let new_score = -(get_score new_st) in
       if new_score > score then calc_scores_aux st (c+1) new_score else
         calc_scores_aux st (c+1) score
     else calc_scores_aux st (c+1) score
   in calc_scores_aux st 1 b_score
 
+
+let rec get_score2 st alpha beta = 
+  if check_full st.board then 0 else
+    match moves_that_win st with
+    | h :: tl -> (43 - (count_moves st.board))/2
+    | [] -> 
+      let max = (41 - (count_moves st.board))/2 in
+      let bm = if beta > max then max else beta in
+      if alpha >= bm then bm else
+        calc_scores2 st alpha bm
+
+and calc_scores2 st a bm =
+  let rec calc_scores2_aux st c alpha beta = 
+    if c>7 then alpha else
+    if playable st.board c then
+      let new_st = move st c in
+      let score = -(get_score2 new_st (-beta) (-alpha)) in
+      if score >= beta then score else
+      if score > alpha then calc_scores2_aux st (c+1) score beta else
+        calc_scores2_aux st (c+1) alpha beta
+    else calc_scores2_aux st (c+1) alpha beta
+  in calc_scores2_aux st 1 a bm
 
 
 
