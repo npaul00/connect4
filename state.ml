@@ -3,11 +3,13 @@ type position = int * int
 type status = color option
 type board = (position * status) list
 type num_wins = int * int * int
+type moves_list = int list
 
 type t = {
   board : board;
   turn : color;
-  wins : num_wins
+  wins : num_wins;
+  moves : moves_list
 }
 
 let board t =
@@ -19,8 +21,11 @@ let turn t =
 let wins t =
   t.wins
 
+let moves t =
+  t.moves
+
 let set_turn t clr =
-  {board = board t; turn = clr; wins = wins t}
+  {board = t.board; turn = clr; wins = t.wins; moves = t.moves}
 
 let empty = 
   []
@@ -37,33 +42,47 @@ let num_ties t =
   match t.wins with
   | (_, _, ties) -> ties
 
-let rec empty_board b r c = 
-  if c > 7 && r < 6 then
-    empty_board b (r+1) 1
-  else if c < 8 && r < 7 then
-    empty_board (((c,r), None) :: b) r (c+1)
-  else 
-    b
-
-let rec half_board b r c = 
-  if c > 7 && r < 6 then
-    half_board b (r+1) 1
-  else if c < 8 && r < 7 then
-    if c mod 2 = 0 && r < 3 then 
-      half_board (((c,r), Some Blue) :: b) r (c+1)
-    else if r < 3 then 
-      half_board (((c,r), Some Red) :: b) r (c+1)
-    else if r == 3 && c mod 2 = 0 then
-      half_board (((c,r), Some Red) :: b) r (c+1)
-    else if r == 3  then
-      half_board (((c,r), Some Blue) :: b) r (c+1)
+let empty_board = 
+  let rec empty_board_aux b r c = 
+    if c > 7 && r < 6 then
+      empty_board_aux b (r+1) 1
+    else if c < 8 && r < 7 then
+      empty_board_aux (((c,r), None) :: b) r (c+1)
     else 
-      half_board (((c,r), None) :: b) r (c+1)
-  else 
-    b
+      b
+  in empty_board_aux empty 1 1
+
+let half_board = 
+  let rec half_board_aux b r c =
+    if c > 7 && r < 6 then
+      half_board_aux b (r+1) 1
+    else if c < 8 && r < 7 then
+      if c mod 2 = 0 && r < 3 then 
+        half_board_aux (((c,r), Some Blue) :: b) r (c+1)
+      else if r < 3 then 
+        half_board_aux (((c,r), Some Red) :: b) r (c+1)
+      else if r == 3 && c mod 2 = 0 then
+        half_board_aux (((c,r), Some Red) :: b) r (c+1)
+      else if r == 3  then
+        half_board_aux (((c,r), Some Blue) :: b) r (c+1)
+      else 
+        half_board_aux (((c,r), None) :: b) r (c+1)
+    else 
+      b
+  in half_board_aux empty 1 1
+
+let half_board_moves = 
+  [1; 2; 3; 4; 5; 6; 7; 2; 3; 4; 5; 6; 7; 7; 1; 1; 2; 3; 4; 5; 6]
+
+(* set testing to true to start with a half board, false for an empty board *)
+let testing = true
 
 let init_state = 
-  {board = (half_board empty 1 1); turn = Blue; wins = (0, 0, 0)}
+  if testing then
+    {board = half_board; turn = Blue; wins = (0, 0, 0); 
+     moves = half_board_moves}
+  else
+    {board = empty_board; turn = Blue; wins = (0, 0, 0); moves = []}
 
 (** [bot] is the bottom row of a board *)
 let bot = "1 | 2 | 3 | 4 | 5 | 6 | 7 |"
@@ -202,13 +221,13 @@ let update_wins t =
   match winning_player t, t.wins with
   | Some Red, (red, blue, ties) -> 
     let u_wins = (red + 1, blue, ties) in
-    {board = (empty_board empty 1 1); turn = new_color u_wins; wins = u_wins} 
+    {board = empty_board; turn = new_color u_wins; wins = u_wins; moves = []} 
   | Some Blue, (red, blue, ties) -> 
     let u_wins = (red, blue + 1, ties) in
-    {board = (empty_board empty 1 1); turn = new_color u_wins; wins = u_wins} 
+    {board = empty_board; turn = new_color u_wins; wins = u_wins; moves = []} 
   | None, (red, blue, ties) -> 
     let u_wins = (red, blue, ties + 1) in
-    {board = (empty_board empty 1 1); turn = new_color u_wins; wins = u_wins} 
+    {board = empty_board; turn = new_color u_wins; wins = u_wins; moves = []} 
 
 (** [update_wins_tuple t wins] is [t] with [wins] for the wins field*)
 let update_wins_tuple t wins =
@@ -262,12 +281,16 @@ let rec anim t c low high =
   else 
     ()
 
+let update_moves_list lst c = 
+  List.rev (c :: (List.rev lst))
+
 let move t c = 
   let height = drop_height c t.board in
   if height < 7 then
     {board = update c height t.turn t.board;
      turn = other_color t.turn;
-     wins = t.wins}
+     wins = t.wins;
+     moves = update_moves_list t.moves c}
   else t
 
 let move_anim t c = 
@@ -277,7 +300,8 @@ let move_anim t c =
       anim t c height 7;
       {board = update c height t.turn t.board;
        turn = other_color t.turn;
-       wins = t.wins} end
+       wins = t.wins;
+       moves = update_moves_list t.moves c} end
   else t
 
 
@@ -291,7 +315,7 @@ let rec check_full b =
 (**[state_w_other_color t] is the state with the same board as [t.board] 
    but with the turn changed to the other color. *)
 let state_w_other_color t = 
-  {board = t.board; turn = other_color t.turn; wins = t.wins}
+  {board = t.board; turn = other_color t.turn; wins = t.wins; moves = t.moves}
 
 (**[possible_moves_aux b c] is a list of the locations of the possible moves for
    the current turn of state [t]. *)
@@ -419,8 +443,6 @@ let cpu_move_easy t =
       let p_moves = possible_moves t in
       cpu_choose_move t (Random.int (List.length p_moves)) p_moves
 
-
-
 (** [count_moves b] is the amount of times a piece has been placed in [b] *)
 let rec count_moves b =
   match b with 
@@ -432,6 +454,7 @@ let rec count_moves b =
 let playable b c =
   drop_height c b != 7
 
+(** [next_col c] is the next column that should be checked after [c]. *)
 let next_col = function
   | 4 -> 3
   | 3 -> 5
@@ -441,6 +464,7 @@ let next_col = function
   | 1 -> 7
   | _ -> 8
 
+(*
 let rec get_score st = 
   if check_full st.board then 0 else
     match moves_that_win st with
@@ -482,6 +506,7 @@ and calc_scores1 st a bm =
       else calc_scores1_aux st (next_col c) alpha beta
     else calc_scores1_aux st (next_col c) alpha beta
   in calc_scores1_aux st 4 a bm
+*)
 
 type visited = (board * int) list
 
@@ -496,6 +521,7 @@ let get vis k = List.assoc k vis
 
 let contain vis k = List.mem_assoc k vis 
 
+(*
 let rec get_score2 st alpha beta vis : (int * int) = 
   if check_full st.board then (1, 0) else
     match moves_that_win st with
@@ -505,7 +531,6 @@ let rec get_score2 st alpha beta vis : (int * int) =
       let bm = if beta > max then max else beta in
       if alpha >= bm then (1, bm) else
         calc_scores2 st alpha bm vis
-
 
 and calc_scores2 st a bm vis =
   let rec calc_scores2_aux st c alpha beta vis col = 
@@ -527,12 +552,11 @@ and calc_scores2 st a bm vis =
       else calc_scores2_aux st (next_col c) alpha beta (put vis new_st.board score) col
     else calc_scores2_aux st (next_col c) alpha beta vis col
   in calc_scores2_aux st 4 a bm vis 4
-
+*)
 
 let rec solve st weak =
   let min = if weak then -1 else -(42 - (count_moves st.board))/2 in
   let max = if weak then 1 else (43 - (count_moves st.board))/2 in
-
   let rec solve_aux min' max' c = 
     if min' >= max' then (c, min') else
       let med = min' + (max' - min')/2 in
@@ -542,7 +566,6 @@ let rec solve st weak =
       let (col, r) = get_score3 st med' (med'+1) [] c in
       if r <= med' then solve_aux min' r col else
         solve_aux r max' col
-
   in solve_aux min max 4
 
 and get_score3 st alpha beta vis col = 
@@ -555,7 +578,6 @@ and get_score3 st alpha beta vis col =
       if alpha >= bm then (col, bm) else
         calc_scores3 st alpha bm vis
 
-
 and calc_scores3 st a bm vis =
   let rec calc_scores3_aux st c alpha beta vis col = 
     if c > 7 then (col, alpha) else
@@ -566,8 +588,7 @@ and calc_scores3 st a bm vis =
             match (get_score3 new_st (-beta) (-alpha) vis col) with
             | (cc, ss) -> (cc, -ss)
           end
-          in 
-          match neg with
+          in match neg with
           | (c', s') -> s'
       in
       if score >= beta then (c, score) else
@@ -577,8 +598,163 @@ and calc_scores3 st a bm vis =
     else calc_scores3_aux st (next_col c) alpha beta vis col
   in calc_scores3_aux st 4 a bm vis 4
 
+(** [pick_rand_from lst] is a random element of [lst]. *)
+let pick_rand_from lst =
+  let rand = Random.int (List.length lst) in
+  List.nth lst rand
+
+(** [one_played st] is the column where the cpu should play when 1 piece has
+    been played so far. *)
+let one_played st = 
+  match st.moves with
+  | [1] -> pick_rand_from [2; 4]
+  | [2] -> 3
+  | [3] -> pick_rand_from [3; 4; 5; 6]
+  | [4] -> 4
+  | [5] -> pick_rand_from [2; 3; 4; 5]
+  | [6] -> 5
+  | _ -> pick_rand_from [4; 6]
+
+(** [two_played st] is the column where the cpu should play when 2 pieces have
+    been played so far, assuming the cpu played perfectly on their first turn.*)
+let two_played st =
+  match st.moves with
+  | [4; 1] -> 4
+  | [4; 2] -> pick_rand_from [2; 6]
+  | [4; 3] -> 6
+  | [4; 4] -> 4
+  | [4; 5] -> 2
+  | [4; 6] -> pick_rand_from [2; 6]
+  | _ -> 4
+
+(** [three_played st] is the column where the cpu should play when 3 pieces have
+    been played so far, assuming the cpu played perfectly on their first turn.*)
+let three_played st = 
+  match st.moves with
+  | [1; 2; 1] -> pick_rand_from [1; 4]
+  | [1; 2; 2] -> 2
+  | [1; 2; 3] -> 3
+  | [1; 2; 4] -> 4
+  | [1; 2; 5] -> 6
+  | [1; 2; 6] -> 5
+  | [1; 2; 7] -> pick_rand_from [2; 5; 6]
+  | [1; 4; 1] -> pick_rand_from [4; 5]
+  | [1; 4; 2] -> 4
+  | [1; 4; 3] -> 4
+  | [1; 4; 4] -> pick_rand_from [4; 6]
+  | [1; 4; 5] -> 4
+  | [1; 4; 6] -> 4
+  | [1; 4; 7] -> pick_rand_from [3; 5]
+  | [2; 3; 1] -> 3
+  | [2; 3; 2] -> 2
+  | [2; 3; 3] -> 3
+  | [2; 3; 4] -> 4
+  | [2; 3; 5] -> 3
+  | [2; 3; 6] -> pick_rand_from [3; 7]
+  | [2; 3; 7] -> pick_rand_from [2; 3; 6]
+  | [3; 3; 1] -> 4
+  | [3; 3; 2] -> pick_rand_from [1; 4; 5]
+  | [3; 3; 3] -> 4
+  | [3; 3; 4] -> pick_rand_from [2; 5]
+  | [3; 3; 5] -> 4
+  | [3; 3; 6] -> 3
+  | [3; 3; 7] -> 3
+  | [3; 4; 1] -> 4
+  | [3; 4; 2] -> 4
+  | [3; 4; 3] -> 3
+  | [3; 4; 4] -> 4
+  | [3; 4; 5] -> pick_rand_from [3; 4; 5]
+  | [3; 4; 6] -> 4
+  | [3; 4; 7] -> 4
+  | [3; 5; 1] -> 2
+  | [3; 5; 2] -> 2
+  | [3; 5; 3] -> 3
+  | [3; 5; 4] -> 4
+  | [3; 5; 5] -> 5
+  | [3; 5; 6] -> 5
+  | [3; 5; 7] -> 5
+  | [3; 6; 1] -> pick_rand_from [2; 3]
+  | [3; 6; 2] -> 4
+  | [3; 6; 3] -> 3
+  | [3; 6; 4] -> 2
+  | [3; 6; 5] -> pick_rand_from [2; 3; 4; 6]
+  | [3; 6; 6] -> 3
+  | [3; 6; 7] -> 2
+  | [4; 4; 1] -> pick_rand_from [3; 4]
+  | [4; 4; 2] -> 3
+  | [4; 4; 3] -> pick_rand_from [2; 5]
+  | [4; 4; 4] -> 4
+  | [4; 4; 5] -> pick_rand_from [3; 6]
+  | [4; 4; 6] -> 5
+  | [4; 4; 7] -> pick_rand_from [4; 5]
+  | [5; 2; 1] -> 6
+  | [5; 2; 2] -> 5
+  | [5; 2; 3] -> pick_rand_from [2; 4; 5; 6]
+  | [5; 2; 4] -> 6
+  | [5; 2; 5] -> 5
+  | [5; 2; 6] -> 4
+  | [5; 2; 7] -> pick_rand_from [5; 6]
+  | [5; 3; 1] -> 3
+  | [5; 3; 2] -> 3
+  | [5; 3; 3] -> 3
+  | [5; 3; 4] -> 4
+  | [5; 3; 5] -> 5
+  | [5; 3; 6] -> 6
+  | [5; 3; 7] -> 6
+  | [5; 4; 1] -> 4
+  | [5; 4; 2] -> 4
+  | [5; 4; 3] -> pick_rand_from [3; 4; 5]
+  | [5; 4; 4] -> 4
+  | [5; 4; 5] -> 5
+  | [5; 4; 6] -> 4
+  | [5; 4; 7] -> 4
+  | [5; 5; 1] -> 5
+  | [5; 5; 2] -> 5
+  | [5; 5; 3] -> 4
+  | [5; 5; 4] -> pick_rand_from [3; 6]
+  | [5; 5; 5] -> 4
+  | [5; 5; 6] -> pick_rand_from [3; 4; 7]
+  | [5; 5; 7] -> 4
+  | [6; 5; 1] -> pick_rand_from [2; 5; 6]
+  | [6; 5; 2] -> pick_rand_from [1; 5]
+  | [6; 5; 3] -> 5
+  | [6; 5; 4] -> 4
+  | [6; 5; 5] -> 5
+  | [6; 5; 6] -> 6
+  | [6; 5; 7] -> 5
+  | [7; 4; 1] -> pick_rand_from [3; 5]
+  | [7; 4; 2] -> 4
+  | [7; 4; 3] -> 4
+  | [7; 4; 4] -> pick_rand_from [2; 4]
+  | [7; 4; 5] -> 4
+  | [7; 4; 6] -> 4
+  | [7; 4; 7] -> pick_rand_from [3; 4]
+  | [7; 6; 1] -> pick_rand_from [2; 3; 6]
+  | [7; 6; 2] -> 3
+  | [7; 6; 3] -> 2
+  | [7; 6; 4] -> 4
+  | [7; 6; 5] -> 5
+  | [7; 6; 6] -> 6
+  | [7; 6; 7] -> pick_rand_from [4; 7]
+  | _ -> 4
+
+(** [start_solve st] is the algorithm for the cpu's moves near the start of 
+    the game.*)
+let start_solve st =
+  match num_pieces_on_board st.board with
+  | 0 -> 4
+  | 1 -> one_played st
+  | 2 -> two_played st
+  | 3 -> three_played st
+  | _ -> let (c, _) = solve st false in c
+
 let cpu_move_hard st =
-  let (out, _) = solve st false in out
+  match moves_that_win st with
+  | (x, y) :: tl -> x
+  | [] -> 
+    match moves_that_block st with 
+    | (x, y) :: tl -> x
+    | [] -> start_solve st
 
 let red_diag_win : board = [((1,6), None);      ((2,6), None);      ((3,6), None);      ((4,6), None);      ((5,6), None);     ((6,6), None); ((7,6), Some Red);
                             ((1,5), None);      ((2,5), None);      ((3,5), None);      ((4,5), Some Blue); ((5,5), None);     ((6,5), None);  ((7,5), Some Red);

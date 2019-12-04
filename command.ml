@@ -127,6 +127,10 @@ let starting_one_msg () =
   ANSITerminal.(print_string [cyan] "\nType 'help' for help at any time");
   print_endline " "
 
+let rec string_of_moves_list = function
+  | h :: tl -> (string_of_int h) ^ " " ^ string_of_moves_list tl
+  | [] -> ""
+
 let rec difficulty_msg st d () =
   ANSITerminal.(print_string [yellow; Bold] "  CHOOSE DIFFICULTY  ");
   print_endline "";
@@ -151,6 +155,7 @@ and play_again () st one_two =
     | AgainYes, i ->
       if i = 1 then cpu_play st true 0 () 1 
       else if i = 3 then cpu_play st true 0 () 3 
+      else if i = 4 then cpu_play st true 0 () 4
       else two_play st true 0 () 
     | AgainNo, i -> exit 0
     | Quit, i -> exit 0
@@ -246,7 +251,8 @@ and cpu_play st d last () i =
           (if turn = State.Blue then "Computer" else "You") in
         print_string ("\nLast move: " ^ (State.color_to_string last_clr) ^ 
                       " (" ^ last_person_string ^ ") in column " ^ 
-                      string_of_int last)
+                      string_of_int last);
+        print_string ("\nMoves: " ^ (string_of_moves_list (State.moves st)))
       end;
       print_string 
         ("\n" ^ State.color_to_string turn ^ "'s turn (" ^ person_string ^")");
@@ -254,7 +260,7 @@ and cpu_play st d last () i =
     match turn with 
     | State.Red -> 
       print_endline "";
-      Unix.sleepf 1.0;
+      (* Unix.sleepf 1.0;*)
       (*print_int (State.sim_game st 1 4);*)
       let move_col = op st in
       cpu_play (State.move st move_col) true (move_col) () i;
