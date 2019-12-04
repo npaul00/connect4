@@ -95,3 +95,9 @@ val update : int -> int -> color -> board -> board
 
 (** [new_color wins] is the new starting color of a new game*)
 val new_color : num_wins -> color
+
+val red_diag_win : board
+
+val blue_horiz_win : board
+
+val full_board_tie : board
