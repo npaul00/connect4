@@ -111,3 +111,11 @@ val blue_horiz_win_updated : board
 val empty_updated : board
 
 val man_empty_board : board
+
+val blue_3 : board
+
+val state_blue_3 : t
+
+val blue_diag_pot : board
+
+val state_blue_pot : t

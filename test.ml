@@ -2,11 +2,6 @@ open OUnit2
 open State
 open Command
 
-let empty_board_test
-    (name: string)
-    (expected_output: State.board) : test =
-  name >:: (fun _ -> assert_equal expected_output (empty_board))
-
 let check_full_test
     (name: string)
     (input1: State.board)
@@ -54,6 +49,18 @@ let update_test
   name >:: (fun _ ->
       assert_equal expected_output (update input1 input2 input3 input4))
 
+let cpu_move_test
+    (name: string)
+    (input1: State.t)
+    (expected_output: int) : test = 
+  name >:: (fun _ -> assert_equal expected_output (cpu_move input1))
+
+let cpu_move_test_notequals
+    (name: string)
+    (input1: State.t)
+    (wrong_output: int) : test = 
+  name >:: (fun _ -> assert_equal false (cpu_move input1 = wrong_output))
+
 let check_win_tests =
   [
     check_win_test "Red diagonal win should return true for appropriate board and color Red." 
@@ -68,11 +75,6 @@ let check_win_tests =
       State.full_board_tie Red false;
     check_win_test "Tie board should return false for color Blue." 
       State.full_board_tie Blue false;
-  ]
-
-let board_tests = 
-  [
-    empty_board_test "Empty board test" State.man_empty_board;
   ]
 
 let check_full_tests =
@@ -115,10 +117,19 @@ let update_tests =
       "Blue horizontal win board with a blue piece inserted into (1,3) 
     should return appropriate board." 
       1 3 Blue State.blue_horiz_win State.blue_horiz_win_updated;
-    (* update_test 
-       "Empty board with a blue piece inserted into (3,1) should return
+    update_test 
+      "Empty board with a blue piece inserted into (3,1) should return
        appropriate board." 
-       3 1 Blue State.empty_board State.empty_updated;   *)
+      3 1 Blue State.man_empty_board State.empty_updated;
+  ]
+
+let move_tests = 
+  [
+    cpu_move_test "AI should play column 1 to block blue win in board blue_3" 
+      State.state_blue_3 1;
+    cpu_move_test_notequals 
+      "AI should not play column 7 as it would trigger blue win" 
+      State.state_blue_pot 7;
   ]
 
 let suite =
@@ -128,7 +139,7 @@ let suite =
     color_tests;
     drop_height_tests;
     update_tests;
-    (* board_tests  *)
+    move_tests
   ]
 
 let _ = run_test_tt_main suite
