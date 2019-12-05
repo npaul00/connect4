@@ -57,13 +57,13 @@ let half_board =
     if c > 7 && r < 6 then
       half_board_aux b (r+1) 1
     else if c < 8 && r < 7 then
-      if c mod 2 = 0 && r < 3 then 
+      if c mod 2 = 0 && r < 4 then 
         half_board_aux (((c,r), Some Blue) :: b) r (c+1)
-      else if r < 3 then 
+      else if r < 4 then 
         half_board_aux (((c,r), Some Red) :: b) r (c+1)
-      else if r == 3 && c mod 2 = 0 then
+      else if r < 6 && c mod 2 = 0 then
         half_board_aux (((c,r), Some Red) :: b) r (c+1)
-      else if r == 3  then
+      else if r < 6  then
         half_board_aux (((c,r), Some Blue) :: b) r (c+1)
       else 
         half_board_aux (((c,r), None) :: b) r (c+1)
@@ -71,15 +71,23 @@ let half_board =
       b
   in half_board_aux empty 1 1
 
+let man_test : board =        [((1,6), Some Red); ((2,6), Some Blue); ((3,6), Some Red); ((4,6), Some Blue); ((5,6), None); ((6,6), None); ((7,6), None);
+                               ((1,5), Some Blue); ((2,5), Some Blue); ((3,5), Some Blue); ((4,5), Some Red); ((5,5), Some Red); ((6,5), Some Red); ((7,5), None);
+                               ((1,4), Some Red); ((2,4), Some Red); ((3,4), Some Red); ((4,4), Some Blue); ((5,4), Some Blue); ((6,4), Some Red); ((7,4), None);
+                               ((1,3), Some Blue); ((2,3), Some Blue); ((3,3), Some Blue); ((4,3), Some Red); ((5,3), Some Red); ((6,3), Some Blue); ((7,3), Some Red);
+                               ((1,2), Some Red); ((2,2), Some Red); ((3,2), Some Red); ((4,2), Some Blue); ((5,2), Some Blue); ((6,2), Some Red); ((7,2), Some Blue);
+                               ((1,1), Some Blue); ((2,1), Some Blue); ((3,1), Some Blue); ((4,1), Some Red); ((5,1), Some Red); ((6,1), Some Red); ((7,1), Some Blue)]
+
+
 let half_board_moves = 
   [1; 2; 3; 4; 5; 6; 7; 2; 3; 4; 5; 6; 7; 7; 1; 1; 2; 3; 4; 5; 6]
 
 (* set testing to true to start with a half board, false for an empty board *)
-let testing = false
+let testing = true
 
 let init_state = 
   if testing then
-    {board = half_board; turn = Blue; wins = (0, 0, 0); 
+    {board = man_test; turn = Blue; wins = (0, 0, 0); 
      moves = half_board_moves}
   else 
     {board = empty_board; turn = Blue; wins = (0, 0, 0); moves = []}
@@ -553,7 +561,7 @@ let get vis k = List.assoc k vis
 
 let contain vis k = List.mem_assoc k vis 
 
-(*
+
 let rec get_score2 st alpha beta vis : (int * int) = 
   if check_full st.board then (1, 0) else
     match moves_that_win st with
@@ -584,7 +592,7 @@ and calc_scores2 st a bm vis =
       else calc_scores2_aux st (next_col c) alpha beta (put vis new_st.board score) col
     else calc_scores2_aux st (next_col c) alpha beta vis col
   in calc_scores2_aux st 4 a bm vis 4
-*)
+
 
 let rec solve st weak =
   let min = if weak then -1 else -(42 - (count_moves st.board))/2 in
@@ -596,8 +604,8 @@ let rec solve st weak =
         else if med >= 0 && max/2 > med then max/2 
         else med in
       let (col, r) = get_score3 st med' (med'+1) [] c in
-      if r <= med' then solve_aux min' r col else
-        solve_aux r max' col
+      if r <= med' then solve_aux min' r c else
+        solve_aux r max' c
   in solve_aux min max 4
 
 and get_score3 st alpha beta vis col = 
@@ -609,6 +617,11 @@ and get_score3 st alpha beta vis col =
       let bm = if beta > max then max else beta in
       if alpha >= bm then (col, bm) else
         calc_scores3 st alpha bm vis
+and check_safe st c =
+  let rec check_safe_aux c = function
+    | [] -> false
+    | (h, _)::t -> h = c || check_safe_aux c t
+  in check_safe_aux c (safe_moves st (possible_moves st)) 
 
 and calc_scores3 st a bm vis =
   let rec calc_scores3_aux st c alpha beta vis col = 
@@ -789,7 +802,6 @@ let cpu_move_hard st =
     | [] -> start_solve st
 
 (** MANUALLY-TYPED BOARDS AND STATES FOR TESTING *)
-
 let red_diag_win : board = [((1,6), None);      ((2,6), None);      ((3,6), None);      ((4,6), None);      ((5,6), None);     ((6,6), None); ((7,6), Some Red);
                             ((1,5), None);      ((2,5), None);      ((3,5), None);      ((4,5), Some Blue); ((5,5), None);     ((6,5), None);  ((7,5), Some Red);
                             ((1,4), None);      ((2,4), None);      ((3,4), Some Red);  ((4,4), Some Red);  ((5,4), None);     ((6,4), None);  ((7,4), Some Red);
