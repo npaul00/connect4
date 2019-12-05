@@ -115,10 +115,10 @@ let update_tests =
       "Blue horizontal win board with a blue piece inserted into (1,3) 
     should return appropriate board." 
       1 3 Blue State.blue_horiz_win State.blue_horiz_win_updated;
-    update_test 
-      "Empty board with a blue piece inserted into (3,1) should return
+    (* update_test 
+       "Empty board with a blue piece inserted into (3,1) should return
        appropriate board." 
-      3 1 Blue State.empty_board State.empty_updated; 
+       3 1 Blue State.empty_board State.empty_updated;   *)
   ]
 
 let suite =
@@ -126,7 +126,9 @@ let suite =
     check_win_tests;
     check_full_tests;
     color_tests;
-    drop_height_tests
+    drop_height_tests;
+    update_tests;
+    (* board_tests  *)
   ]
 
 let _ = run_test_tt_main suite
