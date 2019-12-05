@@ -57,13 +57,13 @@ let half_board =
     if c > 7 && r < 6 then
       half_board_aux b (r+1) 1
     else if c < 8 && r < 7 then
-      if c mod 2 = 0 && r < 4 then 
+      if c mod 2 = 0 && r < 3 then 
         half_board_aux (((c,r), Some Blue) :: b) r (c+1)
-      else if r < 4 then 
+      else if r < 3 then 
         half_board_aux (((c,r), Some Red) :: b) r (c+1)
-      else if r < 6 && c mod 2 = 0 then
+      else if r < 4 && c mod 2 = 0 then
         half_board_aux (((c,r), Some Red) :: b) r (c+1)
-      else if r < 6  then
+      else if r < 4  then
         half_board_aux (((c,r), Some Blue) :: b) r (c+1)
       else 
         half_board_aux (((c,r), None) :: b) r (c+1)
@@ -71,12 +71,12 @@ let half_board =
       b
   in half_board_aux empty 1 1
 
-let man_test : board =        [((1,6), Some Red); ((2,6), Some Blue); ((3,6), Some Red); ((4,6), Some Blue); ((5,6), None); ((6,6), None); ((7,6), None);
-                               ((1,5), Some Blue); ((2,5), Some Blue); ((3,5), Some Blue); ((4,5), Some Red); ((5,5), Some Red); ((6,5), Some Red); ((7,5), None);
-                               ((1,4), Some Red); ((2,4), Some Red); ((3,4), Some Red); ((4,4), Some Blue); ((5,4), Some Blue); ((6,4), Some Red); ((7,4), None);
-                               ((1,3), Some Blue); ((2,3), Some Blue); ((3,3), Some Blue); ((4,3), Some Red); ((5,3), Some Red); ((6,3), Some Blue); ((7,3), Some Red);
-                               ((1,2), Some Red); ((2,2), Some Red); ((3,2), Some Red); ((4,2), Some Blue); ((5,2), Some Blue); ((6,2), Some Red); ((7,2), Some Blue);
-                               ((1,1), Some Blue); ((2,1), Some Blue); ((3,1), Some Blue); ((4,1), Some Red); ((5,1), Some Red); ((6,1), Some Red); ((7,1), Some Blue)]
+let man_test : board =        [((1,6), None); ((2,6), None); ((3,6), Some Blue); ((4,6), Some Blue); ((5,6), None); ((6,6), None); ((7,6), None);
+                               ((1,5), None); ((2,5), None); ((3,5), Some Red); ((4,5), Some Red); ((5,5), None); ((6,5), None); ((7,5), None);
+                               ((1,4), None); ((2,4), None); ((3,4), Some Red); ((4,4), Some Blue); ((5,4), None); ((6,4), Some Red); ((7,4), None);
+                               ((1,3), None); ((2,3), None); ((3,3), Some Red); ((4,3), Some Red); ((5,3), Some Blue); ((6,3), Some Blue); ((7,3), None);
+                               ((1,2), None); ((2,2), None); ((3,2), Some Blue); ((4,2), Some Blue); ((5,2), Some Red); ((6,2), Some Red); ((7,2), None);
+                               ((1,1), None); ((2,1), None); ((3,1), Some Red); ((4,1), Some Red); ((5,1), Some Blue); ((6,1), Some Blue); ((7,1), None)]
 
 
 let half_board_moves = 
@@ -594,9 +594,9 @@ and calc_scores2 st a bm vis =
   in calc_scores2_aux st 4 a bm vis 4
 
 
-let rec solve st weak =
-  let min = if weak then -1 else -(42 - (count_moves st.board))/2 in
-  let max = if weak then 1 else (43 - (count_moves st.board))/2 in
+let rec solve st =
+  let min = -1 in
+  let max = 1 in
   let rec solve_aux min' max' c = 
     if min' >= max' then (c, min') else
       let med = min' + (max' - min')/2 in
@@ -642,7 +642,7 @@ and check_safe st c =
 and calc_scores3 st a bm vis =
   let rec calc_scores3_aux st c alpha beta vis col = 
     if c > 7 then (col, alpha) else
-    if playable st.board c then
+    if playable st.board c && check_safe st c then
       let new_st = move st c in
       let score = if contain vis new_st.board then get vis new_st.board else
           let neg = begin
@@ -807,7 +807,7 @@ let start_solve st =
   | 1 -> one_played st
   | 2 -> two_played st
   | 3 -> three_played st
-  | _ -> let (c, _) = solve_ st false in c
+  | _ -> let (c, r) = solve st in c
 
 let cpu_move_hard st =
   match moves_that_win st with  
