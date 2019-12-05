@@ -14,6 +14,9 @@ type command =
   | Medium
   | Hard
   | Back
+  | Animation
+  | Settings
+  | Night
 
 exception Invalid
 
@@ -55,6 +58,9 @@ let parse str =
   | "medium" :: [] -> Medium
   | "hard" :: [] -> Hard
   | "back" :: [] -> Back
+  | "animation" :: [] -> Animation
+  | "settings" :: [] -> Settings
+  | "nightmode" :: [] | "night" :: [] | "night" :: "mode" :: [] -> Night 
   | _ -> raise Invalid
 
 let parse_menu str =
@@ -130,14 +136,14 @@ let instructions_message () =
 
 let starting_one_msg () = 
   ANSITerminal.(print_string [red] "Starting One Player Mode");
-  ANSITerminal.(print_string [cyan] "\nType 'help' for help at any time");
+  ANSITerminal.(print_string [cyan] "\nType 'help' for help or 'settings' to adjust the settings at any time");
   print_endline " "
 
 let rec string_of_moves_list = function
   | h :: tl -> (string_of_int h) ^ " " ^ string_of_moves_list tl
   | [] -> ""
 
-let rec difficulty_msg st d () =
+let rec difficulty_msg st d () mov dis=
   ANSITerminal.(print_string [yellow; Bold] "  CHOOSE DIFFICULTY  ");
   print_endline "";
   ANSITerminal.(print_string [yellow; Background Blue] "\n        Easy");
@@ -147,50 +153,53 @@ let rec difficulty_msg st d () =
   ANSITerminal.(print_string [yellow; Background Blue] "\n        Hard");
   print_endline "";
   print_string "\n> ";
-  one_play st d ()
+  one_play st d () mov dis
 
 (** [play again () st one_two] asks the user if they want to play again and 
     starts a new game if the anser is yes. [one_two] is 1 for one player easy 
     mode, 2 for two player, 3 for medium one player, 4 for hard one player*)
-and play_again () st one_two =
+and play_again () st one_two mov dis=
   print_endline "Would you like to play again?";
   ANSITerminal.(print_string [yellow] "\n   yes | no | menu | stats"); 
   print_endline "";
   print_string "> ";
   try match parse (read_line ()), one_two with
     | AgainYes, i ->
-      if i = 1 then cpu_play st true 0 () 1 
-      else if i = 3 then cpu_play st true 0 () 3 
-      else if i = 4 then cpu_play st true 0 () 4
-      else two_play st true 0 () 
+      if i = 1 then cpu_play st true 0 () 1 mov dis
+      else if i = 3 then cpu_play st true 0 () 3 mov dis
+      else if i = 4 then cpu_play st true 0 () 4 mov dis
+      else two_play st true 0 () mov dis
     | AgainNo, i -> exit 0
     | Quit, i -> exit 0
-    | Stats, i -> stats_messages () st; print_endline ""; play_again () st i
-    | MainMenu, i -> print_endline ""; menu (); execute_menu_command () 
+    | Stats, i -> stats_messages () st; print_endline ""; play_again () st i mov dis
+    | MainMenu, i -> print_endline ""; execute_menu_command () mov dis
     | _, i -> print_endline 
                 "Invalid command! Hint: type 'yes', 'no', or 'menu' for the main menu."; 
-      play_again () st i
+      play_again () st i mov dis
   with
   | Invalid -> 
     print_endline 
       "Invalid command! Hint: type 'yes', 'no', or 'menu' for the main menu."; 
-    play_again () st one_two
+    play_again () st one_two mov dis
 
 (** [two_play st d last ()] is the start of a two player game in state [st] and 
     displays the board if [d] is true. [last] is the column of the most recent 
     piece played, and is 0 if no pieces have been played.*)
-and two_play st d last () = 
+and two_play st d last () mov dis = 
   let turn = State.turn st in
   let board = State.board st in
   let last_clr = State.other_color turn in
-  if d then State.display board 1;
+  let move = if mov == State.move then mov
+    else if dis == State.display then State.move_anim
+    else State.move_anim_n in
+  if d then dis board 1;
   if State.check_win board last_clr then 
     (ANSITerminal.(print_string [Blink] 
                      ("\n" ^ State.color_to_string last_clr ^ " wins!\n")); 
-     play_again () (State.update_wins st) 2)
+     play_again () (State.update_wins st) 2 mov dis)
   else if (State.check_full board) then
     (ANSITerminal.(print_string [Blink] ("\nIt's a tie!\n")); 
-     play_again () (State.update_wins st) 2)
+     play_again () (State.update_wins st) 2 mov dis)
 
   else begin
     if d then begin
@@ -204,34 +213,35 @@ and two_play st d last () =
     print_string "> ";
     try match parse (read_line()) with
       | Go col -> 
-        let new_state = State.move st col in
+        let new_state = move st col in
         if new_state = st then begin
           print_endline "That column is full, try another!";
-          two_play st false last ()
+          two_play st false last () mov dis
         end
         else begin
-          two_play new_state true col ()
+          two_play new_state true col () mov dis
         end
       | Help -> 
         help_message ();
-        two_play st true last ()
+        two_play st true last () mov dis
       | Stats -> stats_messages () st; 
-        two_play st true last ()
-      | MainMenu -> print_endline ""; menu (); execute_menu_command () 
+        two_play st true last () mov dis
+      | MainMenu -> execute_menu_command () mov dis
       | Easy | Medium | Hard -> 
         print_endline "Invalid move! Hint: type 'go' and a column number"; 
-        two_play st d last ()
+        two_play st d last () mov dis
+      | Settings -> settings_menu () mov dis (two_play st true last ())
       | _ -> exit 0
     with 
     | Invalid -> 
       print_endline "Invalid move! Hint: type 'go' and a column number";
-      two_play st false last ()
+      two_play st false last () mov dis
   end
 
 (** [cpu_play st d last () i] is one player mode at difficulty [i] and prints if 
     [d] is true. [last] is the column of the most recent piece played, and is 0 
     if no pieces have been played.*)
-and cpu_play st d last () i = 
+and cpu_play st d last () i mov dis= 
   let op = if i = 1 then (State.cpu_move_easy)
     else if i = 3 then (State.cpu_move)
     else if i = 4 then (State.cpu_move_hard)
@@ -239,17 +249,20 @@ and cpu_play st d last () i =
   let turn = State.turn st in
   let board = State.board st in
   let last_clr = State.other_color turn in
-  if d then State.display board 1;
+  let move = if mov == State.move then mov
+    else if dis == State.display then State.move_anim
+    else State.move_anim_n in
+  if d then dis board 1;
   let person_string = (if turn = State.Red then "Computer" else "You") in
   if State.check_win board last_clr then 
     if last_clr = State.Red then 
       (ANSITerminal.(print_string [Blink] ("\nComputer wins!\n")); 
-       play_again () (State.update_wins st) i)
+       play_again () (State.update_wins st) i mov dis)
     else (ANSITerminal.(print_string [Blink] ("\nYou win!\n")); 
-          play_again () (State.update_wins st) i)
+          play_again () (State.update_wins st) i mov dis)
   else if (State.check_full board) then
     (ANSITerminal.(print_string [Blink] ("\nIt's a tie!\n")); 
-     play_again () (State.update_wins st) i)
+     play_again () (State.update_wins st) i mov dis)
   else begin
     if d then begin
       if last <> 0 then begin
@@ -269,84 +282,100 @@ and cpu_play st d last () i =
       (* Unix.sleepf 1.0;*)
       (*print_int (State.sim_game st 1 4);*)
       let move_col = op st in
-      cpu_play (State.move st move_col) true (move_col) () i;
+      cpu_play (move st move_col) true (move_col) () i mov dis;
     | State.Blue -> 
       print_string "\n> ";
       try match parse (read_line()) with
         | Go col -> 
-          let new_state = State.move st col in
+          let new_state =  move st col in
           if new_state = st then begin
             print_string "That column is full, try another!";
-            cpu_play st false last () i
+            cpu_play st false last () i mov dis
           end
-          else cpu_play new_state true col () i
+          else cpu_play new_state true col () i mov dis
         | Help -> 
           help_message ();
-          cpu_play st true last () i
+          cpu_play st true last () i mov dis
         | Stats -> stats_messages () st;
-          cpu_play st true last () i
-        | MainMenu -> print_endline ""; menu (); execute_menu_command () 
+          cpu_play st true last () i mov dis
+        | MainMenu -> execute_menu_command () mov dis
         | Easy | Medium | Hard -> 
           print_string "Invalid move! Hint: type 'go' and a column number"; 
-          cpu_play st d last () i
+          cpu_play st d last () i mov dis
+        | Settings -> settings_menu () mov dis (cpu_play st true last () i)
         | _ -> exit 0
       with 
       | Invalid -> 
         print_string "Invalid move! Hint: type 'go' and a column number";
-        cpu_play st false last () i
+        cpu_play st false last () i mov dis
   end
 
 (** [one_play st d ()] is the start of one player mode and asks the user for a 
     difficulty*)
-and one_play st d () = 
+and one_play st d () mov dis = 
   try match parse (read_line ()) with
     | Easy -> 
       starting_one_msg ();
-      cpu_play st d 0 () 1
+      cpu_play st d 0 () 1 mov dis
     | Medium -> 
       starting_one_msg ();
-      cpu_play st d 0 () 3
+      cpu_play st d 0 () 3 mov dis
     | Hard -> 
       starting_one_msg ();
-      cpu_play st d 0 () 4
+      cpu_play st d 0 () 4 mov dis
     | Quit -> exit 0
     | _ -> print_endline 
              "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
       print_string "> ";
-      one_play st d ()
+      one_play st d () mov dis
   with
   | Invalid -> print_endline 
                  "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
     print_string "> ";
-    one_play st d ()
+    one_play st d () mov dis
 
-and settings_menu () =
-  ANSITerminal.(print_string [green] "Animation:");
+and settings_menu () mov dis next =
+  ANSITerminal.(print_string [cyan] 
+                  "\nEnter the setting to toggle or type 'back' to go back: \n");
   print_endline "";
-  ANSITerminal.(print_string [yellow] "on | off | back");
+  let next_mov = if (mov == State.move_anim) then 
+      begin ANSITerminal.(print_string [green] "Animation "); 
+        State.move end
+    else begin ANSITerminal.(print_string [red] "Animation "); 
+      State.move_anim end in
+  print_endline "";
+  let next_dis = if (dis == State.display) then 
+      begin ANSITerminal.(print_string [red] "Night mode "); 
+        State.display_n end
+    else begin ANSITerminal.(print_string [green] "Night mode ");
+      State.display end in
   print_endline "";
   try match parse (read_line()) with
-    | Back -> menu (); execute_menu_command ()
+    | Back -> next mov dis
+    | Animation -> settings_menu () next_mov dis next
+    | Night -> settings_menu () mov next_dis next
     | _ -> print_string "Invalid command! Hint: type 'back' to go back."
   with
   | Invalid -> print_string "Invalid command! Hint: type 'back' to go back."
 
-and execute_menu_command () =
+and execute_menu_command () mov dis =
+  print_endline "";
+  menu ();
   print_string "\n> ";
   try match parse_menu (read_line()) with
     | One -> 
       Random.self_init ();
-      difficulty_msg State.init_state true () 
+      difficulty_msg State.init_state true () mov dis
     (* one_play State.init_state true 0 ()  *)
     | Two -> 
       ANSITerminal.(print_string [red] "Starting Two Player Mode");
-      ANSITerminal.(print_string [cyan] "\nType 'help' for help at any time");
+      ANSITerminal.(print_string [cyan] "\nType 'help' for help or 'settings' to adjust the settings at any time");
       print_endline " ";
-      two_play State.init_state true 0 () 
+      two_play State.init_state true 0 () mov dis
     | Three -> 
       instructions_message ();
-      execute_menu_command ()
-    | Four -> settings_menu ()
+      execute_menu_command () mov dis
+    | Four -> settings_menu () mov dis (execute_menu_command ())
     | _ -> exit 0
   with
   | Invalid -> 
@@ -357,4 +386,4 @@ and execute_menu_command () =
     print_endline " for Two Player Mode, or ";
     ANSITerminal.(print_string [cyan] "3");
     print_string " to view the instructions";
-    execute_menu_command ()
+    execute_menu_command () mov dis

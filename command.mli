@@ -15,12 +15,12 @@ type command =
   | Medium
   | Hard
   | Back
+  | Animation
+  | Settings
+  | Night
 
 (**Raised when an invalid command is entered. *)
 exception Invalid
-
-(** [menu ()] is the display of options for the start menu. *)
-val menu: unit -> unit
 
 (**[parse str] parses the player's input into a relevant [command] for 
    during game play.
@@ -40,14 +40,15 @@ val parse_menu: string -> command
    game by executing the command resulting from [parse i]. The game board of
    state [st] is displayed if [d] is true. If the winning condition has been 
    met, a winning message is displayed. *)
-val one_play: State.t -> bool -> unit -> unit
+val one_play: 
+  State.t -> bool -> unit -> (State.t -> int -> State.t) -> (State.board -> int -> unit) -> unit
 
 (**[two_play st d last ()] executes the player's input [i] during a two player 
    game by executing the command resulting from [parse i]. The game board of
    state [st] is displayed if [d] is true. If the winning condition has been 
    met, a winning message is displayed. *)
-val two_play: State.t -> bool -> int -> unit -> unit
+val two_play: State.t -> bool -> int -> unit -> (State.t -> int -> State.t) -> (State.board -> int -> unit) -> unit
 
 (**[execute_menu_command ()] executes the player's input [i] at the start menu
    by executing the command resulting from [parse_menu i] *)
-val execute_menu_command: unit -> unit
+val execute_menu_command: unit -> (State.t -> int -> State.t) -> (State.board -> int -> unit) -> unit

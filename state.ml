@@ -75,7 +75,7 @@ let half_board_moves =
   [1; 2; 3; 4; 5; 6; 7; 2; 3; 4; 5; 6; 7; 7; 1; 1; 2; 3; 4; 5; 6]
 
 (* set testing to true to start with a half board, false for an empty board *)
-let testing = true
+let testing = false
 
 let init_state = 
   if testing then
@@ -85,12 +85,12 @@ let init_state =
     {board = empty_board; turn = Blue; wins = (0, 0, 0); moves = []}
 
 (** [bot] is the bottom row of a board *)
-let bot = "1 | 2 | 3 | 4 | 5 | 6 | 7 |"
+let bot = "1 | 2 | 3 | 4 | 5 | 6 | 7 | "
 
 (** [line] is the line in between rows of a board*)
 let line = 
   print_string "\n";
-  "-----------------------------"
+  "----------------------------- "
 
 (** [get_team s] is the team or empty of [s] *)
 let get_team s =
@@ -114,6 +114,27 @@ let rec display b r =
   if r = 1 then begin print_string "\n"; print_string "| "; end;
   if r < 7 then begin display b (r + 1); print_row b b r 1; end;
   if r = 1 then print_string bot
+
+let get_team_n s =
+  match s with
+  | Some Red -> ANSITerminal.(print_string [red ; Background White] "O")
+  | Some Blue -> ANSITerminal.(print_string [cyan ; Background White] "O")
+  | None ->  ANSITerminal.(print_string [cyan ; Background White] " ")
+(** [print_row b temp r c] is the unit that prints the piece at [r] and [c]*)
+let rec print_row_n b temp r c =
+  match temp with
+  | [] -> 
+    if c > 7 then begin print_string "\n"; ANSITerminal.(print_string [black ; Background White] line); print_string "\n"; 
+      if r < 7 then ANSITerminal.(print_string [black ; Background White] "| "); end 
+  | ((x,y), s) :: t -> 
+    if x = c && y = r then 
+      (get_team_n s; (ANSITerminal.(print_string [black ; Background White] " | ")); print_row_n b b r (c + 1);) 
+    else print_row_n b t r c
+
+let rec display_n b r = 
+  if r = 1 then begin print_string "\n"; ANSITerminal.(print_string [black ; Background White] "| "); end;
+  if r < 7 then begin display_n b (r + 1); print_row_n b b r 1; end;
+  if r = 1 then ANSITerminal.(print_string [black ; Background White] bot)
 
 (** [horiz (x, y)] is a list of the four coordinates to the right horizontally 
     starting from (x, y). *)
@@ -271,13 +292,13 @@ let rec update x y clr = function
 
 (** [anim t c low high] is an animation for a piece falling from [high] to [low]
     in column [c] at state [t] *)
-let rec anim t c low high =
+let rec anim t c low high dis =
   if low <= high then 
     begin 
-      display (update c high t.turn t.board) 1;
+      dis (update c high t.turn t.board) 1;
       Unix.sleepf 0.5;
       print_newline ();
-      anim t c low (high-1);  end
+      anim t c low (high-1) dis;  end
   else 
     ()
 
@@ -297,7 +318,18 @@ let move_anim t c =
   let height = drop_height c t.board in
   if height < 7 then
     begin 
-      anim t c height 7;
+      anim t c height 7 display;
+      {board = update c height t.turn t.board;
+       turn = other_color t.turn;
+       wins = t.wins;
+       moves = update_moves_list t.moves c} end
+  else t
+
+let move_anim_n t c= 
+  let height = drop_height c t.board in
+  if height < 7 then
+    begin 
+      anim t c height 7 display_n;
       {board = update c height t.turn t.board;
        turn = other_color t.turn;
        wins = t.wins;
