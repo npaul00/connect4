@@ -5,6 +5,7 @@ type command =
   | One
   | Two
   | Three
+  | Four
   | Help
   | AgainYes
   | AgainNo

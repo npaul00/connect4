@@ -4,6 +4,7 @@ type command =
   | One
   | Two
   | Three
+  | Four
   | Help
   | AgainYes
   | AgainNo
@@ -24,7 +25,9 @@ let menu () =
   ANSITerminal.(print_string [cyan] " (2) ");
   ANSITerminal.(print_endline "Two Player");
   ANSITerminal.(print_string [cyan] " (3) ");
-  ANSITerminal.(print_endline "Instructions")
+  ANSITerminal.(print_endline "Instructions");
+  ANSITerminal.(print_string [cyan] " (4) ");
+  ANSITerminal.(print_endline "Settings")
 
 (**[words lst] is a list of the words (i.e. consecutive sequences of non-space
    characters) in [lst]. *)
@@ -57,6 +60,7 @@ let parse_menu str =
   | "1" :: [] -> One
   | "2" :: [] -> Two
   | "3" :: [] -> Three
+  | "4" :: [] -> Four
   | "quit" :: [] -> Quit
   | _ -> raise Invalid
 
@@ -314,6 +318,12 @@ and one_play st d () =
     print_string "> ";
     one_play st d ()
 
+and settings_menu () =
+  ANSITerminal.(print_string [green] "Animation:");
+  print_endline "";
+  ANSITerminal.(print_string [yellow] "on | off");
+  print_endline "";
+
 and execute_menu_command () =
   print_string "\n> ";
   try match parse_menu (read_line()) with
@@ -329,6 +339,7 @@ and execute_menu_command () =
     | Three -> 
       instructions_message ();
       execute_menu_command ()
+    | Four -> settings_menu ()
     | _ -> exit 0
   with
   | Invalid -> 
