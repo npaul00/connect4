@@ -13,6 +13,7 @@ type command =
   | Easy
   | Medium
   | Hard
+  | Back
 
 exception Invalid
 
@@ -53,6 +54,7 @@ let parse str =
   | "easy" :: [] -> Easy
   | "medium" :: [] -> Medium
   | "hard" :: [] -> Hard
+  | "back" :: [] -> Back
   | _ -> raise Invalid
 
 let parse_menu str =
@@ -321,8 +323,13 @@ and one_play st d () =
 and settings_menu () =
   ANSITerminal.(print_string [green] "Animation:");
   print_endline "";
-  ANSITerminal.(print_string [yellow] "on | off");
+  ANSITerminal.(print_string [yellow] "on | off | back");
   print_endline "";
+  try match parse (read_line()) with
+    | Back -> menu (); execute_menu_command ()
+    | _ -> print_string "Invalid command! Hint: type 'back' to go back."
+  with
+  | Invalid -> print_string "Invalid command! Hint: type 'back' to go back."
 
 and execute_menu_command () =
   print_string "\n> ";

@@ -14,6 +14,7 @@ type command =
   | Easy
   | Medium
   | Hard
+  | Back
 
 (**Raised when an invalid command is entered. *)
 exception Invalid

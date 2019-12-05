@@ -71,6 +71,7 @@ let drop_height_tests =
     drop_height_test "Red diagonal win board's drop height at column 1 is 3." 1 State.red_diag_win 3;
     drop_height_test "Red diagonal win board's drop height at column 4 is 6." 4 State.red_diag_win 6;
     drop_height_test "Blue horizontal win board's drop height at column 3 is 5." 3 State.blue_horiz_win 5;
+    drop_height_test "Full board's drop height should be 7 at any column." 4 State.full_board_tie 7;
   ]
 
 let suite =
