@@ -48,7 +48,7 @@ val init_state : t
 val display : board -> int -> unit
 
 (** [display b i] displays the board [b] in night mode. *)
-val display_n : board -> int -> unit
+val display_d : board -> int -> unit
 
 (** [move t c] is the game state after the current player places a piece into
     column [c] in the current state [t]. *)
@@ -60,7 +60,7 @@ val move_anim : t -> int -> t
 
 (** [move t c] is the game state after the current player places a piece into
     column [c] in the current state [t] with a fall animation in night mode. *)
-val move_anim_n : t -> int -> t
+val move_anim_d : t -> int -> t
 
 (** [check_win b clr] checks if there are 4 pieces with color [clr] in a row. *)
 val check_win : board -> color -> bool

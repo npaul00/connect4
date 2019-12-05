@@ -115,25 +115,25 @@ let rec display b r =
   if r < 7 then begin display b (r + 1); print_row b b r 1; end;
   if r = 1 then print_string bot
 
-let get_team_n s =
+let get_team_d s =
   match s with
   | Some Red -> ANSITerminal.(print_string [red ; Background White] "O")
   | Some Blue -> ANSITerminal.(print_string [cyan ; Background White] "O")
   | None ->  ANSITerminal.(print_string [cyan ; Background White] " ")
 (** [print_row b temp r c] is the unit that prints the piece at [r] and [c]*)
-let rec print_row_n b temp r c =
+let rec print_row_d b temp r c =
   match temp with
   | [] -> 
     if c > 7 then begin print_string "\n"; ANSITerminal.(print_string [black ; Background White] line); print_string "\n"; 
       if r < 7 then ANSITerminal.(print_string [black ; Background White] "| "); end 
   | ((x,y), s) :: t -> 
     if x = c && y = r then 
-      (get_team_n s; (ANSITerminal.(print_string [black ; Background White] " | ")); print_row_n b b r (c + 1);) 
-    else print_row_n b t r c
+      (get_team_d s; (ANSITerminal.(print_string [black ; Background White] " | ")); print_row_d b b r (c + 1);) 
+    else print_row_d b t r c
 
-let rec display_n b r = 
+let rec display_d b r = 
   if r = 1 then begin print_string "\n"; ANSITerminal.(print_string [black ; Background White] "| "); end;
-  if r < 7 then begin display_n b (r + 1); print_row_n b b r 1; end;
+  if r < 7 then begin display_d b (r + 1); print_row_d b b r 1; end;
   if r = 1 then ANSITerminal.(print_string [black ; Background White] bot)
 
 (** [horiz (x, y)] is a list of the four coordinates to the right horizontally 
@@ -325,11 +325,11 @@ let move_anim t c =
        moves = update_moves_list t.moves c} end
   else t
 
-let move_anim_n t c= 
+let move_anim_d t c= 
   let height = drop_height c t.board in
   if height < 7 then
     begin 
-      anim t c height 7 display_n;
+      anim t c height 7 display_d;
       {board = update c height t.turn t.board;
        turn = other_color t.turn;
        wins = t.wins;

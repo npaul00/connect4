@@ -191,7 +191,7 @@ and two_play st d last () mov dis =
   let last_clr = State.other_color turn in
   let move = if mov == State.move then mov
     else if dis == State.display then State.move_anim
-    else State.move_anim_n in
+    else State.move_anim_d in
   if d then dis board 1;
   if State.check_win board last_clr then 
     (ANSITerminal.(print_string [Blink] 
@@ -251,7 +251,7 @@ and cpu_play st d last () i mov dis=
   let last_clr = State.other_color turn in
   let move = if mov == State.move then mov
     else if dis == State.display then State.move_anim
-    else State.move_anim_n in
+    else State.move_anim_d in
   if d then dis board 1;
   let person_string = (if turn = State.Red then "Computer" else "You") in
   if State.check_win board last_clr then 
@@ -345,9 +345,9 @@ and settings_menu () mov dis next =
       State.move_anim end in
   print_endline "";
   let next_dis = if (dis == State.display) then 
-      begin ANSITerminal.(print_string [red] "Night mode "); 
-        State.display_n end
-    else begin ANSITerminal.(print_string [green] "Night mode ");
+      begin ANSITerminal.(print_string [green] "Night mode "); 
+        State.display_d end
+    else begin ANSITerminal.(print_string [red] "Night mode ");
       State.display end in
   print_endline "";
   try match parse (read_line()) with
