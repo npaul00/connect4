@@ -604,8 +604,8 @@ let rec solve st weak =
         else if med >= 0 && max/2 > med then max/2 
         else med in
       let (col, r) = get_score3 st med' (med'+1) [] c in
-      if r <= med' then solve_aux min' r c else
-        solve_aux r max' c
+      if r <= med' then solve_aux min' r col else
+        solve_aux r max' col
   in solve_aux min max 4
 
 and get_score3 st alpha beta vis col = 
@@ -617,6 +617,22 @@ and get_score3 st alpha beta vis col =
       let bm = if beta > max then max else beta in
       if alpha >= bm then (col, bm) else
         calc_scores3 st alpha bm vis
+
+and solve_ st weak =
+  let min = if weak then -1 else -(42 - count_moves st.board)/2 in
+  let max = if weak then 1 else (43 - count_moves st.board)/2 in 
+  solve__aux st min max 4
+
+and solve__aux st min max c =
+  if min >= max then (c, min) else
+    let med = min + (max - min)/2 in
+    let med' = if (med <= 0 && min/2 < med) then (min/2)
+      else if (med >= 0 && max/2 > med) then max/2 
+      else med in
+    let (col, r) = (get_score3 st med' (med'+1) [] c) in
+    let max' = if (r <= med') then r else max in
+    let min' = if (r <= med') then min else r in solve__aux st min' max' col
+
 and check_safe st c =
   let rec check_safe_aux c = function
     | [] -> false
@@ -791,10 +807,10 @@ let start_solve st =
   | 1 -> one_played st
   | 2 -> two_played st
   | 3 -> three_played st
-  | _ -> let (c, _) = solve st false in c
+  | _ -> let (c, _) = solve_ st false in c
 
 let cpu_move_hard st =
-  match moves_that_win st with
+  match moves_that_win st with  
   | (x, y) :: tl -> x
   | [] -> 
     match moves_that_block st with 
