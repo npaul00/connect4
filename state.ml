@@ -756,13 +756,14 @@ let cpu_move_hard st =
     | (x, y) :: tl -> x
     | [] -> start_solve st
 
+(** MANUALLY-TYPED BOARDS FOR TESTING *)
+
 let red_diag_win : board = [((1,6), None);      ((2,6), None);      ((3,6), None);      ((4,6), None);      ((5,6), None);     ((6,6), None); ((7,6), Some Red);
                             ((1,5), None);      ((2,5), None);      ((3,5), None);      ((4,5), Some Blue); ((5,5), None);     ((6,5), None);  ((7,5), Some Red);
                             ((1,4), None);      ((2,4), None);      ((3,4), Some Red);  ((4,4), Some Red);  ((5,4), None);     ((6,4), None);  ((7,4), Some Red);
                             ((1,3), None);      ((2,3), None);      ((3,3), Some Red);  ((4,3), Some Red);  ((5,3), None);     ((6,3), None);  ((7,3), Some Red);
                             ((1,2), Some Blue); ((2,2), Some Blue); ((3,2), Some Blue); ((4,2), Some Red);  ((5,2), Some Red); ((6,2), Some Blue);  ((7,2), Some Red);
                             ((1,1), Some Red);  ((2,1), Some Red);  ((3,1), Some Blue); ((4,1), Some Blue); ((5,1), Some Blue); ((6,1), Some Red);  ((7,1), Some Red)]
-
 let blue_horiz_win : board = [((1,6), None);      ((2,6), None);      ((3,6), None);      ((4,6), None);      ((5,6), None);          ((6,6), None);      ((7,6), None);
                               ((1,5), None);      ((2,5), None);      ((3,5), None);      ((4,5), None);      ((5,5), None);          ((6,5), None);      ((7,5), None);
                               ((1,4), None);      ((2,4), None);      ((3,4), Some Blue);  ((4,4), Some Blue);  ((5,4), Some Blue);   ((6,4), Some Blue); ((7,4), None);
@@ -775,6 +776,24 @@ let full_board_tie : board = [((1,6), Some Red);      ((2,6), Some Red);      ((
                               ((1,3), Some Blue);      ((2,3), Some Blue);    ((3,3), Some Red);  ((4,3), Some Blue);     ((5,3), Some Blue);    ((6,3), Some Red);  ((7,3), Some Blue);
                               ((1,2), Some Red);      ((2,2), Some Red);      ((3,2), Some Blue); ((4,2), Some Red);      ((5,2), Some Red);     ((6,2), Some Red); ((7,2), Some Blue);
                               ((1,1), Some Blue);     ((2,1), Some Red);      ((3,1), Some Red); ((4,1), Some Blue);     ((5,1), Some Blue);     ((6,1), Some Red); ((7,1), Some Blue)]
+let blue_horiz_win_updated : board = [((1,6), None);      ((2,6), None);      ((3,6), None);      ((4,6), None);      ((5,6), None);          ((6,6), None);      ((7,6), None);
+                                      ((1,5), None);      ((2,5), None);      ((3,5), None);      ((4,5), None);      ((5,5), None);          ((6,5), None);      ((7,5), None);
+                                      ((1,4), None);      ((2,4), None);      ((3,4), Some Blue);  ((4,4), Some Blue);  ((5,4), Some Blue);   ((6,4), Some Blue); ((7,4), None);
+                                      ((1,3), Some Blue);      ((2,3), None);      ((3,3), Some Red);  ((4,3), Some Blue);  ((5,3), Some Red);     ((6,3), Some Red);  ((7,3), None);
+                                      ((1,2), Some Red); ((2,2), Some Blue); ((3,2), Some Red); ((4,2), Some Red);    ((5,2), Some Red);      ((6,2), Some Blue); ((7,2), Some Red);
+                                      ((1,1), Some Red);  ((2,1), Some Red);  ((3,1), Some Blue); ((4,1), Some Red); ((5,1), Some Blue);      ((6,1), Some Blue); ((7,1), Some Blue)]
+let man_empty_board : board = [((1,6), None); ((2,6), None); ((3,6), None); ((4,6), None); ((5,6), None); ((6,6), None); ((7,6), None);
+                               ((1,5), None); ((2,5), None); ((3,5), None); ((4,5), None); ((5,5), None); ((6,5), None); ((7,5), None);
+                               ((1,4), None); ((2,4), None); ((3,4), None); ((4,4), None); ((5,4), None); ((6,4), None); ((7,4), None);
+                               ((1,3), None); ((2,3), None); ((3,3), None); ((4,3), None); ((5,3), None); ((6,3), None); ((7,3), None);
+                               ((1,2), None); ((2,2), None); ((3,2), None); ((4,2), None); ((5,2), None); ((6,2), None); ((7,2), None);
+                               ((1,1), None); ((2,1), None); ((3,1), None); ((4,1), None); ((5,1), None); ((6,1), None); ((7,1), None)]
+let empty_updated : board = [((1,6), None); ((2,6), None); ((3,6), None);      ((4,6), None); ((5,6), None); ((6,6), None); ((7,6), None);
+                             ((1,5), None); ((2,5), None); ((3,5), None);      ((4,5), None); ((5,5), None); ((6,5), None); ((7,5), None);
+                             ((1,4), None); ((2,4), None); ((3,4), None);      ((4,4), None); ((5,4), None); ((6,4), None); ((7,4), None);
+                             ((1,3), None); ((2,3), None); ((3,3), None);      ((4,3), None); ((5,3), None); ((6,3), None); ((7,3), None);
+                             ((1,2), None); ((2,2), None); ((3,2), None);      ((4,2), None); ((5,2), None); ((6,2), None); ((7,2), None);
+                             ((1,1), None); ((2,1), None); ((3,1), Some Blue); ((4,1), None); ((5,1), None); ((6,1), None); ((7,1), None)]
 
 (*
 (** [search_win st c clr] is < 50 if there is a winning move*)
