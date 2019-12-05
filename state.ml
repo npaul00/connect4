@@ -504,6 +504,9 @@ let next_col = function
   | 1 -> 7
   | _ -> 8
 
+let move_score st c = 
+  c |> move st |> state_w_other_color |> moves_that_win |> List.length
+
 (*
 let rec get_score st = 
   if check_full st.board then 0 else
@@ -931,5 +934,7 @@ and next_move min max st clr i =
   else
     min
 *)
+
+
 
 
