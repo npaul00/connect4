@@ -837,20 +837,33 @@ let blue_diag_pot : board = [((1,6), None); ((2,6), None);      ((3,6), None);  
                              ((1,4), None); ((2,4), None);      ((3,4), None);     ((4,4), None);      ((5,4), None);      ((6,4), None);      ((7,4), None);
                              ((1,3), None); ((2,3), None);      ((3,3), None);     ((4,3), None);      ((5,3), None);      ((6,3), Some Blue); ((7,3), None);
                              ((1,2), None); ((2,2), None);      ((3,2), None);     ((4,2), Some Blue); ((5,2), Some Blue); ((6,2), Some Red);  ((7,2), Some Red);
-                             ((1,1), None); ((2,1), Some Blue); ((3,1), Some Red); ((4,1), Some Blue); ((5,1), Some Red);  ((6,1), Some Red);  ((7,1), Some Blue)]
+                             ((1,1), None); ((2,1), Some Blue); ((3,1), Some Red);  ((4,1), Some Blue); ((5,1), Some Red);   ((6,1), Some Red);  ((7,1), Some Blue)]
+let red_3 : board = [((1,6), None);     ((2,6), None);      ((3,6), None);      ((4,6), None);      ((5,6), None);       ((6,6), None);       ((7,6), None);
+                     ((1,5), None);     ((2,5), None);      ((3,5), None);      ((4,5), None);      ((5,5), None);       ((6,5), None);       ((7,5), None);
+                     ((1,4), None);     ((2,4), None);      ((3,4), None);      ((4,4), None);      ((5,4), None);       ((6,4), None);       ((7,4), None);
+                     ((1,3), None);     ((2,3), None);      ((3,3), None);      ((4,3), None);      ((5,3), None);       ((6,3), Some Red);   ((7,3), Some Blue);
+                     ((1,2), None);     ((2,2), None);      ((3,2), None);      ((4,2), Some Red);  ((5,2), Some Red);   ((6,2), Some Blue);  ((7,2), Some Blue);
+                     ((1,1), Some Red); ((2,1), Some Red);  ((3,1), Some Blue); ((4,1), Some Red);  ((5,1), Some Blue);  ((6,1), Some Blue);  ((7,1), Some Red)]
 
 let state_blue_3 = {
   board = blue_3;
   turn = Red;
   wins = (0,0,0);
-  moves = [2;1;2;1;3;1];
+  moves = [2;1;2;1;3;1;7];
 }
 
 let state_blue_pot = {
   board = blue_diag_pot;
   turn = Red;
   wins = (0,0,0);
-  moves = [2;3;4;5;4;6;5;6;7;7]
+  moves = [2;3;4;5;4;6;5;6;7;7;6;]
+}
+
+let state_red_3 = {
+  board = red_3;
+  turn = Red;
+  wins = (0,0,0);
+  moves = [2;3;4;5;4;6;5;6;7;7;6;1;7]
 }
 
 (*

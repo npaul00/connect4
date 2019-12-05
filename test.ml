@@ -61,6 +61,13 @@ let cpu_move_test_notequals
     (wrong_output: int) : test = 
   name >:: (fun _ -> assert_equal false (cpu_move input1 = wrong_output))
 
+let cpu_move_easy_test
+    (name: string)
+    (input1: State.t)
+    (expected_output: int) : test = 
+  name >:: (fun _ -> assert_equal expected_output (cpu_move_easy input1))
+
+
 let check_win_tests =
   [
     check_win_test "Red diagonal win should return true for appropriate board and color Red." 
@@ -125,11 +132,21 @@ let update_tests =
 
 let move_tests = 
   [
-    cpu_move_test "AI should play column 1 to block blue win in board blue_3" 
+    cpu_move_test 
+      "Medium AI should play column 1 to block blue win in board blue_3" 
       State.state_blue_3 1;
+    cpu_move_test 
+      "Medium AI should play column 7 to win diagonally in board red_3" 
+      State.state_red_3 7;
     cpu_move_test_notequals 
-      "AI should not play column 7 as it would trigger blue win" 
+      "Medium AI should not play column 7 as it would trigger blue win" 
       State.state_blue_pot 7;
+    cpu_move_easy_test 
+      "Easy AI should play column 1 to block blue win in board blue_3" 
+      State.state_blue_3 1;
+    cpu_move_easy_test 
+      "Easy AI should play column 7 to win diagonally in board red_3" 
+      State.state_red_3 7;
   ]
 
 let suite =
