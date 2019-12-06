@@ -578,7 +578,8 @@ and check_safe st c =
   in check_safe_aux c (safe_moves st (possible_moves st)) 
 
 and calc_scores3 st a bm vis i =
-  let rec calc_scores3_aux st c alpha beta vis col i = 
+  let rec calc_scores3_aux st c alpha beta vis col i =
+
     if i < 1 then (1, 0) else
     if c > 7 then (col, alpha) else
     if playable st.board c && check_safe st c then
@@ -749,10 +750,11 @@ let start_solve st =
   | _ -> let (c, r) = solve st in 
     if check_safe st c then c else 
     if playable st.board c then c else
-      let moves = safe_moves st (possible_moves st) in
+      let p_moves = possible_moves st in
+      let moves = safe_moves st p_moves in
       match moves with
-      | [] -> let (c', _) = pick_rand_from (possible_moves st) in c'
-      | h::t -> let (c', _) = pick_rand_from moves in c'
+      | [] -> let (c', _) = pick_rand_from p_moves in c'
+      | _ -> let (c'', _) = pick_rand_from moves in c''
 
 let cpu_move_hard st =
   match moves_that_win st with  
@@ -824,6 +826,19 @@ let blue_diag_pot_2 : board = [((1,6), None);      ((2,6), None); ((3,6), None);
                                ((1,2), None);      ((2,2), None); ((3,2), Some Red);  ((4,2), Some Blue); ((5,2), Some Red); ((6,2), None); ((7,2), None);
                                ((1,1), Some Blue); ((2,1), None); ((3,1), Some Blue); ((4,1), Some Red);  ((5,1), Some Red); ((6,1), None); ((7,1), None)]
 
+let test_safe : board = [((1,6), None);     ((2,6), Some Blue);      ((3,6), Some Blue);      ((4,6), Some Red);      ((5,6), None);       ((6,6), Some Red);       ((7,6), None);
+                         ((1,5), Some Blue);     ((2,5), Some Red);      ((3,5), Some Red);      ((4,5), Some Blue);      ((5,5), None);       ((6,5), Some Blue);       ((7,5), None);
+                         ((1,4), Some Red);     ((2,4), Some Blue);      ((3,4), Some Red);      ((4,4), Some Red);      ((5,4), None);       ((6,4), Some Red);       ((7,4), None);
+                         ((1,3), Some Blue);     ((2,3), Some Red);      ((3,3), Some Blue);      ((4,3), Some Blue);      ((5,3), None);       ((6,3), Some Blue);   ((7,3), None);
+                         ((1,2), Some Red);     ((2,2), Some Blue);      ((3,2), Some Red);      ((4,2), Some Red);  ((5,2), None);   ((6,2), Some Blue);  ((7,2), None);
+                         ((1,1), Some Blue); ((2,1), Some Red);  ((3,1), Some Red); ((4,1), Some Blue);  ((5,1), Some Blue);  ((6,1), Some Blue);  ((7,1), Some Red)]
+
+let ts_st = {
+  board = test_safe;
+  turn = Red;
+  wins = (0,0,0);
+  moves = [4; 4; 4; 4; 4; 4; 5; 3; 6; 7; 6; 3; 6; 6; 3; 3; 6; 3; 3; 2; 2; 2]
+}
 let state_blue_3 = {
   board = blue_3;
   turn = Red;
@@ -865,26 +880,3 @@ let state_red_3_blue_turn = {
   wins = (0,0,0);
   moves = [2;3;4;5;4;6;5;6;7;7;6;1;7]
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
