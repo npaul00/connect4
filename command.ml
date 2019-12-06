@@ -19,6 +19,7 @@ type command =
   | Night
 
 exception Invalid
+exception Cancel
 
 (** [menu ()] is the display of options for the start menu. *)
 let menu () =
@@ -70,6 +71,12 @@ let parse_menu str =
   | "3" :: [] -> Three
   | "4" :: [] -> Four
   | "quit" :: [] -> Quit
+  | _ -> raise Invalid
+
+let parse_are_you_sure str = 
+  match words (String.split_on_char ' ' (String.lowercase_ascii str)) with
+  | "yes" :: [] -> AgainYes
+  | "no" :: [] -> AgainNo
   | _ -> raise Invalid
 
 (** [greater wins t] prints who has the most wins in state [t]*)
@@ -130,7 +137,6 @@ let help_message () =
   print_endline ""
 
 let instructions_message () =
-  print_endline " ";
   ANSITerminal.(print_string [yellow; Underlined] "   Instructions   ");
   ANSITerminal.(print_string [yellow] "\n - To win, get four of your pieces in a row on the board. The sequence of four pieces can be horizontal, vertical, or diagonal.");
   ANSITerminal.(print_string [yellow] "\n - In one player mode, you play Connect Four with an A.I. Enter '1' to go to one player mode.");
@@ -146,7 +152,7 @@ let rec string_of_moves_list = function
   | h :: tl -> (string_of_int h) ^ " " ^ string_of_moves_list tl
   | [] -> ""
 
-let rec difficulty_msg st d () mov dis=
+let difficulty_msg () =
   ANSITerminal.(print_string [yellow; Bold] "  CHOOSE DIFFICULTY  ");
   print_endline "";
   ANSITerminal.(print_string [yellow; Background Blue] "\n        Easy");
@@ -155,13 +161,12 @@ let rec difficulty_msg st d () mov dis=
   print_endline "";
   ANSITerminal.(print_string [yellow; Background Blue] "\n        Hard");
   print_endline "";
-  print_string "\n> ";
-  one_play st d () mov dis
+  print_string "\n> "
 
 (** [play again () st one_two] asks the user if they want to play again and 
     starts a new game if the anser is yes. [one_two] is 1 for one player easy 
     mode, 2 for two player, 3 for medium one player, 4 for hard one player*)
-and play_again () st one_two mov dis=
+let rec play_again () st one_two mov dis=
   print_endline "Would you like to play again?";
   ANSITerminal.(print_string [yellow] "\n   yes | no | menu | stats"); 
   print_endline "";
@@ -172,19 +177,53 @@ and play_again () st one_two mov dis=
       else if i = 3 then cpu_play st true 0 () 3 mov dis
       else if i = 4 then cpu_play st true 0 () 4 mov dis
       else two_play st true 0 () mov dis
-    | AgainNo, i -> exit 0
-    | Quit, i -> exit 0
+    | AgainNo, i -> begin
+        ANSITerminal.(print_string [magenta] "Thanks for playing!");
+        print_endline "";
+        exit 0
+      end
+    | Quit, i -> begin
+        ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
+        print_endline "";
+        try are_you_sure () mov dis 0
+        with | Cancel -> play_again () st one_two mov dis
+      end
     | Stats, i -> stats_messages () st; print_endline ""; play_again () st i mov dis
-    | MainMenu, i -> print_endline ""; execute_menu_command () mov dis
+    | MainMenu, i -> begin
+        ANSITerminal.(print_string [red] 
+                        "Are you sure you want to exit to the main menu? All stats will be reset.");
+        print_endline "";
+        try are_you_sure () mov dis 1
+        with | Cancel -> play_again () st i mov dis
+      end
     | _, i -> print_endline 
                 "Invalid command! Hint: type 'yes', 'no', or 'menu' for the main menu."; 
       play_again () st i mov dis
   with
   | Invalid -> 
     print_endline 
-      "Invalid command! Hint: type 'yes', 'no', or 'menu' for the main menu."; 
+      "Invalid command! Hint: type 'yes', 'no', 'menu', or 'stats'."; 
     play_again () st one_two mov dis
 
+(*qm = 0 for quit, 1 for menu*)
+and are_you_sure () mov dis qm =
+  print_string "> ";
+  try match parse_are_you_sure (read_line ()) with
+    | AgainYes ->
+      if qm = 1 then execute_menu_command () mov dis
+      else begin
+        ANSITerminal.(print_string [magenta] "Thanks for playing!"); 
+        print_endline ""; 
+        exit 0
+      end
+    | AgainNo -> raise Cancel
+    | _ -> begin print_endline "Invalid command! Hint: type 'yes' or 'no'";
+        are_you_sure () mov dis qm
+      end
+  with
+  | Invalid -> begin print_endline "Invalid command! Hint: type 'yes' or 'no'";
+      are_you_sure () mov dis qm
+    end
 (** [two_play st d last ()] is the start of a two player game in state [st] and 
     displays the board if [d] is true. [last] is the column of the most recent 
     piece played, and is 0 if no pieces have been played.*)
@@ -238,12 +277,23 @@ and two_play st d last () mov dis =
         two_play st true last () mov dis
       | Stats -> stats_messages () st; 
         two_play st true last () mov dis
-      | MainMenu -> execute_menu_command () mov dis
+      | MainMenu -> begin 
+          ANSITerminal.(print_string [red] 
+                          "Are you sure you want to exit to the main menu? All stats will be reset.");
+          print_endline "";
+          try are_you_sure () mov dis 1
+          with | Cancel -> two_play st true last () mov dis
+        end
       | Easy | Medium | Hard -> 
         print_endline "Invalid move! Hint: type 'go' and a column number"; 
-        two_play st d last () mov dis
+        two_play st false last () mov dis
       | Settings -> settings_menu () mov dis (two_play st true last ())
-      | _ -> exit 0
+      | _ -> begin
+          ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
+          print_endline "";
+          try are_you_sure () mov dis 0
+          with | Cancel -> two_play st true last () mov dis
+        end
     with 
     | Invalid -> 
       print_endline "Invalid move! Hint: type 'go' and a column number";
@@ -304,7 +354,6 @@ and cpu_play st d last () i mov dis =
     match turn with 
     | State.Red -> 
       print_endline "";
-      (* Unix.sleepf 1.0;*)
       (*print_int (State.sim_game st 1 4);*)
       let (move_col, vis) = op st in
       cpu_play (State.update_vis (move st move_col) vis) true (move_col) () i mov dis;
@@ -323,12 +372,23 @@ and cpu_play st d last () i mov dis =
           cpu_play st true last () i mov dis
         | Stats -> stats_messages () st;
           cpu_play st true last () i mov dis
-        | MainMenu -> execute_menu_command () mov dis
+        | MainMenu -> begin 
+            ANSITerminal.(print_string [red] 
+                            "Are you sure you want to exit to the main menu? All stats will be reset.");
+            print_endline "";
+            try are_you_sure () mov dis 1
+            with | Cancel -> cpu_play st true last () i mov dis
+          end
         | Easy | Medium | Hard -> 
           print_string "Invalid move! Hint: type 'go' and a column number"; 
-          cpu_play st d last () i mov dis
+          cpu_play st false last () i mov dis
         | Settings -> settings_menu () mov dis (cpu_play st true last () i)
-        | _ -> exit 0
+        | _ -> begin
+            ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
+            print_endline "";
+            try are_you_sure () mov dis 0 
+            with | Cancel -> cpu_play st true last () i mov dis
+          end
       with 
       | Invalid -> 
         print_string "Invalid move! Hint: type 'go' and a column number";
@@ -338,6 +398,7 @@ and cpu_play st d last () i mov dis =
 (** [one_play st d ()] is the start of one player mode and asks the user for a 
     difficulty*)
 and one_play st d () mov dis = 
+  difficulty_msg ();
   try match parse (read_line ()) with
     | Easy -> 
       starting_one_msg ();
@@ -348,40 +409,53 @@ and one_play st d () mov dis =
     | Hard -> 
       starting_one_msg ();
       cpu_play st d 0 () 4 mov dis
-    | Quit -> exit 0
-    | _ -> print_endline 
-             "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
+    | Quit -> begin 
+        ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
+        print_endline "";
+        try are_you_sure () mov dis 0
+        with | Cancel -> one_play st true () mov dis 
+      end
+    | _ -> 
+      print_endline "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
       print_string "> ";
-      one_play st d () mov dis
+      one_play st false () mov dis
   with
-  | Invalid -> print_endline 
-                 "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
+  | Invalid -> 
+    print_endline "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
     print_string "> ";
-    one_play st d () mov dis
+    one_play st false () mov dis
 
 and settings_menu () mov dis next =
   ANSITerminal.(print_string [cyan] 
-                  "\nEnter the setting to toggle or type 'back' to go back: \n");
+                  "Enter a setting to toggle or type 'back' to go back: \n");
   print_endline "";
   let next_mov = if (mov == State.move_anim) then 
-      begin ANSITerminal.(print_string [green] "Animation "); 
+      begin ANSITerminal.(print_string [green] "  Animation "); 
         State.move end
-    else begin ANSITerminal.(print_string [red] "Animation "); 
+    else begin ANSITerminal.(print_string [red] "  Animation "); 
       State.move_anim end in
   print_endline "";
   let next_dis = if (dis == State.display) then 
-      begin ANSITerminal.(print_string [green] "Night mode "); 
+      begin ANSITerminal.(print_string [green] "  Night mode "); 
         State.display_d end
-    else begin ANSITerminal.(print_string [red] "Night mode ");
+    else begin ANSITerminal.(print_string [red] "  Night mode ");
       State.display end in
-  print_endline "";
+  print_string "\n> ";
   try match parse (read_line()) with
     | Back -> next mov dis
     | Animation -> settings_menu () next_mov dis next
     | Night -> settings_menu () mov next_dis next
-    | _ -> print_string "Invalid command! Hint: type 'back' to go back."
+    | Quit -> begin
+        ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
+        print_endline "";
+        try are_you_sure () mov dis 0
+        with | Cancel -> settings_menu () mov dis next
+      end
+    | _ -> print_endline "Invalid command!";
+      settings_menu () mov dis next
   with
-  | Invalid -> print_string "Invalid command! Hint: type 'back' to go back."
+  | Invalid -> print_endline "Invalid command!";
+    settings_menu () mov dis next
 
 and execute_menu_command () mov dis =
   print_endline "";
@@ -390,7 +464,7 @@ and execute_menu_command () mov dis =
   try match parse_menu (read_line()) with
     | One -> 
       Random.self_init ();
-      difficulty_msg State.init_state true () mov dis
+      one_play State.init_state true () mov dis
     (* one_play State.init_state true 0 ()  *)
     | Two -> 
       ANSITerminal.(print_string [red] "Starting Two Player Mode");
@@ -401,14 +475,21 @@ and execute_menu_command () mov dis =
       instructions_message ();
       execute_menu_command () mov dis
     | Four -> settings_menu () mov dis (execute_menu_command ())
-    | _ -> exit 0
+    | _ -> begin
+        ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
+        print_endline "";
+        try are_you_sure () mov dis 0 
+        with | Cancel -> execute_menu_command () mov dis
+      end
   with
   | Invalid -> 
     print_string "Invalid. Please enter "; 
     ANSITerminal.(print_string [cyan] "1");
     print_string " for One Player Mode, ";
     ANSITerminal.(print_string [cyan] "2");
-    print_endline " for Two Player Mode, or ";
+    print_endline " for Two Player Mode, ";
     ANSITerminal.(print_string [cyan] "3");
-    print_string " to view the instructions";
+    print_string " to view the instructions, or ";
+    ANSITerminal.(print_string [cyan] "4");
+    print_string " to adjust the settings.";
     execute_menu_command () mov dis
