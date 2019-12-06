@@ -107,30 +107,45 @@ val update : int -> int -> color -> board -> board
 (** [new_color wins] is the new starting color of a new game*)
 val new_color : num_wins -> color
 
+(** [red_diag_win] is a board with a red diagonal win. *)
 val red_diag_win : board
 
+(** [blue_horiz_win] is a board with a blue horizontal win. *)
 val blue_horiz_win : board
 
+(** [full_board_tie] is a full board where the players tied. *)
 val full_board_tie : board
 
+(** [blue_horiz_win_updated] is a board with one piece inserted into 
+    [blue_horiz_win]. *)
 val blue_horiz_win_updated : board
 
+(** [empty_updated] is a board with one piece. *)
 val empty_updated : board
 
+(** [man_empty_board] is an empty board. *)
 val man_empty_board : board
 
+(** [blue_3] is a board with 3 blue pieces in a row. *)
 val blue_3 : board
 
+(** [state_blue_3] is the state with board [blue_3]. *)
 val state_blue_3 : t
 
+(** [blue_diag_pot] is a board with three blues in a row diagonally. *)
 val blue_diag_pot : board
 
+(** [state_blue_pot] is the state with the board [blue_diag_pot]. *)
 val state_blue_pot : t
 
+(** [red_3] is a board with three red pieces in a row. *)
 val red_3 : board
 
+(** [state_red_3] is the state with board [red_3]. *)
 val state_red_3 : t
 
+(** [state_red_3_blue_turn] is [state_red_3] but switched to blue's turn. *)
 val state_red_3_blue_turn : t
 
+(** [state_blue_3_blue_turn] is [state_blue_3] but switched to red's turn.  *)
 val state_blue_3_blue_turn : t
