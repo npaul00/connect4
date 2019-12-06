@@ -431,7 +431,8 @@ let rec safer_moves t = function
 let rec cpu_choose_move t i lst = 
   let rec cpu_choose_move_aux t' i' count' = function 
     | (x, y) :: tl -> 
-      if count' = i' then x else cpu_choose_move_aux t' i' (count'+1) tl
+      if count' = i' then begin Unix.sleepf 1.0; x end 
+      else cpu_choose_move_aux t' i' (count'+1) tl
     | [] -> failwith "No possible moves"
   in cpu_choose_move_aux t i 0 lst
 
@@ -446,6 +447,7 @@ let rec piece_on_board = function
   | [] -> (-1)
 
 let next_to loc =
+  Unix.sleepf 1.0;
   if loc = (-1) then 4 else
   if loc < 4 then loc + 1 else
   if loc > 4 then loc - 1 else
@@ -456,10 +458,10 @@ let next_to loc =
 let cpu_move t =
   if num_pieces_on_board t.board <= 1 then next_to (piece_on_board t.board) else
     match moves_that_win t with
-    | (x, y) :: tl -> x
+    | (x, y) :: tl -> Unix.sleepf 1.0; x
     | [] -> 
       match moves_that_block t with 
-      | (x, y) :: tl -> x
+      | (x, y) :: tl -> Unix.sleepf 1.0; x
       | [] -> 
         let p_moves = possible_moves t in
         let s_moves = safe_moves t p_moves in 
@@ -475,10 +477,10 @@ let cpu_move t =
 
 let cpu_move_easy t =
   match moves_that_win t with
-  | (x, y) :: tl -> x
+  | (x, y) :: tl -> Unix.sleepf 1.0; x
   | [] -> 
     match moves_that_block t with 
-    | (x, y) :: tl -> x
+    | (x, y) :: tl -> Unix.sleepf 1.0; x
     | [] -> 
       let p_moves = possible_moves t in
       cpu_choose_move t (Random.int (List.length p_moves)) p_moves
@@ -743,10 +745,10 @@ let three_played st =
     the game.*)
 let start_solve st =
   match num_pieces_on_board st.board with
-  | 0 -> 4
-  | 1 -> one_played st
-  | 2 -> two_played st
-  | 3 -> three_played st
+  | 0 -> Unix.sleepf 1.0; 4
+  | 1 -> Unix.sleepf 1.0; one_played st
+  | 2 -> Unix.sleepf 1.0; two_played st
+  | 3 -> Unix.sleepf 1.0; three_played st
   | _ -> let (c, r) = solve st in 
     if check_safe st c then c else 
     if playable st.board c then c else
@@ -758,10 +760,10 @@ let start_solve st =
 
 let cpu_move_hard st =
   match moves_that_win st with  
-  | (x, y) :: tl -> x
+  | (x, y) :: tl -> Unix.sleepf 1.0; x
   | [] -> 
     match moves_that_block st with 
-    | (x, y) :: tl -> x
+    | (x, y) :: tl -> Unix.sleepf 1.0; x
     | [] -> start_solve st
 
 (** MANUALLY-TYPED BOARDS AND STATES FOR TESTING *)
