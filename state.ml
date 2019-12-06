@@ -551,6 +551,7 @@ let get vis k = List.assoc k vis
 let contain vis k = List.mem_assoc k vis 
 
 let rec solve st =
+  print_endline "Loading...";
   let min = -1 in
   let max = 1 in
   let i = if count_moves st.board < 26 then 
