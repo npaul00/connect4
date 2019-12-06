@@ -494,6 +494,12 @@ let rec count_moves b =
 let playable b c =
   drop_height c b != 7
 
+
+let move_score st c = 
+  c |> move st |> state_w_other_color |> moves_that_win |> List.length
+
+let col_sort (k1,v1) (k2, v2) = v2 - v1
+
 (** [next_col c] is the next column that should be checked after [c]. *)
 let next_col = function
   | 4 -> 3
@@ -504,8 +510,11 @@ let next_col = function
   | 1 -> 7
   | _ -> 8
 
-let move_score st c = 
-  c |> move st |> state_w_other_color |> moves_that_win |> List.length
+let get_score_list st = 
+  let rec get_score st c = 
+    if c > 7 then [] else
+      (c, move_score st c):: get_score st (next_col c)
+  in List.stable_sort col_sort (get_score st 4)
 
 (*
 let rec get_score st = 
