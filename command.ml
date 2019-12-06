@@ -196,9 +196,18 @@ and two_play st d last () mov dis =
     else if dis == State.display then State.move_anim
     else State.move_anim_d in
   if d then dis board 1;
+  print_endline "";
   if State.check_win board last_clr then 
-    (ANSITerminal.(print_string [Blink] 
-                     ("\n" ^ State.color_to_string last_clr ^ " wins!\n")); 
+    (if dis == State.display then 
+       (State.display_win last_clr (State.board st) 1;)
+     else
+       State.display_win_d last_clr (State.board st) 1;
+     print_endline "";
+     (* State.print_pos_lst (State.board st) last_clr;
+        print_endline ""; *)
+     ANSITerminal.(print_string [Blink] 
+                     ("\n" ^ State.color_to_string last_clr ^ " wins!\n"));
+     print_endline "";
      play_again () (State.update_wins st) 2 mov dis)
   else if (State.check_full board) then
     (ANSITerminal.(print_string [Blink] ("\nIt's a tie!\n")); 
@@ -244,7 +253,7 @@ and two_play st d last () mov dis =
 (** [cpu_play st d last () i] is one player mode at difficulty [i] and prints if 
     [d] is true. [last] is the column of the most recent piece played, and is 0 
     if no pieces have been played.*)
-and cpu_play st d last () i mov dis= 
+and cpu_play st d last () i mov dis = 
   let op = if i = 1 then (State.cpu_move_easy)
     else if i = 3 then (State.cpu_move)
     else if i = 4 then (State.cpu_move_hard)
@@ -256,12 +265,25 @@ and cpu_play st d last () i mov dis=
     else if dis == State.display then State.move_anim
     else State.move_anim_d in
   if d then dis board 1;
+  print_endline "";
   let person_string = (if turn = State.Red then "Computer" else "You") in
   if State.check_win board last_clr then 
     if last_clr = State.Red then 
-      (ANSITerminal.(print_string [Blink] ("\nComputer wins!\n")); 
+      (if dis == State.display then
+         (State.display_win Red (State.board st) 1;)
+       else
+         State.display_win_d Red (State.board st) 1;
+       print_endline "";
+       ANSITerminal.(print_string [Blink] ("\nComputer wins!\n"));
+       print_endline ""; 
        play_again () (State.update_wins st) i mov dis)
-    else (ANSITerminal.(print_string [Blink] ("\nYou win!\n")); 
+    else (if dis == State.display then
+            (State.display_win Blue (State.board st) 1;)
+          else
+            State.display_win_d Blue (State.board st) 1;
+          print_endline "";
+          ANSITerminal.(print_string [Blink] ("\nYou win!\n"));
+          print_endline "";
           play_again () (State.update_wins st) i mov dis)
   else if (State.check_full board) then
     (ANSITerminal.(print_string [Blink] ("\nIt's a tie!\n")); 

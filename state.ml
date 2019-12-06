@@ -4,6 +4,7 @@ type status = color option
 type board = (position * status) list
 type num_wins = int * int * int
 type moves_list = int list
+type bool_or_pos = Truth of bool | Pos of position list
 
 type t = {
   board : board;
@@ -129,6 +130,7 @@ let get_team_d s =
   | Some Blue -> ANSITerminal.(print_string [cyan ; Background White] "O")
   | None ->  ANSITerminal.(print_string [cyan ; Background White] " ")
 (** [print_row b temp r c] is the unit that prints the piece at [r] and [c]*)
+
 let rec print_row_d b temp r c =
   match temp with
   | [] -> 
@@ -196,43 +198,126 @@ let rec four_in_a_row lst b clr =
 
 (** [check_right_diag b clr lst] checks if any right diagonal in board [b] has
     four pieces of color [clr] in a row. *)
-let rec check_right_diag b clr lst =
+let rec check_right_diag b clr lst op =
   match lst with
-  | [] -> false
-  | (x, y) :: t -> if (four_in_a_row (right_diag (x, y)) b clr) then true 
-    else check_right_diag b clr t 
+  | [] -> if op then (Truth false) else Pos []
+  | (x, y) :: t -> if (op && four_in_a_row (right_diag (x, y)) b clr) then Truth true
+    else if (four_in_a_row (right_diag (x, y)) b clr) then Pos (right_diag (x,y))
+    else check_right_diag b clr t op
 
 (** [check_left_diag b clr lst] checks if any left diagonal in board [b] has
     four pieces of color [clr] in a row. *)
-let rec check_left_diag b clr lst = 
+let rec check_left_diag b clr lst op = 
   match lst with
-  | [] -> false
-  | (x, y) :: t -> if (four_in_a_row (left_diag (x, y)) b clr) then true 
-    else check_left_diag b clr t 
+  | [] -> if op then (Truth false) else Pos []
+  | (x, y) :: t -> if (op && four_in_a_row (left_diag (x, y)) b clr) then Truth true
+    else if (four_in_a_row (left_diag (x, y)) b clr) then Pos (left_diag (x,y))
+    else check_left_diag b clr t op
 
 (** [check_horiz b clr lst] checks if any horizontal sequence in board [b] has 
     four pieces of color [clr] in a row. *)
-let rec check_horiz b clr lst = 
+let rec check_horiz b clr lst op = 
   match lst with
-  | [] -> false
-  | (x, y) :: t -> if (four_in_a_row (horiz (x, y)) b clr) then true 
-    else check_horiz b clr t 
+  | [] -> if op then (Truth false) else Pos []
+  | (x, y) :: t -> if (op && four_in_a_row (horiz (x, y)) b clr) then Truth true
+    else if (four_in_a_row (horiz (x, y)) b clr) then Pos (horiz (x,y))
+    else check_horiz b clr t op
 
 (** [check_vert b clr lst] checks if any vertical sequence in board [b] has four 
     pieces of color [clr] in a row. *)
-let rec check_vert b clr lst = 
+let rec check_vert b clr lst op = 
   match lst with
-  | [] -> false
-  | (x, y) :: t -> if (four_in_a_row (vert (x, y)) b clr) then true 
-    else check_vert b clr t 
+  | [] -> if op then (Truth false) else Pos []
+  | (x, y) :: t -> if (op && four_in_a_row (vert (x, y)) b clr) then Truth true
+    else if (four_in_a_row (vert (x, y)) b clr) then Pos (vert (x,y))
+    else check_vert b clr t op
+
+let get_truth = function
+  | Truth b -> b
+  | Pos _ -> failwith "Not a truth value"
+
+let get_pos = function
+  | Pos lst -> lst
+  | Truth _ -> failwith "Not a position list"
 
 (** [check_win b clr] is true if [clr] is winning and false otherwise*)
 let check_win b clr =
   let positions = pos_by_color b clr in
-  check_right_diag b clr positions ||
-  check_left_diag b clr positions ||
-  check_horiz b clr positions ||
-  check_vert b clr positions
+  get_truth (check_right_diag b clr positions true) ||
+  get_truth (check_left_diag b clr positions true) ||
+  get_truth (check_horiz b clr positions true) ||
+  get_truth (check_vert b clr positions true)
+
+let get_win_pos b clr  =
+  let positions = pos_by_color b clr in
+  if get_truth (check_right_diag b clr positions true) then
+    get_pos (check_right_diag b clr positions false) else if
+    get_truth (check_left_diag b clr positions true) then
+    get_pos (check_left_diag b clr positions false) else if
+    get_truth (check_horiz b clr positions true) then
+    get_pos (check_horiz b clr positions false) else if
+    get_truth (check_vert b clr positions true) then
+    get_pos (check_vert b clr positions false) else
+    failwith "Not a winning board or color"
+
+let string_tuple (x,y) = "(" ^ string_of_int x ^ ", " ^ string_of_int y ^ ")"
+
+let rec string_tuples = function
+  | [] -> ""
+  | s :: t -> string_tuple s ^ ", " ^ string_tuples t
+
+let print_pos_lst b clr =
+  clr |> get_win_pos b |> string_tuples |> print_string
+
+let get_team_win s win =
+  match s with
+  | Some Red -> if win then ANSITerminal.(print_string [red; Blink] "X") else ANSITerminal.(print_string [red] "O")
+  | Some Blue -> if win then ANSITerminal.(print_string [cyan; Blink] "X") else ANSITerminal.(print_string [cyan] "O")
+  | None -> print_string " "
+
+let rec print_row_win b temp r c clr =
+  match temp with
+  | [] -> 
+    if c > 7 then begin print_string "\n"; print_string line; print_string "\n"; 
+      if r < 7 then print_string "| "; end 
+  | ((x,y), s) :: t -> 
+    if x = c && y = r then 
+      (if (List.mem (x, y) (get_win_pos b clr)) then
+         (get_team_win s true; (print_string " | "); print_row_win b b r (c + 1) clr;)
+       else 
+         (get_team_win s false; (print_string " | "); print_row_win b b r (c + 1) clr;) 
+      )
+    else print_row_win b t r c clr
+
+let rec display_win clr b r = 
+  if r = 1 then begin print_string "\n"; print_string "| "; end;
+  if r < 7 then begin display_win clr b (r + 1); print_row_win b b r 1 clr; end;
+  if r = 1 then print_string bot
+
+let get_team_win_d s win =
+  match s with
+  | Some Red -> if win then ANSITerminal.(print_string [red; Blink; Background White] "X") else ANSITerminal.(print_string [red; Background White] "O")
+  | Some Blue -> if win then ANSITerminal.(print_string [cyan; Blink; Background White] "X") else ANSITerminal.(print_string [cyan; Background White] "O")
+  | None -> ANSITerminal.(print_string [cyan ; Background White] " ")
+
+let rec print_row_win_d b temp r c clr =
+  match temp with
+  | [] -> 
+    if c > 7 then begin print_string "\n"; ANSITerminal.(print_string [black ; Background White] line); print_string "\n"; 
+      if r < 7 then ANSITerminal.(print_string [black ; Background White] "| "); end 
+  | ((x,y), s) :: t -> 
+    if x = c && y = r then 
+      (if (List.mem (x, y) (get_win_pos b clr)) then
+         (get_team_win_d s true; (ANSITerminal.(print_string [black ; Background White] " | ")); print_row_win_d b b r (c + 1) clr;)
+       else 
+         (get_team_win_d s false; (ANSITerminal.(print_string [black ; Background White] " | ")); print_row_win_d b b r (c + 1) clr;) 
+      )
+    else print_row_win_d b t r c clr
+
+let rec display_win_d clr b r = 
+  if r = 1 then begin print_string "\n"; ANSITerminal.(print_string [black ; Background White] "| "); end;
+  if r < 7 then begin display_win_d clr b (r + 1); print_row_win_d b b r 1 clr; end;
+  if r = 1 then ANSITerminal.(print_string [black ; Background White] bot)
 
 (** [winning_player t] is the winner at state [t] *)
 let winning_player t = 

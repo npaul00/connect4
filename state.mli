@@ -19,6 +19,8 @@ type num_wins
 (** The type for the list of moves. *)
 type moves_list = int list
 
+type bool_or_pos = Truth of bool | Pos of position list
+
 (** [turn t] is the color of whose turn it is to play in state [t]. *)
 val turn : t -> color
 
@@ -65,8 +67,16 @@ val move_anim : t -> int -> t
     column [c] in the current state [t] with a fall animation in night mode. *)
 val move_anim_d : t -> int -> t
 
+val get_truth : bool_or_pos -> bool
+
+val get_pos : bool_or_pos -> position list
+
 (** [check_win b clr] checks if there are 4 pieces with color [clr] in a row. *)
 val check_win : board -> color -> bool
+
+val display_win : color -> board -> int -> unit
+
+val display_win_d : color -> board -> int -> unit
 
 (** [winning_player t] is Some [clr] if that color won, or [None] if no one is 
     winning. *)
@@ -83,6 +93,8 @@ val empty : board
 
 (** [color_to_string clr] is the string representation of color [clr]. *)
 val color_to_string : color -> string
+
+val print_pos_lst : board -> color -> unit
 
 (** [other_color clr] is [Blue] if [clr] is [Red], and [Red] if [clr] is 
     [Blue]. *)
