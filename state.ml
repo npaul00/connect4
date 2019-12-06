@@ -532,50 +532,6 @@ let rec new_next_col c = function
       new_next_col c (s ::tl)
   | _ -> 8
 
-(*
-let rec get_score st = 
-  if check_full st.board then 0 else
-    match moves_that_win st with
-    | h :: tl -> (43 - (count_moves st.board))/2
-    | [] -> 
-      let best_score = -42 in
-      calc_scores st best_score
-
-and calc_scores st b_score =
-  let rec calc_scores_aux st c score = 
-    if c>7 then score else
-    if playable st.board c then
-      let new_st = move st c in
-      let new_score = -(get_score new_st) in
-      if new_score > score then calc_scores_aux st (c+1) new_score else
-        calc_scores_aux st (c+1) score
-    else calc_scores_aux st (c+1) score
-  in calc_scores_aux st 1 b_score
-
-let rec get_score1 st alpha beta = 
-  if check_full st.board then 0 else
-    match moves_that_win st with
-    | h :: tl -> (43 - (count_moves st.board))/2
-    | [] -> 
-      let max = (41 - (count_moves st.board))/2 in
-      let bm = if beta > max then max else beta in
-      if alpha >= bm then bm else
-        calc_scores1 st alpha bm
-
-and calc_scores1 st a bm =
-  let rec calc_scores1_aux st c alpha beta = 
-    if c > 7 then alpha else
-    if playable st.board c then
-      let new_st = move st c in
-      let score = -(get_score1 new_st (-beta) (-alpha)) in
-      if score >= beta then score else
-      if score > alpha then 
-        calc_scores1_aux st (next_col c) score beta 
-      else calc_scores1_aux st (next_col c) alpha beta
-    else calc_scores1_aux st (next_col c) alpha beta
-  in calc_scores1_aux st 4 a bm
-*)
-
 type visited = (board * int) list
 
 let put vis k v =
@@ -588,43 +544,6 @@ let put vis k v =
 let get vis k = List.assoc k vis
 
 let contain vis k = List.mem_assoc k vis 
-
-
-let rec get_score2 st alpha beta vis : (int * int) = 
-  if check_full st.board then (1, 0) else
-    match moves_that_win st with
-    | (x, y) :: tl -> (x, (43 - (count_moves st.board))/2)
-    | [] -> 
-      let max = (41 - (count_moves st.board))/2 in
-      let bm = if beta > max then max else beta in
-      if alpha >= bm then (1, bm) else
-        calc_scores2 st alpha bm vis
-
-and calc_scores2 st a bm vis =
-  let rec calc_scores2_aux st c alpha beta vis col = 
-    if c > 7 then (col, alpha) else
-    if playable st.board c then
-      let new_st = move st c in
-      let score = if contain vis new_st.board then get vis new_st.board else
-          let neg = begin
-            match (get_score2 new_st (-beta) (-alpha) vis) with
-            | (cc, ss) -> (cc, -ss)
-          end
-          in 
-          match neg with
-          | (c', s') -> s'
-      in
-      if score >= beta then (c, score) else
-      if score > alpha then 
-        calc_scores2_aux st (next_col c) score beta (put vis new_st.board score) c 
-      else calc_scores2_aux st (next_col c) alpha beta (put vis new_st.board score) col
-    else calc_scores2_aux st (next_col c) alpha beta vis col
-  in calc_scores2_aux st 4 a bm vis 4
-
-
-
-
-
 
 let rec solve st =
   let min = -1 in
@@ -828,8 +747,12 @@ let start_solve st =
   | 2 -> two_played st
   | 3 -> three_played st
   | _ -> let (c, r) = solve st in 
-    if playable st.board c then c else 
-      let (c, _) = pick_rand_from (possible_moves st) in c
+    if check_safe st c then c else 
+    if playable st.board c then c else
+      let moves = safe_moves st (possible_moves st) in
+      match moves with
+      | [] -> let (c', _) = pick_rand_from (possible_moves st) in c'
+      | h::t -> let (c', _) = pick_rand_from moves in c'
 
 let cpu_move_hard st =
   match moves_that_win st with  
@@ -930,43 +853,6 @@ let state_red_3_blue_turn = {
   moves = [2;3;4;5;4;6;5;6;7;7;6;1;7]
 }
 
-(*
-(** [search_win st c clr] is < 50 if there is a winning move*)
-let rec search_win st c clr =
-  if playable (board st) c && will_win st c then 22 - count_moves (board st) clr
-  else if (c>7) then 50
-  else search_win st (c+1) clr
-
-(** [get_score min max st clr] is the best score among each move for [clr] in 
-    [st]*)
-let rec get_score0 min max st clr = 
-  let board = board st in 
-  if check_full board then 0
-  else
-  if search_win st 1 clr < 50 then search_win st 1 clr  
-  else 
-    next_move min max st clr 4 
-
-(** [next_move min max st clr i] is the next move for [clr] in [st] 
-    while searching with a depth of [i]*)
-and next_move min max st clr i =
-  let next_i = if i = 4 then 3
-    else if i = 3 then 5
-    else if i = 5 then 2
-    else if i = 2 then 6
-    else if i = 6 then 1 
-    else if i = 1 then 7
-    else 8 in
-  if i < 8 then
-    let color = if clr = Red then Blue else Red in
-    if playable (board st) i &&  -1 * (get_score0 (-1 * min) (-1 * max) (move st i) color) >= max then 
-      -1 * (get_score0 (-1 * min) (-1 * max) (move st i) color)
-    else if playable (board st) i && -1 * (get_score0 (-1 * min) (-1 * max) (move st i) color) > min then
-      next_move (-1 * (get_score0 (-1 * min) (-1 * max) (move st i) color)) max st clr next_i
-    else next_move min max st clr next_i
-  else
-    min
-*)
 
 
 
