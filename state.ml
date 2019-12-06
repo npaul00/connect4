@@ -494,9 +494,20 @@ let rec count_moves b =
 let playable b c =
   drop_height c b != 7
 
+let rec empty_spots = function
+  | [] -> []
+  | ((x,y), None) :: t -> (x, y) :: empty_spots t
+  | _ :: t -> empty_spots t
 
-let move_score st c = 
-  c |> move st |> state_w_other_color |> moves_that_win |> List.length
+let check_four (x, y) clr b =
+  check_win (update x y clr b) clr
+
+let rec threes clr b = function
+  | [] -> 0
+  | (x, y) :: t -> if check_four (x, y) clr b then 1 + threes clr b t else
+      threes clr b t 
+
+let move_score st c = threes (other_color st.turn) st.board (empty_spots st.board)
 
 let col_sort (k1,v1) (k2, v2) = v2 - v1
 
@@ -515,6 +526,11 @@ let get_score_list st =
     if c > 7 then [] else
       (c, move_score st c):: get_score st (next_col c)
   in List.stable_sort col_sort (get_score st 4)
+
+let rec new_next_col c = function
+  | (h, _) :: ((h', _) as s) :: tl -> if h = c then h' else
+      new_next_col c (s ::tl)
+  | _ -> 8
 
 (*
 let rec get_score st = 
@@ -666,9 +682,9 @@ and calc_scores3 st a bm vis =
       in
       if score >= beta then (c, score) else
       if score > alpha then 
-        calc_scores3_aux st (next_col c) score beta (put vis new_st.board score) c 
-      else calc_scores3_aux st (next_col c) alpha beta (put vis new_st.board score) col
-    else calc_scores3_aux st (next_col c) alpha beta vis col
+        calc_scores3_aux st (new_next_col c (get_score_list st)) score beta (put vis new_st.board score) c 
+      else calc_scores3_aux st (new_next_col c (get_score_list st)) alpha beta (put vis new_st.board score) col
+    else calc_scores3_aux st (new_next_col c (get_score_list st)) alpha beta vis col
   in calc_scores3_aux st 4 a bm vis 4
 
 (** [pick_rand_from lst] is a random element of [lst]. *)
@@ -943,6 +959,21 @@ and next_move min max st clr i =
   else
     min
 *)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
