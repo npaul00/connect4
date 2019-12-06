@@ -67,6 +67,12 @@ let cpu_move_easy_test
     (expected_output: int) : test = 
   name >:: (fun _ -> assert_equal expected_output (cpu_move_easy input1))
 
+let set_turn_test
+    (name: string)
+    (input1: State.t)
+    (input2: State.color)
+    (expected_output: State.t) : test =
+  name >:: (fun _ -> assert_equal expected_output (set_turn input1 input2))
 
 let check_win_tests =
   [
@@ -149,6 +155,14 @@ let move_tests =
       State.state_red_3 7;
   ]
 
+let set_turn_tests = 
+  [
+    set_turn_test "Set state_blue_3 to color blue" 
+      State.state_blue_3 Blue State.state_blue_3_blue_turn;
+    set_turn_test "Set state_red_3 to color blue" 
+      State.state_red_3 Blue State.state_red_3_blue_turn;
+  ]
+
 let suite =
   "test suite for connect four"  >::: List.flatten [
     check_win_tests;
@@ -156,7 +170,8 @@ let suite =
     color_tests;
     drop_height_tests;
     update_tests;
-    move_tests
+    move_tests;
+    set_turn_tests
   ]
 
 let _ = run_test_tt_main suite
