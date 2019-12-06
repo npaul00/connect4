@@ -828,7 +828,8 @@ let start_solve st =
   | 2 -> two_played st
   | 3 -> three_played st
   | _ -> let (c, r) = solve st in 
-    if playable st.board c then c else failwith "yikes"
+    if playable st.board c then c else 
+      let (c, _) = pick_rand_from (possible_moves st) in c
 
 let cpu_move_hard st =
   match moves_that_win st with  
