@@ -987,3 +987,5 @@ and next_move min max st clr i =
 
 
 
+
+
