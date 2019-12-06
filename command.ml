@@ -224,6 +224,7 @@ and are_you_sure () mov dis qm =
   | Invalid -> begin print_endline "Invalid command! Hint: type 'yes' or 'no'";
       are_you_sure () mov dis qm
     end
+
 (** [two_play st d last ()] is the start of a two player game in state [st] and 
     displays the board if [d] is true. [last] is the column of the most recent 
     piece played, and is 0 if no pieces have been played.*)
@@ -235,7 +236,6 @@ and two_play st d last () mov dis =
     else if dis == State.display then State.move_anim
     else State.move_anim_d in
   if d then dis board 1;
-  (*print_endline "";*)
   if State.check_win board last_clr then begin
     print_endline "";
     (if dis == State.display then 
@@ -316,7 +316,6 @@ and cpu_play st d last () i mov dis =
     else if dis == State.display then State.move_anim
     else State.move_anim_d in
   if d then dis board 1;
-  (*print_endline "";*)
   let person_string = (if turn = State.Red then "Computer" else "You") in
   if State.check_win board last_clr then begin
     print_endline "";
@@ -465,7 +464,6 @@ and execute_menu_command () mov dis =
     | One -> 
       Random.self_init ();
       one_play State.init_state true () mov dis
-    (* one_play State.init_state true 0 ()  *)
     | Two -> 
       ANSITerminal.(print_string [red] "Starting Two Player Mode");
       ANSITerminal.(print_string [cyan] "\nType 'help' for help or 'settings' to adjust the settings at any time");
