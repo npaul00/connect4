@@ -53,31 +53,31 @@ let cpu_move_test
     (name: string)
     (input1: State.t)
     (expected_output: int) : test = 
-  name >:: (fun _ -> assert_equal expected_output (cpu_move input1))
+  name >:: (fun _ -> assert_equal expected_output (let (c, _) = cpu_move input1 in c))
 
 let cpu_move_test_notequals
     (name: string)
     (input1: State.t)
     (wrong_output: int) : test = 
-  name >:: (fun _ -> assert_equal false (cpu_move input1 = wrong_output))
+  name >:: (fun _ -> assert_equal false (let (c, _) = cpu_move input1 in c = wrong_output))
 
 let cpu_move_hard_test_notequals
     (name: string)
     (input1: State.t)
     (wrong_output: int) : test = 
-  name >:: (fun _ -> assert_equal false (cpu_move_hard input1 = wrong_output))
+  name >:: (fun _ -> assert_equal false (let (c, _) = cpu_move_hard input1 in c = wrong_output))
 
 let cpu_move_easy_test
     (name: string)
     (input1: State.t)
     (expected_output: int) : test = 
-  name >:: (fun _ -> assert_equal expected_output (cpu_move_easy input1))
+  name >:: (fun _ -> assert_equal expected_output (let (c, _) = cpu_move_easy input1 in c))
 
 let cpu_move_hard_test
     (name: string)
     (input1: State.t)
     (expected_output: int) : test = 
-  name >:: (fun _ -> assert_equal expected_output (cpu_move_hard input1))
+  name >:: (fun _ -> assert_equal expected_output (let (c, _) = cpu_move_hard input1 in c))
 
 let set_turn_test
     (name: string)

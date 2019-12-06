@@ -144,7 +144,7 @@ val empty_updated : board
 
 (** [man_empty_board] is an empty board. *)
 val man_empty_board : board
-(* 
+
 (** [blue_3] is a board with 3 blue pieces in a row. *)
 val blue_3 : board
 
@@ -173,4 +173,4 @@ val state_red_3_blue_turn : t
 val state_blue_3_blue_turn : t
 
 (** [state_blue_pot_2] is the state with the board [blue_diag_pot_2]. *)
-val state_blue_pot_2 : t*)
+val state_blue_pot_2 : t

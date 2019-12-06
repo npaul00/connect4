@@ -924,13 +924,12 @@ let test_safe : board = [((1,6), None);     ((2,6), Some Blue);      ((3,6), Som
                          ((1,1), Some Blue); ((2,1), Some Red);  ((3,1), Some Red); ((4,1), Some Blue);  ((5,1), Some Blue);  ((6,1), Some Blue);  ((7,1), Some Red)]
 
 
-(*
->>>>>>> Stashed changes
 let state_blue_3 = {
   board = blue_3;
   turn = Red;
   wins = (0,0,0);
   moves = [2;1;2;1;3;1;7];
+  visit = []
 }
 
 let state_blue_3_blue_turn = {
@@ -938,38 +937,41 @@ let state_blue_3_blue_turn = {
   turn = Blue;
   wins = (0,0,0);
   moves = [2;1;2;1;3;1;7];
+  visit = []
 }
 
 let state_blue_pot = {
   board = blue_diag_pot;
   turn = Red;
   wins = (0,0,0);
-  moves = [2;3;4;5;4;6;5;6;7;7;6;]
+  moves = [2;3;4;5;4;6;5;6;7;7;6;];
+  visit = []
 }
 
 let state_blue_pot_2 = {
   board = blue_diag_pot_2;
   turn = Red;
   wins = (0,0,0);
-  moves = [4;4;4;4;4;4;5;3;3;3;5;1]
+  moves = [4;4;4;4;4;4;5;3;3;3;5;1];
+  visit = []
 }
 
 let state_red_3 = {
   board = red_3;
   turn = Red;
   wins = (0,0,0);
-  moves = [2;3;4;5;4;6;5;6;7;7;6;1;7]
+  moves = [2;3;4;5;4;6;5;6;7;7;6;1;7];
+  visit = []
 }
 
 let state_red_3_blue_turn = {
   board = red_3;
   turn = Blue;
   wins = (0,0,0);
-  moves = [2;3;4;5;4;6;5;6;7;7;6;1;7]
+  moves = [2;3;4;5;4;6;5;6;7;7;6;1;7];
+  visit = []
 }
-<<<<<<< Updated upstream
-=======
-*)
+
 
 
 
