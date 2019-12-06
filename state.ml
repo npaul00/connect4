@@ -83,7 +83,7 @@ let half_board_moves =
   [1; 2; 3; 4; 5; 6; 7; 2; 3; 4; 5; 6; 7; 7; 1; 1; 2; 3; 4; 5; 6]
 
 (* set testing to true to start with a half board, false for an empty board *)
-let testing = true
+let testing = false
 
 let init_state = 
   if testing then
@@ -622,21 +622,27 @@ and calc_scores2 st a bm vis =
   in calc_scores2_aux st 4 a bm vis 4
 
 
+
+
+
+
 let rec solve st =
   let min = -1 in
   let max = 1 in
+  let i = if count_moves (board st) > 36 then 7 else 
+    if count_moves (board st) > 24 then 5 else 3 in
   let rec solve_aux min' max' c = 
     if min' >= max' then (c, min') else
       let med = min' + (max' - min')/2 in
       let med' = if med <= 0 && min'/2 < med then min'/2
         else if med >= 0 && max/2 > med then max/2 
         else med in
-      let (col, r) = get_score3 st med' (med'+1) [] c in
+      let (col, r) = get_score3 st med' (med'+1) [] c i in
       if r <= med' then solve_aux min' r col else
         solve_aux r max' col
-  in solve_aux min max 4
+  in solve_aux min max 4 
 
-and get_score3 st alpha beta vis col = 
+and get_score3 st alpha beta vis col i = 
   if check_full st.board then (1, 0) else
     match moves_that_win st with
     | (x, y) :: tl -> (x, (43 - (count_moves st.board))/2)
@@ -644,22 +650,7 @@ and get_score3 st alpha beta vis col =
       let max = (41 - (count_moves st.board))/2 in
       let bm = if beta > max then max else beta in
       if alpha >= bm then (col, bm) else
-        calc_scores3 st alpha bm vis
-
-and solve_ st weak =
-  let min = if weak then -1 else -(42 - count_moves st.board)/2 in
-  let max = if weak then 1 else (43 - count_moves st.board)/2 in 
-  solve__aux st min max 4
-
-and solve__aux st min max c =
-  if min >= max then (c, min) else
-    let med = min + (max - min)/2 in
-    let med' = if (med <= 0 && min/2 < med) then (min/2)
-      else if (med >= 0 && max/2 > med) then max/2 
-      else med in
-    let (col, r) = (get_score3 st med' (med'+1) [] c) in
-    let max' = if (r <= med') then r else max in
-    let min' = if (r <= med') then min else r in solve__aux st min' max' col
+        calc_scores3 st alpha bm vis i
 
 and check_safe st c =
   let rec check_safe_aux c = function
@@ -667,14 +658,15 @@ and check_safe st c =
     | (h, _)::t -> h = c || check_safe_aux c t
   in check_safe_aux c (safe_moves st (possible_moves st)) 
 
-and calc_scores3 st a bm vis =
-  let rec calc_scores3_aux st c alpha beta vis col = 
+and calc_scores3 st a bm vis i =
+  let rec calc_scores3_aux st c alpha beta vis col i = 
+    if i < 1 then (1, 0) else
     if c > 7 then (col, alpha) else
     if playable st.board c && check_safe st c then
       let new_st = move st c in
       let score = if contain vis new_st.board then get vis new_st.board else
           let neg = begin
-            match (get_score3 new_st (-beta) (-alpha) vis col) with
+            match (get_score3 new_st (-beta) (-alpha) vis col (i-1)) with
             | (cc, ss) -> (cc, -ss)
           end
           in match neg with
@@ -682,10 +674,10 @@ and calc_scores3 st a bm vis =
       in
       if score >= beta then (c, score) else
       if score > alpha then 
-        calc_scores3_aux st (new_next_col c (get_score_list st)) score beta (put vis new_st.board score) c 
-      else calc_scores3_aux st (new_next_col c (get_score_list st)) alpha beta (put vis new_st.board score) col
-    else calc_scores3_aux st (new_next_col c (get_score_list st)) alpha beta vis col
-  in calc_scores3_aux st 4 a bm vis 4
+        calc_scores3_aux st (new_next_col c (get_score_list st)) score beta (put vis new_st.board score) c i 
+      else calc_scores3_aux st (new_next_col c (get_score_list st)) alpha beta (put vis new_st.board score) col i
+    else calc_scores3_aux st (new_next_col c (get_score_list st)) alpha beta vis col i
+  in calc_scores3_aux st 4 a bm vis 4 i
 
 (** [pick_rand_from lst] is a random element of [lst]. *)
 let pick_rand_from lst =
@@ -835,7 +827,8 @@ let start_solve st =
   | 1 -> one_played st
   | 2 -> two_played st
   | 3 -> three_played st
-  | _ -> let (c, r) = solve st in c
+  | _ -> let (c, r) = solve st in 
+    if playable st.board c then c else failwith "yikes"
 
 let cpu_move_hard st =
   match moves_that_win st with  
