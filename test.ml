@@ -61,11 +61,23 @@ let cpu_move_test_notequals
     (wrong_output: int) : test = 
   name >:: (fun _ -> assert_equal false (cpu_move input1 = wrong_output))
 
+let cpu_move_hard_test_notequals
+    (name: string)
+    (input1: State.t)
+    (wrong_output: int) : test = 
+  name >:: (fun _ -> assert_equal false (cpu_move_hard input1 = wrong_output))
+
 let cpu_move_easy_test
     (name: string)
     (input1: State.t)
     (expected_output: int) : test = 
   name >:: (fun _ -> assert_equal expected_output (cpu_move_easy input1))
+
+let cpu_move_hard_test
+    (name: string)
+    (input1: State.t)
+    (expected_output: int) : test = 
+  name >:: (fun _ -> assert_equal expected_output (cpu_move_hard input1))
 
 let set_turn_test
     (name: string)
@@ -144,15 +156,39 @@ let move_tests =
     cpu_move_test 
       "Medium AI should play column 7 to win diagonally in board red_3" 
       State.state_red_3 7;
+    cpu_move_test 
+      "Medium AI should play column 1 to win vertically in board blue_3" 
+      State.state_blue_3 1;
     cpu_move_test_notequals 
       "Medium AI should not play column 7 as it would trigger blue win" 
       State.state_blue_pot 7;
+    cpu_move_test_notequals 
+      "Medium AI should not play column 2 as it would trigger blue win" 
+      State.state_blue_pot_2 2;
     cpu_move_easy_test 
       "Easy AI should play column 1 to block blue win in board blue_3" 
       State.state_blue_3 1;
     cpu_move_easy_test 
       "Easy AI should play column 7 to win diagonally in board red_3" 
       State.state_red_3 7;
+    cpu_move_easy_test 
+      "Easy AI should play column 1 to win vertically in board blue_3" 
+      State.state_blue_3 1;
+    cpu_move_hard_test 
+      "Hard AI should play column 1 to block blue win in board blue_3" 
+      State.state_blue_3 1;
+    cpu_move_hard_test 
+      "Hard AI should play column 7 to win diagonally in board red_3" 
+      State.state_red_3 7;
+    cpu_move_hard_test 
+      "Hard AI should play column 1 to win vertically in board blue_3" 
+      State.state_blue_3 1;
+    cpu_move_hard_test_notequals 
+      "Hard AI should not play column 7 as it would trigger blue win" 
+      State.state_blue_pot 7;
+    cpu_move_hard_test_notequals 
+      "Hard AI should not play column 2 as it would trigger blue win" 
+      State.state_blue_pot_2 2;
   ]
 
 let set_turn_tests = 

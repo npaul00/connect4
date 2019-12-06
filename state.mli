@@ -144,6 +144,9 @@ val state_blue_pot : t
 (** [red_3] is a board with three red pieces in a row. *)
 val red_3 : board
 
+(** [blue_diag_pot_2] is a board with three blues in a row diagonally. *)
+val blue_diag_pot_2 : board
+
 (** [state_red_3] is the state with board [red_3]. *)
 val state_red_3 : t
 
@@ -152,3 +155,6 @@ val state_red_3_blue_turn : t
 
 (** [state_blue_3_blue_turn] is [state_blue_3] but switched to red's turn.  *)
 val state_blue_3_blue_turn : t
+
+(** [state_blue_pot_2] is the state with the board [blue_diag_pot_2]. *)
+val state_blue_pot_2 : t
