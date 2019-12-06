@@ -98,6 +98,7 @@ let red_blue_stats r b =
 let stats_messages () st =
   let r = State.red_wins st in
   let b = State.blue_wins st in 
+  let t = State.num_ties st in
   ANSITerminal.(print_string [magenta; Underlined; Bold] "   STATS   ");
   print_endline "";
   ANSITerminal.(print_string [yellow; Underlined; Bold] "Score"); 
@@ -105,7 +106,9 @@ let stats_messages () st =
   ANSITerminal.(print_string [red] "Red:"); 
   print_endline (" " ^ (r |> string_of_int));
   ANSITerminal.(print_string [cyan] "Blue:"); 
-  print_string (" " ^ (b |> string_of_int));
+  print_endline (" " ^ (b |> string_of_int));
+  ANSITerminal.(print_string [yellow] "Ties:"); 
+  print_string (" " ^ (t |> string_of_int));
   red_blue_stats r b;
   print_endline "";
   match greater_wins st with
