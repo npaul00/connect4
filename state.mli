@@ -40,6 +40,9 @@ val red_wins : t -> int
 (** [blue_wins t] is the number of wins for the blue player in [t]. *)
 val blue_wins : t -> int
 
+(** [num_ties t] is the number of ties in [t]. *)
+val num_ties : t -> int
+
 (** [init_state] is the initial state of the game, with no pieces on the board, 
     and it being Blue's turn to play. *)
 val init_state : t
