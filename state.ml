@@ -908,6 +908,13 @@ let state_blue_3 = {
   moves = [2;1;2;1;3;1;7];
 }
 
+let state_blue_3_blue_turn = {
+  board = blue_3;
+  turn = Blue;
+  wins = (0,0,0);
+  moves = [2;1;2;1;3;1;7];
+}
+
 let state_blue_pot = {
   board = blue_diag_pot;
   turn = Red;
@@ -918,6 +925,13 @@ let state_blue_pot = {
 let state_red_3 = {
   board = red_3;
   turn = Red;
+  wins = (0,0,0);
+  moves = [2;3;4;5;4;6;5;6;7;7;6;1;7]
+}
+
+let state_red_3_blue_turn = {
+  board = red_3;
+  turn = Blue;
   wins = (0,0,0);
   moves = [2;3;4;5;4;6;5;6;7;7;6;1;7]
 }
@@ -959,6 +973,7 @@ and next_move min max st clr i =
   else
     min
 *)
+
 
 
 
