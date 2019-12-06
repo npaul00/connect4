@@ -4,12 +4,14 @@ type status = color option
 type board = (position * status) list
 type num_wins = int * int * int
 type moves_list = int list
+type visited = (board * int) list
 
 type t = {
   board : board;
   turn : color;
   wins : num_wins;
-  moves : moves_list
+  moves : moves_list;
+  visit : visited 
 }
 
 let board t =
@@ -25,7 +27,7 @@ let moves t =
   t.moves
 
 let set_turn t clr =
-  {board = t.board; turn = clr; wins = t.wins; moves = t.moves}
+  {board = t.board; turn = clr; wins = t.wins; moves = t.moves; visit = t.visit}
 
 let empty = 
   []
@@ -88,9 +90,9 @@ let testing = false
 let init_state = 
   if testing then
     {board = man_test; turn = Blue; wins = (0, 0, 0); 
-     moves = half_board_moves}
+     moves = half_board_moves; visit = []}
   else 
-    {board = empty_board; turn = Blue; wins = (0, 0, 0); moves = []}
+    {board = empty_board; turn = Blue; wins = (0, 0, 0); moves = []; visit = []}
 
 (** [bot] is the bottom row of a board *)
 let bot = "1 | 2 | 3 | 4 | 5 | 6 | 7 | "
@@ -250,13 +252,13 @@ let update_wins t =
   match winning_player t, t.wins with
   | Some Red, (red, blue, ties) -> 
     let u_wins = (red + 1, blue, ties) in
-    {board = empty_board; turn = new_color u_wins; wins = u_wins; moves = []} 
+    {board = empty_board; turn = new_color u_wins; wins = u_wins; moves = []; visit = t.visit} 
   | Some Blue, (red, blue, ties) -> 
     let u_wins = (red, blue + 1, ties) in
-    {board = empty_board; turn = new_color u_wins; wins = u_wins; moves = []} 
+    {board = empty_board; turn = new_color u_wins; wins = u_wins; moves = [];  visit = t.visit} 
   | None, (red, blue, ties) -> 
     let u_wins = (red, blue, ties + 1) in
-    {board = empty_board; turn = new_color u_wins; wins = u_wins; moves = []} 
+    {board = empty_board; turn = new_color u_wins; wins = u_wins; moves = [];  visit = t.visit} 
 
 (** [update_wins_tuple t wins] is [t] with [wins] for the wins field*)
 let update_wins_tuple t wins =
@@ -319,8 +321,11 @@ let move t c =
     {board = update c height t.turn t.board;
      turn = other_color t.turn;
      wins = t.wins;
-     moves = update_moves_list t.moves c}
+     moves = update_moves_list t.moves c;  visit = t.visit}
   else t
+
+let update_vis t vis =    
+  {board = t.board; turn = t.turn; wins = t.wins; moves = t.moves;  visit = vis}
 
 let move_anim t c = 
   let height = drop_height c t.board in
@@ -330,7 +335,7 @@ let move_anim t c =
       {board = update c height t.turn t.board;
        turn = other_color t.turn;
        wins = t.wins;
-       moves = update_moves_list t.moves c} end
+       moves = update_moves_list t.moves c;  visit = t.visit} end
   else t
 
 let move_anim_d t c= 
@@ -341,7 +346,7 @@ let move_anim_d t c=
       {board = update c height t.turn t.board;
        turn = other_color t.turn;
        wins = t.wins;
-       moves = update_moves_list t.moves c} end
+       moves = update_moves_list t.moves c;  visit = []} end
   else t
 
 
@@ -355,7 +360,7 @@ let rec check_full b =
 (**[state_w_other_color t] is the state with the same board as [t.board] 
    but with the turn changed to the other color. *)
 let state_w_other_color t = 
-  {board = t.board; turn = other_color t.turn; wins = t.wins; moves = t.moves}
+  {board = t.board; turn = other_color t.turn; wins = t.wins; moves = t.moves; visit = t.visit}
 
 (**[possible_moves_aux b c] is a list of the locations of the possible moves for
    the current turn of state [t]. *)
@@ -456,34 +461,34 @@ let next_to loc =
 
 (**[cpu_move t] is the column that the computer should place a piece in. *)
 let cpu_move t =
-  if num_pieces_on_board t.board <= 1 then next_to (piece_on_board t.board) else
+  if num_pieces_on_board t.board <= 1 then (next_to (piece_on_board t.board), t.visit) else
     match moves_that_win t with
-    | (x, y) :: tl -> Unix.sleepf 1.0; x
+    | (x, y) :: tl -> Unix.sleepf 1.0; (x, t.visit)
     | [] -> 
       match moves_that_block t with 
-      | (x, y) :: tl -> Unix.sleepf 1.0; x
+      | (x, y) :: tl -> Unix.sleepf 1.0; (x, t.visit)
       | [] -> 
         let p_moves = possible_moves t in
         let s_moves = safe_moves t p_moves in 
         let safer = safer_moves t s_moves in
         match safer with
         | (x, y) :: tl -> 
-          cpu_choose_move t (Random.int (List.length safer)) safer
+          (cpu_choose_move t (Random.int (List.length safer)) safer, t.visit)
         | [] ->
           match s_moves with
           | (x, y) :: tl -> 
-            cpu_choose_move t (Random.int (List.length s_moves)) s_moves
-          | [] -> cpu_choose_move t (Random.int (List.length p_moves)) p_moves
+            (cpu_choose_move t (Random.int (List.length s_moves)) s_moves, t.visit)
+          | [] -> (cpu_choose_move t (Random.int (List.length p_moves)) p_moves, t.visit)
 
 let cpu_move_easy t =
   match moves_that_win t with
-  | (x, y) :: tl -> Unix.sleepf 1.0; x
+  | (x, y) :: tl -> Unix.sleepf 1.0; (x, t.visit)
   | [] -> 
     match moves_that_block t with 
-    | (x, y) :: tl -> Unix.sleepf 1.0; x
+    | (x, y) :: tl -> Unix.sleepf 1.0; (x, t.visit)
     | [] -> 
       let p_moves = possible_moves t in
-      cpu_choose_move t (Random.int (List.length p_moves)) p_moves
+      (cpu_choose_move t (Random.int (List.length p_moves)) p_moves, t.visit)
 
 (** [count_moves b] is the amount of times a piece has been placed in [b] *)
 let rec count_moves b =
@@ -534,8 +539,6 @@ let rec new_next_col c = function
       new_next_col c (s ::tl)
   | _ -> 8
 
-type visited = (board * int) list
-
 let put vis k v =
   if List.length vis > 10000 then
     match List.rev vis with
@@ -550,27 +553,27 @@ let contain vis k = List.mem_assoc k vis
 let rec solve st =
   let min = -1 in
   let max = 1 in
-  let i = if count_moves (board st) > 36 then 7 else 
-    if count_moves (board st) > 24 then 5 else 3 in
-  let rec solve_aux min' max' c = 
-    if min' >= max' then (c, min') else
+  let i = if count_moves st.board < 26 then 
+      (count_moves st.board)/6 + 4 else 9999 in
+  let rec solve_aux min' max' c st = 
+    if min' >= max' then (c, min', st.visit) else
       let med = min' + (max' - min')/2 in
       let med' = if med <= 0 && min'/2 < med then min'/2
         else if med >= 0 && max/2 > med then max/2 
         else med in
-      let (col, r) = get_score3 st med' (med'+1) [] c i in
-      if r <= med' then solve_aux min' r col else
-        solve_aux r max' col
-  in solve_aux min max 4 
+      let (col, r, v) = get_score3 st med' (med'+ 1) st.visit c i in
+      if r <= med' then solve_aux min' r col (update_vis st v) else
+        solve_aux r max' col (update_vis st v)
+  in solve_aux min max 4 st
 
 and get_score3 st alpha beta vis col i = 
-  if check_full st.board then (1, 0) else
+  if check_full st.board then (1, 0, vis) else
     match moves_that_win st with
-    | (x, y) :: tl -> (x, (43 - (count_moves st.board))/2)
+    | (x, y) :: tl -> (x, (43 - (count_moves st.board))/2, vis)
     | [] -> 
       let max = (41 - (count_moves st.board))/2 in
       let bm = if beta > max then max else beta in
-      if alpha >= bm then (col, bm) else
+      if alpha >= bm then (col, bm, vis) else
         calc_scores3 st alpha bm vis i
 
 and check_safe st c =
@@ -580,21 +583,20 @@ and check_safe st c =
   in check_safe_aux c (safe_moves st (possible_moves st)) 
 
 and calc_scores3 st a bm vis i =
-  let rec calc_scores3_aux st c alpha beta vis col i =
-
-    if i < 1 then (1, 0) else
-    if c > 7 then (col, alpha) else
+  let rec calc_scores3_aux st c alpha beta vis col i = 
+    if i < 1 then (1, 0, vis) else
+    if c > 7 then (col, alpha, vis) else
     if playable st.board c && check_safe st c then
       let new_st = move st c in
       let score = if contain vis new_st.board then get vis new_st.board else
           let neg = begin
             match (get_score3 new_st (-beta) (-alpha) vis col (i-1)) with
-            | (cc, ss) -> (cc, -ss)
+            | (cc, ss, vis) -> (cc, -ss)
           end
           in match neg with
           | (c', s') -> s'
       in
-      if score >= beta then (c, score) else
+      if score >= beta then (c, score, vis) else
       if score > alpha then 
         calc_scores3_aux st (new_next_col c (get_score_list st)) score beta (put vis new_st.board score) c i 
       else calc_scores3_aux st (new_next_col c (get_score_list st)) alpha beta (put vis new_st.board score) col i
@@ -745,25 +747,24 @@ let three_played st =
     the game.*)
 let start_solve st =
   match num_pieces_on_board st.board with
-  | 0 -> Unix.sleepf 1.0; 4
-  | 1 -> Unix.sleepf 1.0; one_played st
-  | 2 -> Unix.sleepf 1.0; two_played st
-  | 3 -> Unix.sleepf 1.0; three_played st
-  | _ -> let (c, r) = solve st in 
-    if check_safe st c then c else 
-    if playable st.board c then c else
-      let p_moves = possible_moves st in
-      let moves = safe_moves st p_moves in
+  | 0 -> Unix.sleepf 1.0;(4, st.visit)
+  | 1 -> Unix.sleepf 1.0;(one_played st, st.visit)
+  | 2 -> Unix.sleepf 1.0;(two_played st, st.visit)
+  | 3 -> Unix.sleepf 1.0;(three_played st, st.visit)
+  | _ -> let ((c, r, v):(int*int*visited)) = solve st in 
+    if check_safe st c then (c, v) else 
+    if playable st.board c then (c, v) else
+      let moves = safe_moves st (possible_moves st) in
       match moves with
-      | [] -> let (c', _) = pick_rand_from p_moves in c'
-      | _ -> let (c'', _) = pick_rand_from moves in c''
+      | [] -> let (c', _) = pick_rand_from (possible_moves st) in (c', v)
+      | h::t -> let (c', _) = pick_rand_from moves in (c', v)
 
 let cpu_move_hard st =
   match moves_that_win st with  
-  | (x, y) :: tl -> Unix.sleepf 1.0; x
+  | (x, y) :: tl -> Unix.sleepf 1.0;(x, st.visit)
   | [] -> 
     match moves_that_block st with 
-    | (x, y) :: tl -> Unix.sleepf 1.0; x
+    | (x, y) :: tl -> Unix.sleepf 1.0;(x, st.visit)
     | [] -> start_solve st
 
 (** MANUALLY-TYPED BOARDS AND STATES FOR TESTING *)
@@ -821,6 +822,7 @@ let red_3 : board = [((1,6), None);     ((2,6), None);      ((3,6), None);      
                      ((1,3), None);     ((2,3), None);      ((3,3), None);      ((4,3), None);      ((5,3), None);       ((6,3), Some Red);   ((7,3), Some Blue);
                      ((1,2), None);     ((2,2), None);      ((3,2), None);      ((4,2), Some Red);  ((5,2), Some Red);   ((6,2), Some Blue);  ((7,2), Some Blue);
                      ((1,1), Some Red); ((2,1), Some Red);  ((3,1), Some Blue); ((4,1), Some Red);  ((5,1), Some Blue);  ((6,1), Some Blue);  ((7,1), Some Red)]
+
 let blue_diag_pot_2 : board = [((1,6), None);      ((2,6), None); ((3,6), None);      ((4,6), Some Blue); ((5,6), None);     ((6,6), None); ((7,6), None);
                                ((1,5), None);      ((2,5), None); ((3,5), None);      ((4,5), Some Red);  ((5,5), None);     ((6,5), None); ((7,5), None);
                                ((1,4), None);      ((2,4), None); ((3,4), None);      ((4,4), Some Blue); ((5,4), None);     ((6,4), None); ((7,4), None);
@@ -835,12 +837,9 @@ let test_safe : board = [((1,6), None);     ((2,6), Some Blue);      ((3,6), Som
                          ((1,2), Some Red);     ((2,2), Some Blue);      ((3,2), Some Red);      ((4,2), Some Red);  ((5,2), None);   ((6,2), Some Blue);  ((7,2), None);
                          ((1,1), Some Blue); ((2,1), Some Red);  ((3,1), Some Red); ((4,1), Some Blue);  ((5,1), Some Blue);  ((6,1), Some Blue);  ((7,1), Some Red)]
 
-let ts_st = {
-  board = test_safe;
-  turn = Red;
-  wins = (0,0,0);
-  moves = [4; 4; 4; 4; 4; 4; 5; 3; 6; 7; 6; 3; 6; 6; 3; 3; 6; 3; 3; 2; 2; 2]
-}
+
+(*
+>>>>>>> Stashed changes
 let state_blue_3 = {
   board = blue_3;
   turn = Red;
@@ -882,3 +881,28 @@ let state_red_3_blue_turn = {
   wins = (0,0,0);
   moves = [2;3;4;5;4;6;5;6;7;7;6;1;7]
 }
+<<<<<<< Updated upstream
+=======
+*)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

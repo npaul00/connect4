@@ -16,6 +16,8 @@ type t
 (** The type for the number of wins for the red and blue players respectively. *)
 type num_wins
 
+type visited
+
 (** The type for the list of moves. *)
 type moves_list = int list
 
@@ -91,14 +93,16 @@ val other_color : color -> color
 (** [check_full b] is if board [b] is full. *)
 val check_full : board -> bool
 
+val update_vis : t -> visited -> t
+
 (** [cpu_move t] is move chosen by the medium bot *)
-val cpu_move : t -> int
+val cpu_move : t -> int * visited
 
 (** [cpu_move_easy t] is move chosen by the easy bot *)
-val cpu_move_easy : t -> int
+val cpu_move_easy : t -> int * visited
 
 (** [cpu_move_hard t] is move chosen by the hard bot *)
-val cpu_move_hard : t -> int
+val cpu_move_hard : t -> int * visited
 
 (** [drop_height c b] is the highest open spot in column [c] on board [b] *)
 val drop_height : int -> board -> int
@@ -128,7 +132,7 @@ val empty_updated : board
 
 (** [man_empty_board] is an empty board. *)
 val man_empty_board : board
-
+(* 
 (** [blue_3] is a board with 3 blue pieces in a row. *)
 val blue_3 : board
 
@@ -157,4 +161,4 @@ val state_red_3_blue_turn : t
 val state_blue_3_blue_turn : t
 
 (** [state_blue_pot_2] is the state with the board [blue_diag_pot_2]. *)
-val state_blue_pot_2 : t
+val state_blue_pot_2 : t*)
