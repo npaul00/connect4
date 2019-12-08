@@ -51,12 +51,6 @@ val num_ties : t -> int
     and it being Blue's turn to play. *)
 val init_state : t
 
-(** [display b i] displays the board [b]. *)
-val display : board -> int -> unit
-
-(** [display b i] displays the board [b] in night mode. *)
-val display_d : board -> int -> unit
-
 (** [move t c] is the game state after the current player places a piece into
     column [c] in the current state [t]. *)
 val move : t -> int -> t
@@ -75,10 +69,6 @@ val get_pos : bool_or_pos -> position list
 
 (** [check_win b clr] checks if there are 4 pieces with color [clr] in a row. *)
 val check_win : board -> color -> bool
-
-val display_win : color -> board -> int -> unit
-
-val display_win_d : color -> board -> int -> unit
 
 (** [winning_player t] is Some [clr] if that color won, or [None] if no one is 
     winning. *)
@@ -125,5 +115,15 @@ val update : int -> int -> color -> board -> board
 
 (** [new_color wins] is the new starting color of a new game*)
 val new_color : num_wins -> color
+
+(** [display b i] displays the board [b]. *)
+val display : board -> int -> unit
+
+(** [display b i] displays the board [b] in night mode. *)
+val display_d : board -> int -> unit
+
+val display_win : color -> board -> int -> unit
+
+val display_win_d : color -> board -> int -> unit
 
 val make_state : board -> color -> num_wins -> moves_list -> visited -> t

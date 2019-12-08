@@ -1,4 +1,4 @@
-MODULES=command state main authors computer test
+MODULES=command state main authors test
 OBJECTS=$(MODULES:=.cmo)
 MLS=$(MODULES:=.ml)
 MLIS=$(MODULES:=.mli)

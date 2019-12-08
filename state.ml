@@ -27,11 +27,8 @@ let wins t =
 let moves t =
   t.moves
 
-let set_turn t clr =
-  {board = t.board; turn = clr; wins = t.wins; moves = t.moves; visit = t.visit}
-
-let empty = 
-  []
+let visit t = 
+  t.visit
 
 let red_wins t =
   match t.wins with
@@ -45,12 +42,18 @@ let num_ties t =
   match t.wins with
   | (_, _, ties) -> ties
 
+let set_turn t clr =
+  {board = t.board; turn = clr; wins = t.wins; moves = t.moves; visit = t.visit}
+
+let empty = 
+  []
+
 let empty_board = 
   let rec empty_board_aux b r c = 
     if c > 7 && r < 6 then
-      empty_board_aux b (r+1) 1
+      empty_board_aux b (r + 1) 1
     else if c < 8 && r < 7 then
-      empty_board_aux (((c,r), None) :: b) r (c+1)
+      empty_board_aux (((c, r), None) :: b) r (c + 1)
     else 
       b
   in empty_board_aux empty 1 1
@@ -58,18 +61,18 @@ let empty_board =
 let half_board = 
   let rec half_board_aux b r c =
     if c > 7 && r < 6 then
-      half_board_aux b (r+1) 1
+      half_board_aux b (r + 1) 1
     else if c < 8 && r < 7 then
       if c mod 2 = 0 && r < 3 then 
-        half_board_aux (((c,r), Some Blue) :: b) r (c+1)
+        half_board_aux (((c, r), Some Blue) :: b) r (c + 1)
       else if r < 3 then 
-        half_board_aux (((c,r), Some Red) :: b) r (c+1)
+        half_board_aux (((c, r), Some Red) :: b) r (c + 1)
       else if r < 4 && c mod 2 = 0 then
-        half_board_aux (((c,r), Some Red) :: b) r (c+1)
+        half_board_aux (((c, r), Some Red) :: b) r (c + 1)
       else if r < 4  then
-        half_board_aux (((c,r), Some Blue) :: b) r (c+1)
+        half_board_aux (((c, r), Some Blue) :: b) r (c + 1)
       else 
-        half_board_aux (((c,r), None) :: b) r (c+1)
+        half_board_aux (((c, r), None) :: b) r (c + 1)
     else 
       b
   in half_board_aux empty 1 1
@@ -80,7 +83,6 @@ let man_test : board =        [((1,6), None); ((2,6), None); ((3,6), Some Blue);
                                ((1,3), None); ((2,3), None); ((3,3), Some Red); ((4,3), Some Red); ((5,3), Some Blue); ((6,3), Some Blue); ((7,3), None);
                                ((1,2), None); ((2,2), None); ((3,2), Some Blue); ((4,2), Some Blue); ((5,2), Some Red); ((6,2), Some Red); ((7,2), None);
                                ((1,1), None); ((2,1), None); ((3,1), Some Red); ((4,1), Some Red); ((5,1), Some Blue); ((6,1), Some Blue); ((7,1), None)]
-
 
 let half_board_moves = 
   [1; 2; 3; 4; 5; 6; 7; 2; 3; 4; 5; 6; 7; 7; 1; 1; 2; 3; 4; 5; 6]
