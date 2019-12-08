@@ -2,21 +2,21 @@
 type color = Red | Blue
 
 (** The type for the (x,y) coordinate position on the board. *)
-type position
+type position = int * int
 
 (** The type for the status of a position on the board. *)
-type status
+type status = color option
 
 (** The type for the board. *)
-type board
+type board = (position * status) list
 
 (** The abstract type of values representing the game state. *)
 type t
 
 (** The type for the number of wins for the red and blue players respectively. *)
-type num_wins
+type num_wins = int * int * int
 
-type visited
+type visited = (board * int) list
 
 (** The type for the list of moves. *)
 type moves_list = int list
@@ -126,51 +126,4 @@ val update : int -> int -> color -> board -> board
 (** [new_color wins] is the new starting color of a new game*)
 val new_color : num_wins -> color
 
-(** [red_diag_win] is a board with a red diagonal win. *)
-val red_diag_win : board
-
-(** [blue_horiz_win] is a board with a blue horizontal win. *)
-val blue_horiz_win : board
-
-(** [full_board_tie] is a full board where the players tied. *)
-val full_board_tie : board
-
-(** [blue_horiz_win_updated] is a board with one piece inserted into 
-    [blue_horiz_win]. *)
-val blue_horiz_win_updated : board
-
-(** [empty_updated] is a board with one piece. *)
-val empty_updated : board
-
-(** [man_empty_board] is an empty board. *)
-val man_empty_board : board
-
-(** [blue_3] is a board with 3 blue pieces in a row. *)
-val blue_3 : board
-
-(** [state_blue_3] is the state with board [blue_3]. *)
-val state_blue_3 : t
-
-(** [blue_diag_pot] is a board with three blues in a row diagonally. *)
-val blue_diag_pot : board
-
-(** [state_blue_pot] is the state with the board [blue_diag_pot]. *)
-val state_blue_pot : t
-
-(** [red_3] is a board with three red pieces in a row. *)
-val red_3 : board
-
-(** [blue_diag_pot_2] is a board with three blues in a row diagonally. *)
-val blue_diag_pot_2 : board
-
-(** [state_red_3] is the state with board [red_3]. *)
-val state_red_3 : t
-
-(** [state_red_3_blue_turn] is [state_red_3] but switched to blue's turn. *)
-val state_red_3_blue_turn : t
-
-(** [state_blue_3_blue_turn] is [state_blue_3] but switched to red's turn.  *)
-val state_blue_3_blue_turn : t
-
-(** [state_blue_pot_2] is the state with the board [blue_diag_pot_2]. *)
-val state_blue_pot_2 : t
+val make_state : board -> color -> num_wins -> moves_list -> visited -> t
