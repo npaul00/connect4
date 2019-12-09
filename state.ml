@@ -201,7 +201,7 @@ let rec four_in_a_row lst b clr =
     end
 
 (** [check_right_diag b clr lst] checks if any right diagonal in board [b] has
-    four pieces of color [clr] in a row. *)
+    four pieces of color [clr] in a row. *) 
 let rec check_right_diag b clr lst op =
   match lst with
   | [] -> if op then (Truth false) else Pos []
@@ -831,6 +831,18 @@ let three_played st =
   | [7; 6; 7] -> pick_rand_from [4; 7]
   | _ -> 4
 
+let rec count_bot st i start =
+  if i < 3 then 
+    match pos_status st.board (i+start,1) with
+    | None | Some Red -> 0 + count_bot st (i+1) start
+    | Some Blue -> 1 + count_bot st (i+1) start
+  else 0
+
+let four_played st =
+  if count_bot st 0 1 > 0 && count_bot st 0 5 = 0 then 5
+  else if count_bot st 0 1 = 0 && count_bot st 0 5 > 0 then 3
+  else 4
+
 (** [start_solve st] is the algorithm for the cpu's moves near the start of 
     the game.*)
 let start_solve st =
@@ -839,6 +851,7 @@ let start_solve st =
   | 1 -> Unix.sleepf 1.0;(one_played st, st.visit)
   | 2 -> Unix.sleepf 1.0;(two_played st, st.visit)
   | 3 -> Unix.sleepf 1.0;(three_played st, st.visit)
+  | 5 -> Unix.sleepf 1.0;(four_played st, st.visit)
   | _ -> let ((c, r, v):(int*int*visited)) = solve st in 
     if check_safe st c then (c, v) else 
     if playable st.board c then (c, v) else
