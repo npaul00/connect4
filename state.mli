@@ -21,6 +21,7 @@ type visited = (board * int) list
 (** The type for the list of moves. *)
 type moves_list = int list
 
+(** The type for a boolean or a position list. *)
 type bool_or_pos = Truth of bool | Pos of position list
 
 (** [turn t] is the color of whose turn it is to play in state [t]. *)
@@ -63,8 +64,14 @@ val move_anim : t -> int -> t
     column [c] in the current state [t] with a fall animation in night mode. *)
 val move_anim_d : t -> int -> t
 
+(** [get_truth b] turns [b] into a boolean.
+    Requires:
+    [b] is a Truth, not a Pos. *)
 val get_truth : bool_or_pos -> bool
 
+(** [get_pos b] turns [b] into a position list.
+    Requires:
+    [b] is a Pos, not a Truth. *)
 val get_pos : bool_or_pos -> position list
 
 (** [check_win b clr] checks if there are 4 pieces with color [clr] in a row. *)

@@ -256,12 +256,10 @@ let rec check_vert b clr lst op =
     else if (four_in_a_row (vert (x, y)) b clr) then Pos (vert (x, y))
     else check_vert b clr t op
 
-(* ADD DOCS*)
 let get_truth = function
   | Truth b -> b
   | Pos _ -> failwith "Not a truth value"
 
-(* ADD DOCS*)
 let get_pos = function
   | Pos lst -> lst
   | Truth _ -> failwith "Not a position list"
