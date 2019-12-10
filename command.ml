@@ -355,8 +355,8 @@ and cpu_play st d last () i mov dis =
     match turn with 
     | State.Red -> 
       print_endline "";
-      let (move_col(*, vis*)) = op st in
-      cpu_play (move st move_col) true (move_col) () i mov dis;
+      let (move_col, vis) = op st in
+      cpu_play (State.update_vis (move st move_col) vis) true (move_col) () i mov dis;
     | State.Blue -> 
       print_string "\n> ";
       try match parse (read_line()) with
