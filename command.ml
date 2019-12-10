@@ -289,12 +289,14 @@ and two_play st d last () mov dis =
         print_endline "Invalid move! Hint: type 'go' and a column number"; 
         two_play st false last () mov dis
       | Settings -> settings_menu () mov dis (two_play st true last ())
-      | _ -> begin
+      | Quit -> begin
           ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
           print_endline "";
           try are_you_sure () mov dis 0
           with | Cancel -> two_play st true last () mov dis
         end
+      | _ -> print_endline "Invalid move! Hint: type 'go' and a column number";
+        two_play st false last () mov dis
     with 
     | Invalid -> 
       print_endline "Invalid move! Hint: type 'go' and a column number";
@@ -353,9 +355,8 @@ and cpu_play st d last () i mov dis =
     match turn with 
     | State.Red -> 
       print_endline "";
-      (*print_int (State.sim_game st 1 4);*)
-      let (move_col, vis) = op st in
-      cpu_play (State.update_vis (move st move_col) vis) true (move_col) () i mov dis;
+      let (move_col(*, vis*)) = op st in
+      cpu_play (move st move_col) true (move_col) () i mov dis;
     | State.Blue -> 
       print_string "\n> ";
       try match parse (read_line()) with
@@ -382,12 +383,14 @@ and cpu_play st d last () i mov dis =
           print_string "Invalid move! Hint: type 'go' and a column number"; 
           cpu_play st false last () i mov dis
         | Settings -> settings_menu () mov dis (cpu_play st true last () i)
-        | _ -> begin
+        | Quit -> begin
             ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
             print_endline "";
             try are_you_sure () mov dis 0 
             with | Cancel -> cpu_play st true last () i mov dis
           end
+        | _ -> print_string "Invalid move! Hint: type 'go' and a column number";
+          cpu_play st false last () i mov dis
       with 
       | Invalid -> 
         print_string "Invalid move! Hint: type 'go' and a column number";
@@ -417,7 +420,7 @@ and one_play st d () mov dis =
     | _ -> 
       print_endline "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
       print_string "> ";
-      one_play st false () mov dis
+      one_play st true () mov dis
   with
   | Invalid -> 
     print_endline "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
@@ -473,12 +476,22 @@ and execute_menu_command () mov dis =
       instructions_message ();
       execute_menu_command () mov dis
     | Four -> settings_menu () mov dis (execute_menu_command ())
-    | _ -> begin
+    | Quit -> begin
         ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
         print_endline "";
         try are_you_sure () mov dis 0 
         with | Cancel -> execute_menu_command () mov dis
       end
+    | _ -> print_string "Invalid. Please enter "; 
+      ANSITerminal.(print_string [cyan] "1");
+      print_string " for One Player Mode, ";
+      ANSITerminal.(print_string [cyan] "2");
+      print_endline " for Two Player Mode, ";
+      ANSITerminal.(print_string [cyan] "3");
+      print_string " to view the instructions, or ";
+      ANSITerminal.(print_string [cyan] "4");
+      print_string " to adjust the settings.";
+      execute_menu_command () mov dis
   with
   | Invalid -> 
     print_string "Invalid. Please enter "; 

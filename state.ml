@@ -79,20 +79,20 @@ let half_board =
 
 let man_test : board =        [((1,6), None); ((2,6), None); ((3,6), None); ((4,6), None); ((5,6), None); ((6,6), None); ((7,6), None);
                                ((1,5), None); ((2,5), None); ((3,5), None); ((4,5), None); ((5,5), None); ((6,5), None); ((7,5), None);
-                               ((1,4), None); ((2,4), None); ((3,4), None); ((4,4), Some Red); ((5,4), None); ((6,4), None); ((7,4), None);
-                               ((1,3), None); ((2,3), None); ((3,3), None); ((4,3), Some Blue); ((5,3), None); ((6,3), None); ((7,3), None);
-                               ((1,2), None); ((2,2), None); ((3,2), None); ((4,2), Some Red); ((5,2), Some Red); ((6,2), None); ((7,2), None);
-                               ((1,1), None); ((2,1), Some Blue); ((3,1), Some Red); ((4,1), Some Blue); ((5,1), Some Blue); ((6,1), Some Red); ((7,1), None)]
+                               ((1,4), None); ((2,4), None); ((3,4), None); ((4,4), None); ((5,4), None); ((6,4), None); ((7,4), None);
+                               ((1,3), None); ((2,3), None); ((3,3), None); ((4,3), None); ((5,3), None); ((6,3), None); ((7,3), None);
+                               ((1,2), Some Blue); ((2,2), None); ((3,2), None); ((4,2), Some Red); ((5,2), None); ((6,2), None); ((7,2), None);
+                               ((1,1), Some Blue); ((2,1), Some Blue); ((3,1), None); ((4,1), Some Red); ((5,1), None); ((6,1), Some Red); ((7,1), None)]
 
 let half_board_moves = 
   [1; 2; 3; 4; 5; 6; 7; 2; 3; 4; 5; 6; 7; 7; 1; 1; 2; 3; 4; 5; 6]
 
 (* set testing to true to start with a half board, false for an empty board *)
-let testing = false
+let testing = true
 
 let init_state = 
   if testing then
-    {board = half_board; turn = Blue; wins = (0, 0, 0); 
+    {board = man_test; turn = Blue; wins = (0, 0, 0); 
      moves = half_board_moves; visit = []}
   else 
     {board = empty_board; turn = Blue; wins = (0, 0, 0); moves = []; visit = []}
@@ -643,10 +643,10 @@ let rec print_vis = function
 
 let rec solve st =
   print_endline "Loading...";
-  let min = -1 in
-  let max = 1 in
+  let min = -5 in
+  let max = 5 in
   let i = if count_moves st.board < 26 then 
-      (count_moves st.board)/6 + 2 else 9999 in
+      (count_moves st.board)/6 + 5 else 9999 in
   let rec solve_aux min' max' c st = 
     if min' >= max' then (c, min', st.visit) else
       let med = min' + (max' - min')/2 in
@@ -676,23 +676,25 @@ and check_safe st c =
 
 and calc_scores3 st a bm v i =
   let rec calc_scores3_aux st c alpha beta vis col i = 
-    if i < 1 then (1, 0, vis) else
+    if i < 1 then (1, -1, vis) else
     if c > 7 then (col, alpha, vis) else
     if playable st.board c && check_safe st c then
       let new_st = move st c in
       let score = if contain vis new_st.board then get vis new_st.board else
-          let neg =
-
+          let neg = begin
+            print_endline " cool ";
+            print_int i;
+            print_int col;
             match (get_score3 new_st (-beta) (-alpha) vis col (i-1)) with
             | (cc, ss, vis) -> (cc, -ss)
-
+          end
           in match neg with
           | (c', s') -> s'
       in
-      if score >= beta then (c, score, vis) else
+      if score >= beta then (c, score, (put vis new_st.board score)) else
       if score > alpha then 
         calc_scores3_aux st (new_next_col c (get_score_list st)) score beta (put vis new_st.board score) c i
-      else calc_scores3_aux st (new_next_col c (get_score_list st)) alpha beta (put vis new_st.board score) col i
+      else calc_scores3_aux st (new_next_col c (get_score_list st)) alpha beta vis col i
     else calc_scores3_aux st (new_next_col c (get_score_list st)) alpha beta vis col i
   in calc_scores3_aux st 4 a bm v 4 i
 
