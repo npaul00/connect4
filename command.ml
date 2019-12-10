@@ -422,7 +422,7 @@ and one_play st d () mov dis =
   | Invalid -> 
     print_endline "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
     print_string "> ";
-    one_play st false () mov dis
+    one_play st true () mov dis
 
 and settings_menu () mov dis next =
   ANSITerminal.(print_string [cyan] 
