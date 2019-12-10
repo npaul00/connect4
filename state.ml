@@ -304,7 +304,7 @@ let rec print_row_win b temp r c clr =
       )
     else print_row_win b t r c clr
 
-(* ADD DOCS*)
+
 let rec display_win clr b r = 
   if r = 1 then begin print_string "\n"; print_string "| "; end;
   if r < 7 then begin display_win clr b (r + 1); print_row_win b b r 1 clr; end;
@@ -332,7 +332,7 @@ let rec print_row_win_d b temp r c clr =
       )
     else print_row_win_d b t r c clr
 
-(* ADD DOCS*)
+
 let rec display_win_d clr b r = 
   if r = 1 then begin print_string "\n"; ANSITerminal.(print_string [black ; Background White] "| "); end;
   if r < 7 then begin display_win_d clr b (r + 1); print_row_win_d b b r 1 clr; end;
