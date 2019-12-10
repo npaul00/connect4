@@ -1,3 +1,7 @@
+(**
+   Parsing of player commands.
+*)
+
 (**The type [command] represents a player command. *)
 type command = 
   | Go of int
@@ -41,14 +45,17 @@ val parse_menu: string -> command
    state [st] is displayed if [d] is true. If the winning condition has been 
    met, a winning message is displayed. *)
 val one_play: 
-  State.t -> bool -> unit -> (State.t -> int -> State.t) -> (State.board -> int -> unit) -> unit
+  State.t -> bool -> unit -> (State.t -> int -> State.t) -> 
+  (State.board -> int -> unit) -> unit
 
 (**[two_play st d last ()] executes the player's input [i] during a two player 
    game by executing the command resulting from [parse i]. The game board of
    state [st] is displayed if [d] is true. If the winning condition has been 
    met, a winning message is displayed. *)
-val two_play: State.t -> bool -> int -> unit -> (State.t -> int -> State.t) -> (State.board -> int -> unit) -> unit
+val two_play: State.t -> bool -> int -> unit -> (State.t -> int -> State.t) -> 
+  (State.board -> int -> unit) -> unit
 
 (**[execute_menu_command ()] executes the player's input [i] at the start menu
    by executing the command resulting from [parse_menu i] *)
-val execute_menu_command: unit -> (State.t -> int -> State.t) -> (State.board -> int -> unit) -> unit
+val execute_menu_command: unit -> (State.t -> int -> State.t) -> 
+  (State.board -> int -> unit) -> unit

@@ -129,22 +129,29 @@ let stats_messages () st =
 let help_message () = 
   ANSITerminal.(print_string [yellow; Underlined] "Instructions: "); 
   ANSITerminal.(print_string [yellow] "\n - Type 'go' followed by a column number to drop a piece of your color in that column.");
-  ANSITerminal.(print_string [yellow] "\nOnce a column is filled, you can no longer place pieces there.");
+  ANSITerminal.(print_string [yellow] "\n   Once a column is filled, you can no longer place pieces there.");
   ANSITerminal.(print_string [yellow] "\n - Game continues until one player gets four of their colored pieces in a row,"); 
-  ANSITerminal.(print_string [yellow] "\neither horizontally, vertically, or diagonally.");
-  ANSITerminal.(print_string [yellow] "\n - Type 'quit' at any time to exit the game,");
-  ANSITerminal.(print_string [yellow] "\nor 'help' to bring up these instructions again.");
+  ANSITerminal.(print_string [yellow] "\n   either horizontally, vertically, or diagonally.");
+  ANSITerminal.(print_string [yellow] "\n - Type 'quit' at any time to exit, 'menu' to return to the menu, 'settings' to adjust the");
+  ANSITerminal.(print_string [yellow] "\n   settings, 'stats' to view the score, or 'help' to bring up these instructions again.");
   print_endline ""
 
 let instructions_message () =
-  ANSITerminal.(print_string [yellow; Underlined] "   Instructions   ");
-  ANSITerminal.(print_string [yellow] "\n - To win, get four of your pieces in a row on the board. The sequence of four pieces can be horizontal, vertical, or diagonal.");
-  ANSITerminal.(print_string [yellow] "\n - In one player mode, you play Connect Four with an A.I. Enter '1' to go to one player mode.");
-  ANSITerminal.(print_string [yellow] "\n - In two player mode, two players can play Connect Four against each other. Enter '2' to go to two player mode.");
+  ANSITerminal.(print_string [yellow; Underlined] "   Instructions    ");
+  ANSITerminal.(print_string [yellow] "\n Object of the Game: ");
+  ANSITerminal.(print_string [yellow] "Be the first player to get four of your pieces in a row.");
+  ANSITerminal.(print_string [yellow] "\n    This can be done horizontally, vertically, or diagonally.");
+  ANSITerminal.(print_string [yellow] "\n One Player Mode: ");
+  ANSITerminal.(print_string [yellow] "Play against the computer at easy, medium, or hard difficulty levels.");
+  ANSITerminal.(print_string [yellow] "\n    Enter '1' to go to one player mode.");
+  ANSITerminal.(print_string [yellow] "\n Two Player Mode: ");
+  ANSITerminal.(print_string [yellow] "Two players take turns dropping one piece at a time.");
+  ANSITerminal.(print_string [yellow] "\n    Enter '2' to go to two player mode.");
   print_endline " "
 
-let starting_one_msg () = 
-  ANSITerminal.(print_string [red] "Starting One Player Mode");
+let starting_one_msg () d = 
+  let diff_str = if d = 1 then "Easy" else if d = 2 then "Medium" else "Hard" in 
+  ANSITerminal.(print_string [red] ("Starting One Player Mode: " ^ diff_str));
   ANSITerminal.(print_string [cyan] "\nType 'help' for help or 'settings' to adjust the settings at any time");
   print_endline " "
 
@@ -178,7 +185,7 @@ let rec play_again () st one_two mov dis=
       else if i = 4 then cpu_play st true 0 () 4 mov dis
       else two_play st true 0 () mov dis
     | AgainNo, i -> begin
-        ANSITerminal.(print_string [magenta] "Thanks for playing!");
+        ANSITerminal.(print_string [magenta; Bold] "Thanks for playing!");
         print_endline "";
         exit 0
       end
@@ -212,7 +219,7 @@ and are_you_sure () mov dis qm =
     | AgainYes ->
       if qm = 1 then execute_menu_command () mov dis
       else begin
-        ANSITerminal.(print_string [magenta] "Thanks for playing!"); 
+        ANSITerminal.(print_string [magenta; Bold] "Thanks for playing!"); 
         print_endline ""; 
         exit 0
       end
@@ -223,6 +230,20 @@ and are_you_sure () mov dis qm =
   with
   | Invalid -> begin print_endline "Invalid command! Hint: type 'yes' or 'no'";
       are_you_sure () mov dis qm
+    end
+
+and colored_win_msg clr st mov dis () = 
+  if State.color_to_string clr = "Red" then
+    begin
+      ANSITerminal.(print_string [red; Blink] ("\nRed wins!\n"));
+      print_endline "";
+      play_again () (State.update_wins st) 2 mov dis
+    end
+  else 
+    begin
+      ANSITerminal.(print_string [blue; Blink; Bold] ("\nBlue wins!\n"));
+      print_endline "";
+      play_again () (State.update_wins st) 2 mov dis
     end
 
 (** [two_play st d last ()] is the start of a two player game in state [st] and 
@@ -242,17 +263,11 @@ and two_play st d last () mov dis =
        (State.display_win last_clr (State.board st) 1;)
      else
        State.display_win_d last_clr (State.board st) 1;
-     (* State.print_pos_lst (State.board st) last_clr;
-        print_endline ""; *)
-     ANSITerminal.(print_string [Blink] 
-                     ("\n" ^ State.color_to_string last_clr ^ " wins!\n"));
-     print_endline "";
-     play_again () (State.update_wins st) 2 mov dis)
+     colored_win_msg last_clr st mov dis ())
   end
   else if (State.check_full board) then
     (ANSITerminal.(print_string [Blink] ("\nIt's a tie!\n")); 
      play_again () (State.update_wins st) 2 mov dis)
-
   else begin
     if d then begin
       if last <> 0 then begin
@@ -326,14 +341,14 @@ and cpu_play st d last () i mov dis =
          (State.display_win Red (State.board st) 1;)
        else
          State.display_win_d Red (State.board st) 1;
-       ANSITerminal.(print_string [Blink] ("\nComputer wins!\n"));
+       ANSITerminal.(print_string [red; Blink] ("\nComputer wins!\n"));
        print_endline ""; 
        play_again () (State.update_wins st) i mov dis)
     else (if dis == State.display then
             (State.display_win Blue (State.board st) 1;)
           else
             State.display_win_d Blue (State.board st) 1;
-          ANSITerminal.(print_string [Blink] ("\nYou win!\n"));
+          ANSITerminal.(print_string [blue; Blink] ("\nYou win!\n"));
           print_endline "";
           play_again () (State.update_wins st) i mov dis)
   end
@@ -403,13 +418,13 @@ and one_play st d () mov dis =
   difficulty_msg ();
   try match parse (read_line ()) with
     | Easy -> 
-      starting_one_msg ();
+      starting_one_msg () 1;
       cpu_play st d 0 () 1 mov dis
     | Medium -> 
-      starting_one_msg ();
+      starting_one_msg () 2;
       cpu_play st d 0 () 3 mov dis
     | Hard -> 
-      starting_one_msg ();
+      starting_one_msg () 3;
       cpu_play st d 0 () 4 mov dis
     | Quit -> begin 
         ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
