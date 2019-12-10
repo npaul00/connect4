@@ -729,6 +729,8 @@ let put vis k v =
     | [] -> (k, v) :: []
   else (k, v) :: vis
 
+(** [check_safe st c] is true if a move in [c] won't lead to the opposing player 
+    directly winning and false otherwise*)
 let check_safe st c =
   let rec check_safe_aux c = function
     | [] -> false
