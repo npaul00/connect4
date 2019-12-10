@@ -111,11 +111,11 @@ let stats_messages () st =
   ANSITerminal.(print_string [yellow; Underlined; Bold] "Score"); 
   print_endline "";
   ANSITerminal.(print_string [red] "Red:"); 
-  print_endline (" " ^ (r |> string_of_int));
+  print_endline (" " ^ string_of_int r);
   ANSITerminal.(print_string [cyan] "Blue:"); 
-  print_endline (" " ^ (b |> string_of_int));
+  print_endline (" " ^ string_of_int b);
   ANSITerminal.(print_string [yellow] "Ties:"); 
-  print_string (" " ^ (t |> string_of_int));
+  print_string (" " ^ string_of_int t);
   red_blue_stats r b;
   print_endline "";
   match greater_wins st with
@@ -155,10 +155,6 @@ let starting_one_msg () d =
   ANSITerminal.(print_string [cyan] "\nType 'help' for help or 'settings' to adjust the settings at any time");
   print_endline " "
 
-let rec string_of_moves_list = function
-  | h :: tl -> (string_of_int h) ^ " " ^ string_of_moves_list tl
-  | [] -> ""
-
 let difficulty_msg () =
   ANSITerminal.(print_string [yellow; Bold] "  CHOOSE DIFFICULTY  ");
   print_endline "";
@@ -170,49 +166,72 @@ let difficulty_msg () =
   print_endline "";
   print_string "\n> "
 
-(** [play again () st one_two] asks the user if they want to play again and 
-    starts a new game if the anser is yes. [one_two] is 1 for one player easy 
-    mode, 2 for two player, 3 for medium one player, 4 for hard one player*)
+(** [play_again () st one_two mov dis ] asks the user if they want to play again 
+    and starts a new game if the anser is yes. [one_two] is 1 for one player 
+    easy mode, 2 for two player, 3 for medium one player, 4 for hard one player*)
 let rec play_again () st one_two mov dis=
   print_endline "Would you like to play again?";
   ANSITerminal.(print_string [yellow] "\n   yes | no | menu | stats"); 
   print_endline "";
   print_string "> ";
   try match parse (read_line ()), one_two with
-    | AgainYes, i ->
-      if i = 1 then cpu_play st true 0 () 1 mov dis
-      else if i = 3 then cpu_play st true 0 () 3 mov dis
-      else if i = 4 then cpu_play st true 0 () 4 mov dis
-      else two_play st true 0 () mov dis
-    | AgainNo, i -> begin
-        ANSITerminal.(print_string [magenta; Bold] "Thanks for playing!");
-        print_endline "";
-        exit 0
-      end
-    | Quit, i -> begin
-        ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
-        print_endline "";
-        try are_you_sure () mov dis 0
-        with | Cancel -> play_again () st one_two mov dis
-      end
-    | Stats, i -> stats_messages () st; print_endline ""; play_again () st i mov dis
-    | MainMenu, i -> begin
-        ANSITerminal.(print_string [red] 
-                        "Are you sure you want to exit to the main menu? All stats will be reset.");
-        print_endline "";
-        try are_you_sure () mov dis 1
-        with | Cancel -> play_again () st i mov dis
-      end
-    | _, i -> print_endline 
-                "Invalid command! Hint: type 'yes', 'no', or 'menu' for the main menu."; 
-      play_again () st i mov dis
+    | AgainYes, i -> play_again_yes i st mov dis ()
+    | AgainNo, i -> play_again_no ()
+    | Quit, i -> play_again_quit i st mov dis ()
+    | Stats, i -> play_again_stats i st mov dis ()
+    | MainMenu, i -> play_again_menu i st mov dis ()
+    | _, i -> play_again_invalid i st mov dis ()
   with
-  | Invalid -> 
-    print_endline 
-      "Invalid command! Hint: type 'yes', 'no', 'menu', or 'stats'."; 
-    play_again () st one_two mov dis
+  | Invalid -> play_again_invalid one_two st mov dis ()
 
-(*qm = 0 for quit, 1 for menu*)
+(** [play_again_yes i st mov dis ()] is the result of [play_again] when the 
+    user input parses to Yes. It starts a new game. *)
+and play_again_yes i st mov dis () =
+  if i = 1 then cpu_play st true 0 () 1 mov dis
+  else if i = 3 then cpu_play st true 0 () 3 mov dis
+  else if i = 4 then cpu_play st true 0 () 4 mov dis
+  else two_play st true 0 () mov dis
+
+(** [play_again_no ()] is the result of [play_again] when the user input parses
+    to No. It exits the game engine. *)
+and play_again_no () = 
+  ANSITerminal.(print_string [magenta; Bold] "Thanks for playing!");
+  print_endline "";
+  exit 0
+
+(** [play_again_quit i st mov dis ()] is the result of [play_again] when the 
+    user input parses to Quit. It prompts the Are you sure message for quit. *)
+and play_again_quit i st mov dis () =
+  ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
+  print_endline "";
+  try are_you_sure () mov dis 0 with
+  | Cancel -> play_again () st i mov dis
+
+(** [play_again_stats i st mov dis ()] is the result of [play_again] when the 
+    user input parses to Stats. It displays the game statistics. *)
+and play_again_stats i st mov dis () = 
+  stats_messages () st; 
+  print_endline ""; 
+  play_again () st i mov dis
+
+(** [play_again_invalid i st mov dis ()] is the result of [play_again] when the 
+    user input parses to Invalid. It asks the user for a new input. *)
+and play_again_invalid i st mov dis () =
+  print_endline "Invalid command! Hint: type 'yes', 'no', 'menu', or 'stats'."; 
+  play_again () st i mov dis
+
+(** [play_again_yes i st mov dis ()] is the result of [play_again] when the 
+    user input parses to Menu. It prompts the Are your sure message for menu. *)
+and play_again_menu i st mov dis () = 
+  ANSITerminal.(print_string [red] 
+                  "Are you sure you want to exit to the main menu? All stats will be reset.");
+  print_endline "";
+  try are_you_sure () mov dis 1 with
+  | Cancel -> play_again () st i mov dis
+
+(** [are_you_sure () mov dis qm] asks the user if they are sure they want to
+    either quit the game if [qm]=0 or return to the menu if [qm]=1. If the 
+    answer is no, it returns the user to where they were. *)
 and are_you_sure () mov dis qm =
   print_string "> ";
   try match parse_are_you_sure (read_line ()) with
@@ -224,11 +243,13 @@ and are_you_sure () mov dis qm =
         exit 0
       end
     | AgainNo -> raise Cancel
-    | _ -> begin print_endline "Invalid command! Hint: type 'yes' or 'no'";
+    | _ -> begin 
+        print_endline "Invalid command! Hint: type 'yes' or 'no'";
         are_you_sure () mov dis qm
       end
   with
-  | Invalid -> begin print_endline "Invalid command! Hint: type 'yes' or 'no'";
+  | Invalid -> begin 
+      print_endline "Invalid command! Hint: type 'yes' or 'no'";
       are_you_sure () mov dis qm
     end
 
