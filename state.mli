@@ -1,3 +1,15 @@
+(** 
+   Representation of dynamic game state.
+
+   This module represents the state of a game as it is being played, including
+   the current board, whose turn it is, the win count, the moves that have been 
+   taken, and the boards that have been scored when calculating AI moves,
+   and functions that cause the state to change.
+*)
+
+(** The abstract type of values representing the game state. *)
+type t
+
 (** The type for the color of a piece. *)
 type color = Red | Blue
 
@@ -9,9 +21,6 @@ type status = color option
 
 (** The type for the board. *)
 type board = (position * status) list
-
-(** The abstract type of values representing the game state. *)
-type t
 
 (** The type for the number of wins for the red and blue players respectively. *)
 type num_wins = int * int * int
