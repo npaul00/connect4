@@ -98,7 +98,7 @@ val check_full : board -> bool
 (** [update_vis t vis] is [t] with [vis] added to visited *)
 val update_vis : t -> visited -> t
 
-(** [cpu_move t] is move chosen by the medium bot *)
+(** [cpu_move_med t] is move chosen by the medium bot *)
 val cpu_move_med : t -> int * visited
 
 (** [cpu_move_easy t] is move chosen by the easy bot *)
