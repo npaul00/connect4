@@ -52,6 +52,14 @@ module type TestCases = sig
   (** [state_blue_pot_2] is the state with the board [blue_diag_pot_2]. *)
   val state_blue_pot_2 : t
 
+  (** [state_red_diag_win] is the state with the board [red_diag_win]. *)
+  val state_red_diag_win : t
+
+  (** [state_blue_horiz_win] is the state with the board [blue_horiz_win]. *)
+  val state_blue_horiz_win : t
+
+  (** [state_tie_board] is the state with the board [full_board_tie]. *)
+  val state_tie_board : t
 end
 
 (** MANUALLY-TYPED BOARDS AND STATES FOR TESTING *)
@@ -147,6 +155,17 @@ module TstCases : TestCases = struct
     State.make_state red_3 Blue (0, 0, 0) 
       [2; 3; 4; 5; 4; 6; 5; 6; 7; 7; 6; 1; 7] []
 
+  let state_red_diag_win = 
+    State.make_state red_diag_win Blue (0, 0, 0) 
+      [] []
+
+  let state_blue_horiz_win = 
+    State.make_state blue_horiz_win Red (0, 0, 0) 
+      [] []
+
+  let state_tie_board = 
+    State.make_state full_board_tie Red (0, 0, 0) 
+      [] []
 end
 
 open TstCases
@@ -165,6 +184,13 @@ let check_win_test
     (expected_output: bool) : test = 
   name >:: (fun _ ->
       assert_equal expected_output (check_win input1 input2))
+
+let winning_player_test
+    (name: string)
+    (input1: State.t)
+    (expected_output: State.color option) : test = 
+  name >:: (fun _ ->
+      assert_equal expected_output (winning_player input1))
 
 let color_to_string_test
     (name: string)
@@ -202,31 +228,36 @@ let cpu_move_test
     (name: string)
     (input1: State.t)
     (expected_output: int) : test = 
-  name >:: (fun _ -> assert_equal expected_output (let (c, _) = cpu_move input1 in c))
+  name >:: (fun _ -> 
+      assert_equal expected_output (let (c, _) = cpu_move input1 in c))
 
 let cpu_move_test_notequals
     (name: string)
     (input1: State.t)
     (wrong_output: int) : test = 
-  name >:: (fun _ -> assert_equal false (let (c, _) = cpu_move input1 in c = wrong_output))
+  name >:: (fun _ -> 
+      assert_equal false (let (c, _) = cpu_move input1 in c = wrong_output))
 
 let cpu_move_hard_test_notequals
     (name: string)
     (input1: State.t)
     (wrong_output: int) : test = 
-  name >:: (fun _ -> assert_equal false (let (c, _) = cpu_move_hard input1 in c = wrong_output))
+  name >:: (fun _ -> 
+      assert_equal false (let (c, _) = cpu_move_hard input1 in c = wrong_output))
 
 let cpu_move_easy_test
     (name: string)
     (input1: State.t)
     (expected_output: int) : test = 
-  name >:: (fun _ -> assert_equal expected_output (let (c, _) = cpu_move_easy input1 in c))
+  name >:: (fun _ -> 
+      assert_equal expected_output (let (c, _) = cpu_move_easy input1 in c))
 
 let cpu_move_hard_test
     (name: string)
     (input1: State.t)
     (expected_output: int) : test = 
-  name >:: (fun _ -> assert_equal expected_output (let (c, _) = cpu_move_hard input1 in c))
+  name >:: (fun _ -> 
+      assert_equal expected_output (let (c, _) = cpu_move_hard input1 in c))
 
 let set_turn_test
     (name: string)
@@ -235,20 +266,52 @@ let set_turn_test
     (expected_output: State.t) : test =
   name >:: (fun _ -> assert_equal expected_output (set_turn input1 input2))
 
-let check_win_tests =
+let init_state_test
+    (name: string)
+    (expected_output: State.t) : test =
+  name >:: (fun _ -> assert_equal expected_output init_state)
+
+let board_test
+    (name: string)
+    (input1: State.t)
+    (expected_output: State.board) : test =
+  name >:: (fun _ -> assert_equal expected_output (board input1))
+
+let moves_test
+    (name: string)
+    (input1: State.t)
+    (expected_output: State.moves_list) : test =
+  name >:: (fun _ -> assert_equal expected_output (moves input1))
+
+let win_tests =
   [
-    check_win_test "Red diagonal win should return true for appropriate board and color Red." 
+    check_win_test 
+      "Red piece won in the board with the red diagonal win, red_diag_win." 
       red_diag_win Red true;
-    check_win_test "Red diagonal win should return false for appropriate board and color Blue." 
+    check_win_test 
+      "Blue did not win in the board with the red diagonal win, red_diag_win." 
       red_diag_win Blue false;
-    check_win_test "Blue horizontal win should return true for appropriate board and color Blue." 
+    check_win_test 
+      "Blue won in the board with the blue horizontal win, blue_horiz_win." 
       blue_horiz_win Blue true;
-    check_win_test "Blue horizontal win should return false for appropriate board and color Red." 
+    check_win_test 
+      "Red didn'tt win in the board with the blue horizontal win, blue_horiz_win" 
       blue_horiz_win Red false;
-    check_win_test "Tie board should return false for color Red." 
+    check_win_test "Red did not win in the tie board." 
       full_board_tie Red false;
-    check_win_test "Tie board should return false for color Blue." 
+    check_win_test "Blue did not win in the tie board." 
       full_board_tie Blue false;
+    winning_player_test 
+      "Winning player is Some Red for the state with board red_diag_win."
+      state_red_diag_win (Some Red);
+    winning_player_test 
+      "Winning player is Some Blue for the state with board blue_horiz_win."
+      state_blue_horiz_win (Some Blue);
+    winning_player_test 
+      "Winning player is None for the state with board red_3." state_red_3 None;
+    winning_player_test 
+      "Winning player is None for the state with the tie board." 
+      state_tie_board None;
   ]
 
 let check_full_tests =
@@ -350,7 +413,7 @@ let set_turn_tests =
 
 let suite =
   "test suite for connect four"  >::: List.flatten [
-    check_win_tests;
+    win_tests;
     check_full_tests;
     color_tests;
     drop_height_tests;
