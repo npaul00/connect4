@@ -232,6 +232,9 @@ and are_you_sure () mov dis qm =
       are_you_sure () mov dis qm
     end
 
+(**[colored_win_msg clr st mov dis ()] displays a colored winning message for 
+   color [clr] and then prompts the play again menu for [st] with updated wins,
+   with settings [mov] and [dis].*)
 and colored_win_msg clr st mov dis () = 
   if State.color_to_string clr = "Red" then
     begin
