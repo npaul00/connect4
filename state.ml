@@ -58,6 +58,7 @@ let empty_board =
       b
   in empty_board_aux empty 1 1
 
+(** [half_board] creates a board that is half full and has no winners*)
 let half_board = 
   let rec half_board_aux b r c =
     if c > 7 && r < 6 then
@@ -128,13 +129,15 @@ let rec display b r =
   if r < 7 then begin display b (r + 1); print_row b b r 1; end;
   if r = 1 then print_string bot
 
+(** [get_team_d s] is the team or empty of [s] in day mode*)
 let get_team_d s =
   match s with
   | Some Red -> ANSITerminal.(print_string [red ; Background White] "O")
   | Some Blue -> ANSITerminal.(print_string [cyan ; Background White] "O")
   | None ->  ANSITerminal.(print_string [cyan ; Background White] " ")
-(** [print_row b temp r c] is the unit that prints the piece at [r] and [c]*)
 
+(** [print_row_d b temp r c] is the unit that prints the piece at [r] and [c] 
+    in day mode*)
 let rec print_row_d b temp r c =
   match temp with
   | [] -> 
@@ -236,10 +239,12 @@ let rec check_vert b clr lst op =
     else if (four_in_a_row (vert (x, y)) b clr) then Pos (vert (x,y))
     else check_vert b clr t op
 
+(* ADD DOCS*)
 let get_truth = function
   | Truth b -> b
   | Pos _ -> failwith "Not a truth value"
 
+(* ADD DOCS*)
 let get_pos = function
   | Pos lst -> lst
   | Truth _ -> failwith "Not a position list"
@@ -252,6 +257,7 @@ let check_win b clr =
   get_truth (check_horiz b clr positions true) ||
   get_truth (check_vert b clr positions true)
 
+(** [get_win_pos b clr] is a list of the positions where [clr] can win in [b]*)
 let get_win_pos b clr  =
   let positions = pos_by_color b clr in
   if get_truth (check_right_diag b clr positions true) then
@@ -264,21 +270,26 @@ let get_win_pos b clr  =
     get_pos (check_vert b clr positions false) else
     failwith "Not a winning board or color"
 
+(** [string_tuple (x,y)] is the string ([x], [y])*)
 let string_tuple (x,y) = "(" ^ string_of_int x ^ ", " ^ string_of_int y ^ ")"
 
+(** ADD DOCS*)
 let rec string_tuples = function
   | [] -> ""
   | s :: t -> string_tuple s ^ ", " ^ string_tuples t
 
+(** ADD DOCS*)
 let print_pos_lst b clr =
   clr |> get_win_pos b |> string_tuples |> print_string
 
+(** ADD DOCS*)
 let get_team_win s win =
   match s with
   | Some Red -> if win then ANSITerminal.(print_string [red; Blink] "X") else ANSITerminal.(print_string [red] "O")
   | Some Blue -> if win then ANSITerminal.(print_string [cyan; Blink] "X") else ANSITerminal.(print_string [cyan] "O")
   | None -> print_string " "
 
+(** ADD DOCS*)
 let rec print_row_win b temp r c clr =
   match temp with
   | [] -> 
@@ -293,17 +304,20 @@ let rec print_row_win b temp r c clr =
       )
     else print_row_win b t r c clr
 
+(* ADD DOCS*)
 let rec display_win clr b r = 
   if r = 1 then begin print_string "\n"; print_string "| "; end;
   if r < 7 then begin display_win clr b (r + 1); print_row_win b b r 1 clr; end;
   if r = 1 then print_string bot
 
+(* ADD DOCS*)
 let get_team_win_d s win =
   match s with
   | Some Red -> if win then ANSITerminal.(print_string [red; Blink; Background White] "X") else ANSITerminal.(print_string [red; Background White] "O")
   | Some Blue -> if win then ANSITerminal.(print_string [cyan; Blink; Background White] "X") else ANSITerminal.(print_string [cyan; Background White] "O")
   | None -> ANSITerminal.(print_string [cyan ; Background White] " ")
 
+(** ADD DOCS*)
 let rec print_row_win_d b temp r c clr =
   match temp with
   | [] -> 
@@ -318,6 +332,7 @@ let rec print_row_win_d b temp r c clr =
       )
     else print_row_win_d b t r c clr
 
+(* ADD DOCS*)
 let rec display_win_d clr b r = 
   if r = 1 then begin print_string "\n"; ANSITerminal.(print_string [black ; Background White] "| "); end;
   if r < 7 then begin display_win_d clr b (r + 1); print_row_win_d b b r 1 clr; end;
@@ -399,6 +414,7 @@ let rec anim t c low high dis =
   else 
     ()
 
+(** [update_moves_list lst c] is [lst] with [c] concatinated *)
 let update_moves_list lst c = 
   List.rev (c :: (List.rev lst))
 
@@ -410,6 +426,7 @@ let move t c =
      wins = t.wins;
      moves = update_moves_list t.moves c;  visit = t.visit}
   else t
+
 
 let update_vis t vis =    
   {board = t.board; turn = t.turn; wins = t.wins; moves = t.moves;  visit = vis}
@@ -509,17 +526,21 @@ let rec safe_moves t = function
     if will_cause_four t x then safe_moves t tl 
     else (x, y) :: safe_moves t tl
 
+(** [will_eliminate_potential t c] is true if a move to [c] in [t] blocks a 
+    four in a row and is false otherwise*)
 let will_eliminate_potential t c = 
   block_four (move t c) c
 
+(** [safer_moves t lst] is the potential moves in [lst] that won't jeapardize a
+    potential four in a row at [t] *)
 let rec safer_moves t = function
   | [] -> []
   | (x, y) :: tl ->
     if will_eliminate_potential t x then safer_moves t tl
     else (x, y) :: safer_moves t tl
 
-(**[cpu_choose_move t i count lst] is the column the computer should play in, 
-   found by choosing the [ith] element of [lst], a list of possible positions.*)
+(** [cpu_choose_move t i count lst] is the column the computer should play in, 
+    found by choosing the [ith] element of [lst], a list of possible positions.*)
 let rec cpu_choose_move t i lst = 
   let rec cpu_choose_move_aux t' i' count' = function 
     | (x, y) :: tl -> 
@@ -528,16 +549,20 @@ let rec cpu_choose_move t i lst =
     | [] -> failwith "No possible moves"
   in cpu_choose_move_aux t i 0 lst
 
+(** [num_pieces_on_noard b] is the amount of pieces placed in [b] *)
 let rec num_pieces_on_board = function
   | [] -> 0
   | ((x, y), Some clr) :: tl -> 1 + num_pieces_on_board tl
   | ((x, y), None) :: tl -> num_pieces_on_board tl
 
+(** [piece_on_board b] is the firs piece's column or -1 if there are no
+    pieces *)
 let rec piece_on_board = function
   | ((x, y), Some clr) :: tl -> x
   | ((x, y), None) :: tl -> piece_on_board tl
   | [] -> (-1)
 
+(** [next_to loc] is a column adjacent to [loc] *)
 let next_to loc =
   Unix.sleepf 1.0;
   if loc = (-1) then 4 else
@@ -546,8 +571,7 @@ let next_to loc =
     let rand = Random.int 2 in
     if rand = 0 then loc - 1 else loc + 1
 
-(**[cpu_move t] is the column that the computer should place a piece in. *)
-let cpu_move t =
+let cpu_move_med t =
   if num_pieces_on_board t.board <= 1 then (next_to (piece_on_board t.board), t.visit) else
     match moves_that_win t with
     | (x, y) :: tl -> Unix.sleepf 1.0; (x, t.visit)
@@ -588,21 +612,30 @@ let rec count_moves b =
 let playable b c =
   drop_height c b != 7
 
+(** [empty_spots b] is all the positions in [b] that are empty *)
 let rec empty_spots = function
   | [] -> []
   | ((x,y), None) :: t -> (x, y) :: empty_spots t
   | _ :: t -> empty_spots t
 
+(** [check_four (x, y) clr b] is if placing a piece at [(x, y)] will give [clr] 
+    a win on [b]*)
 let check_four (x, y) clr b =
   check_win (update x y clr b) clr
 
+(** [threes clr b lst] is how many three in a rows [clr] has in [b] using
+    [lst] of empty spots*)
 let rec threes clr b = function
   | [] -> 0
   | (x, y) :: t -> if check_four (x, y) clr b then 1 + threes clr b t else
       threes clr b t 
 
+(** [move_score st c] is the score for deternmining the order of moves for 
+    [c] in [st]*)
 let move_score st c = threes (other_color st.turn) st.board (empty_spots st.board)
 
+(** [col_sort (k1, k2) (k2, v2)] is < 0 if v1 < v2, > 0 if v1 > v2 and 0 
+    otherwise *)
 let col_sort (k1,v1) (k2, v2) = v2 - v1
 
 (** [next_col c] is the next column that should be checked after [c]. *)
@@ -615,17 +648,21 @@ let next_col = function
   | 1 -> 7
   | _ -> 8
 
+(** [get_score_list st] is the list of columns in order of increasing 
+    score for [st]*)
 let get_score_list st = 
   let rec get_score st c = 
     if c > 7 then [] else
       (c, move_score st c):: get_score st (next_col c)
   in List.stable_sort col_sort (get_score st 4)
 
+(** [new_next_col c lst] is the column that comes after [c] in [lst]*)
 let rec new_next_col c = function
   | (h, _) :: ((h', _) as s) :: tl -> if h = c then h' else
       new_next_col c (s ::tl)
   | _ -> 8
 
+(** [put vis k v] is [vis] with ([k], [v]) injected into it *)
 let put vis k v =
   if List.length vis > 10000 then
     match List.rev vis with
@@ -633,14 +670,15 @@ let put vis k v =
     | [] -> (k, v) :: []
   else (k, v) :: vis
 
+(** [get vis k] is the value bounded to [k] in [vis] *)
 let get vis k = List.assoc k vis
 
+(** [conatin vis k] is true if theres a value bounded to [k] in [vis] and false
+    otherwise*)
 let contain vis k = List.mem_assoc k vis 
 
-let rec print_vis = function
-  | [] -> print_string "DONE."
-  | (k, v):: t -> print_string " score: ";print_int v; print_vis t
-
+(** [solve st] is the column, corresponding score, and boards visited
+    respectively after choosing a move for [st]*)
 let rec solve st =
   print_endline "Loading...";
   let min = -1 in
@@ -658,6 +696,8 @@ let rec solve st =
         solve_aux r max' col (update_vis st v)
   in solve_aux min max 4 st
 
+(** [get_score3 st alpha beta vis col i] is a potential column, corresponding 
+    score, and boards visited at a depth of [i]*)
 and get_score3 st alpha beta vis col i = 
   if check_full st.board then (1, 0, vis) else
     match moves_that_win st with
@@ -668,12 +708,16 @@ and get_score3 st alpha beta vis col i =
       if alpha >= bm then (col, bm, vis) else
         calc_scores3 st alpha bm vis i
 
+(** [check_safe st c] is true if a move in [c] won't lead to the opposing player 
+    directly winning and false otherwise*)
 and check_safe st c =
   let rec check_safe_aux c = function
     | [] -> false
     | (h, _)::t -> h = c || check_safe_aux c t
   in check_safe_aux c (safe_moves st (possible_moves st)) 
 
+(** [calc_scores3 st a bm v i] is the best best column, score, and boards 
+    visited respectfully with a depth of [i]*)
 and calc_scores3 st a bm v i =
   let rec calc_scores3_aux st c alpha beta vis col i = 
     if i < 1 then (1, 0, vis) else
@@ -834,6 +878,8 @@ let three_played st =
   | [7; 6; 7] -> pick_rand_from [4; 7]
   | _ -> 4
 
+(** [count_bot st i start] is the amoung of pieces on the bottom row in [st] 
+    from columns [i] to [start]*)
 let rec count_bot st i start =
   if i < 3 then 
     match pos_status st.board (i+start,1) with
@@ -841,7 +887,8 @@ let rec count_bot st i start =
     | Some Blue -> 1 + count_bot st (i+1) start
   else 0
 
-let four_played st =
+(** [five_played st] is the best move for when five pieces are placed in [st] *)
+let five_played st =
   if count_bot st 0 1 > 0 && count_bot st 0 5 = 0 then 5
   else if count_bot st 0 1 = 0 && count_bot st 0 5 > 0 then 3
   else 4
@@ -854,7 +901,7 @@ let start_solve st =
   | 1 -> Unix.sleepf 1.0;(one_played st, st.visit)
   | 2 -> Unix.sleepf 1.0;(two_played st, st.visit)
   | 3 -> Unix.sleepf 1.0;(three_played st, st.visit)
-  | 5 -> Unix.sleepf 1.0;(four_played st, st.visit)
+  | 5 -> Unix.sleepf 1.0;(five_played st, st.visit)
   | _ -> let ((c, r, v):(int*int*visited)) = solve st in 
     if check_safe st c then (c, v) else 
     if playable st.board c then (c, v) else

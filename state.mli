@@ -95,10 +95,11 @@ val other_color : color -> color
 (** [check_full b] is if board [b] is full. *)
 val check_full : board -> bool
 
+(** [update_vis t vis] is [t] with [vis] added to visited *)
 val update_vis : t -> visited -> t
 
 (** [cpu_move t] is move chosen by the medium bot *)
-val cpu_move : t -> int * visited
+val cpu_move_med : t -> int * visited
 
 (** [cpu_move_easy t] is move chosen by the easy bot *)
 val cpu_move_easy : t -> int * visited
@@ -122,8 +123,13 @@ val display : board -> int -> unit
 (** [display b i] displays the board [b] in night mode. *)
 val display_d : board -> int -> unit
 
+(** ADD DOCS*)
 val display_win : color -> board -> int -> unit
 
+(** ADD DOCS*)
 val display_win_d : color -> board -> int -> unit
 
+(** [make_state b t w m v] is a state with [b] as a board, [t] as a turn, [w] 
+    as an amount of wins, [m] as a list of moves, and [v] as a list of boards 
+    seen*)
 val make_state : board -> color -> num_wins -> moves_list -> visited -> t

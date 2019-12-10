@@ -308,9 +308,9 @@ and two_play st d last () mov dis =
     if no pieces have been played.*)
 and cpu_play st d last () i mov dis = 
   let op = if i = 1 then (State.cpu_move_easy)
-    else if i = 3 then (State.cpu_move)
+    else if i = 3 then (State.cpu_move_med)
     else if i = 4 then (State.cpu_move_hard)
-    else (State.cpu_move) in
+    else (State.cpu_move_med) in
   let turn = State.turn st in
   let board = State.board st in
   let last_clr = State.other_color turn in
