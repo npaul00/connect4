@@ -741,20 +741,18 @@ let check_safe st c =
     respectively after choosing a move for [st]*)
 let rec solve st =
   print_endline "Loading...";
-  let min = -1 in
-  let max = 1 in
   let i = if count_moves st.board < 26 then 
       (count_moves st.board)/6 + 2 else 9999 in
-  let rec solve_aux min' max' c st = 
-    if min' >= max' then (c, min', st.visit) else
-      let med = min' + (max' - min')/2 in
-      let med' = if med <= 0 && min'/2 < med then min'/2
+  let rec solve_aux min max c st = 
+    if min >= max then (c, min, st.visit) else
+      let med = min + (max - min)/2 in
+      let med' = if med <= 0 && min/2 < med then min/2
         else if med >= 0 && max/2 > med then max/2 
         else med in
       let (col, r, v) = get_score3 st med' (med'+ 1) st.visit c i in
-      if r <= med' then solve_aux min' r col (update_vis st v) else
-        solve_aux r max' col (update_vis st v)
-  in solve_aux min max 4 st
+      if r <= med' then solve_aux min r col (update_vis st v) else
+        solve_aux r max col (update_vis st v)
+  in solve_aux (-1) 1 4 st
 
 (** [get_score3 st alpha beta vis col i] is a potential column, corresponding 
     score, and boards visited at a depth of [i]*)

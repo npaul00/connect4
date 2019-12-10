@@ -60,6 +60,16 @@ module type TestCases = sig
 
   (** [state_tie_board] is the state with the board [full_board_tie]. *)
   val state_tie_board : t
+
+  (** [state_one_piece] is a state with a board with 1 piece placed in col 6. *)
+  val state_one_piece : t
+
+  (**[state_two_pieces] is a state with a board with 2 pieces placed. *)
+  val state_two_pieces : t 
+
+  (**[state_three_pieces] is a state with a board with 3 pieces placed. *)
+  val state_three_pieces : t
+
 end
 
 (** MANUALLY-TYPED BOARDS AND STATES FOR TESTING *)
@@ -133,6 +143,27 @@ module TstCases : TestCases = struct
                    ((1,2), Some Red);     ((2,2), Some Blue);      ((3,2), Some Red);      ((4,2), Some Red);  ((5,2), None);   ((6,2), Some Blue);  ((7,2), None);
                    ((1,1), Some Blue); ((2,1), Some Red);  ((3,1), Some Red); ((4,1), Some Blue);  ((5,1), Some Blue);  ((6,1), Some Blue);  ((7,1), Some Red)]
 
+  let one_piece = [((1,6), None); ((2,6), None); ((3,6), None); ((4,6), None); ((5,6), None); ((6,6), None);      ((7,6), None);
+                   ((1,5), None); ((2,5), None); ((3,5), None); ((4,5), None); ((5,5), None); ((6,5), None);      ((7,5), None);
+                   ((1,4), None); ((2,4), None); ((3,4), None); ((4,4), None); ((5,4), None); ((6,4), None);      ((7,4), None);
+                   ((1,3), None); ((2,3), None); ((3,3), None); ((4,3), None); ((5,3), None); ((6,3), None);      ((7,3), None);
+                   ((1,2), None); ((2,2), None); ((3,2), None); ((4,2), None); ((5,2), None); ((6,2), None);      ((7,2), None);
+                   ((1,1), None); ((2,1), None); ((3,1), None); ((4,1), None); ((5,1), None); ((6,1), Some Blue); ((7,1), None)]
+
+  let two_pieces = [((1,6), None); ((2,6), None); ((3,6), None);      ((4,6), None);     ((5,6), None); ((6,6), None); ((7,6), None);
+                    ((1,5), None); ((2,5), None); ((3,5), None);      ((4,5), None);     ((5,5), None); ((6,5), None); ((7,5), None);
+                    ((1,4), None); ((2,4), None); ((3,4), None);      ((4,4), None);     ((5,4), None); ((6,4), None); ((7,4), None);
+                    ((1,3), None); ((2,3), None); ((3,3), None);      ((4,3), None);     ((5,3), None); ((6,3), None); ((7,3), None);
+                    ((1,2), None); ((2,2), None); ((3,2), None);      ((4,2), None);     ((5,2), None); ((6,2), None); ((7,2), None);
+                    ((1,1), None); ((2,1), None); ((3,1), Some Blue); ((4,1), Some Red); ((5,1), None); ((6,1), None); ((7,1), None)]
+
+  let three_pieces = [((1,6), None);      ((2,6), None);     ((3,6), None);      ((4,6), None); ((5,6), None); ((6,6), None); ((7,6), None);
+                      ((1,5), None);      ((2,5), None);     ((3,5), None);      ((4,5), None); ((5,5), None); ((6,5), None); ((7,5), None);
+                      ((1,4), None);      ((2,4), None);     ((3,4), None);      ((4,4), None); ((5,4), None); ((6,4), None); ((7,4), None);
+                      ((1,3), None);      ((2,3), None);     ((3,3), None);      ((4,3), None); ((5,3), None); ((6,3), None); ((7,3), None);
+                      ((1,2), None);      ((2,2), None);     ((3,2), None);      ((4,2), None); ((5,2), None); ((6,2), None); ((7,2), None);
+                      ((1,1), Some Blue); ((2,1), Some Red); ((3,1), Some Blue); ((4,1), None); ((5,1), None); ((6,1), None); ((7,1), None)]
+
   let state_blue_3 = 
     State.make_state blue_3 Red (0, 0, 0) [2; 1; 2; 1; 3; 1; 7] []
 
@@ -166,6 +197,16 @@ module TstCases : TestCases = struct
   let state_tie_board = 
     State.make_state full_board_tie Red (0, 0, 0) 
       [] []
+
+  let state_one_piece = 
+    State.make_state one_piece Red (0, 0, 0) [6] []
+
+  let state_two_pieces = 
+    State.make_state two_pieces Red (0, 0, 0) [4; 3] []
+
+  let state_three_pieces = 
+    State.make_state three_pieces Red (0, 0, 0) [1; 2; 3] []
+
 end
 
 open TstCases
@@ -399,6 +440,15 @@ let move_tests =
     cpu_move_hard_test_notequals 
       "Hard AI should not play column 2 as it would trigger blue win" 
       state_blue_pot_2 2;
+    cpu_move_hard_test 
+      "Hard AI should play 6 when the moves 4 and 3 have been taken"
+      state_two_pieces 6;
+    cpu_move_hard_test
+      "Hard AI should play 5 when there is only a piece in column 6"
+      state_one_piece 5; 
+    cpu_move_hard_test
+      "Hard AI should play 3 when the moves 1, 2, 3 have been taken"
+      state_three_pieces 3; 
   ]
 
 let set_turn_tests = 
