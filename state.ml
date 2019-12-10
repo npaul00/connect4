@@ -427,7 +427,6 @@ let move t c =
      moves = update_moves_list t.moves c;  visit = t.visit}
   else t
 
-
 let update_vis t vis =    
   {board = t.board; turn = t.turn; wins = t.wins; moves = t.moves;  visit = vis}
 

@@ -1,3 +1,17 @@
+(** TEST PLAN
+    We tested most parts of our system using OUnit to make sure all of our 
+    functions work properly. We manually created boards and tested to make sure 
+    the A.I. made the appropriate move. We tested functions that update the 
+    state, determine winning players, boards, scores, etc. We left off helper 
+    functions as the functions we test use the helper functions and validate 
+    their functionality. We also left off functions from the file command.ml, 
+    main.ml, and the functions display, display_d, display_win, and 
+    display_win_d from state.ml, because those are display functions which we 
+    manually tested by running 'make play' in our terminal. We left off move, 
+    move_anim, and move_anim_d from state.ml because it updates the "visited" 
+    property of the state which is algorithmically complex and inconvenient to 
+    test in OUnit; instead we tested them by playing the game for ourselves. *)
+
 open OUnit2
 open State
 open Command
@@ -60,6 +74,12 @@ module type TestCases = sig
 
   (** [state_tie_board] is the state with the board [full_board_tie]. *)
   val state_tie_board : t
+
+  (** [expected_init_state] is the expected initial state for Connect Four. *)
+  val expected_init_state : t
+
+  (** [init_state_updated] is the state for board [empty_updated]. *)
+  val init_state_updated : t
 end
 
 (** MANUALLY-TYPED BOARDS AND STATES FOR TESTING *)
@@ -148,11 +168,11 @@ module TstCases : TestCases = struct
       [4; 4; 4; 4; 4; 4; 5; 3; 3; 3; 5; 1] []
 
   let state_red_3 = 
-    State.make_state red_3 Red (0, 0, 0) 
+    State.make_state red_3 Red (3, 2, 1) 
       [2; 3; 4; 5; 4; 6; 5; 6; 7; 7; 6; 1; 7] []
 
   let state_red_3_blue_turn = 
-    State.make_state red_3 Blue (0, 0, 0) 
+    State.make_state red_3 Blue (3, 2, 1) 
       [2; 3; 4; 5; 4; 6; 5; 6; 7; 7; 6; 1; 7] []
 
   let state_red_diag_win = 
@@ -166,9 +186,43 @@ module TstCases : TestCases = struct
   let state_tie_board = 
     State.make_state full_board_tie Red (0, 0, 0) 
       [] []
+
+  let expected_init_state =
+    State.make_state empty_board Blue (0,0,0) 
+      [] []
+
+  let init_state_updated =
+    State.make_state empty_updated Red (0,0,0)
+      [3] []
 end
 
 open TstCases
+
+(** [cmp_set_like_lists lst1 lst2] compares two lists to see whether 
+    they are equivalent set-like lists.  That means checking two things.
+    First, they must both be {i set-like}, meaning that they do not
+    contain any duplicates.  Second, they must contain the same elements,
+    though not necessarily in the same order. (Taken from a2) *)
+let cmp_set_like_lists lst1 lst2 =
+  let uniq1 = List.sort_uniq compare lst1 in
+  let uniq2 = List.sort_uniq compare lst2 in
+  List.length lst1 = List.length uniq1
+  &&
+  List.length lst2 = List.length uniq2
+  &&
+  uniq1 = uniq2
+
+let empty_board_test
+    (name: string)
+    (expected_output: State.board) : test = 
+  name >:: (fun _ ->
+      assert_equal ~cmp:cmp_set_like_lists expected_output empty_board)
+
+let empty_test
+    (name: string)
+    (expected_output: State.board) : test = 
+  name >:: (fun _ ->
+      assert_equal expected_output empty)
 
 let check_full_test
     (name: string)
@@ -228,13 +282,15 @@ let cpu_move_test
     (name: string)
     (input1: State.t)
     (expected_output: int) : test = 
-  name >:: (fun _ -> assert_equal expected_output (let (c, _) = cpu_move_med input1 in c))
+  name >:: (fun _ -> 
+      assert_equal expected_output (let (c, _) = cpu_move_med input1 in c))
 
 let cpu_move_test_notequals
     (name: string)
     (input1: State.t)
     (wrong_output: int) : test = 
-  name >:: (fun _ -> assert_equal false (let (c, _) = cpu_move_med input1 in c = wrong_output))
+  name >:: (fun _ -> 
+      assert_equal false (let (c, _) = cpu_move_med input1 in c = wrong_output))
 
 let cpu_move_hard_test_notequals
     (name: string)
@@ -275,11 +331,48 @@ let board_test
     (expected_output: State.board) : test =
   name >:: (fun _ -> assert_equal expected_output (board input1))
 
+let turn_test
+    (name: string)
+    (input1: State.t)
+    (expected_output: State.color) : test =
+  name >:: (fun _ -> assert_equal expected_output (turn input1))
+
 let moves_test
     (name: string)
     (input1: State.t)
     (expected_output: State.moves_list) : test =
   name >:: (fun _ -> assert_equal expected_output (moves input1))
+
+let wins_test
+    (name: string)
+    (input1: State.t)
+    (expected_output: State.num_wins) : test =
+  name >:: (fun _ -> assert_equal expected_output (wins input1))
+
+let red_wins_test
+    (name: string)
+    (input1: State.t)
+    (expected_output: int) : test =
+  name >:: (fun _ -> assert_equal expected_output (red_wins input1))
+
+let blue_wins_test
+    (name: string)
+    (input1: State.t)
+    (expected_output: int) : test =
+  name >:: (fun _ -> assert_equal expected_output (blue_wins input1))
+
+let num_ties_test
+    (name: string)
+    (input1: State.t)
+    (expected_output: int) : test =
+  name >:: (fun _ -> assert_equal expected_output (num_ties input1))
+
+let empty_tests = 
+  [
+    empty_test "empty should return an empty list" [];
+    empty_board_test "empty_board should return an appropriate empty board."
+      man_empty_board;
+  ]
 
 let win_tests =
   [
@@ -293,7 +386,7 @@ let win_tests =
       "Blue won in the board with the blue horizontal win, blue_horiz_win." 
       blue_horiz_win Blue true;
     check_win_test 
-      "Red didn'tt win in the board with the blue horizontal win, blue_horiz_win" 
+      "Red didn't win in the board with the blue horizontal win, blue_horiz_win" 
       blue_horiz_win Red false;
     check_win_test "Red did not win in the tie board." 
       full_board_tie Red false;
@@ -346,7 +439,7 @@ let drop_height_tests =
       4 full_board_tie 7;
   ]
 
-let update_tests = 
+let board_update_tests = 
   [
     update_test 
       "Blue horizontal win board with a blue piece inserted into (1,3) 
@@ -401,8 +494,19 @@ let move_tests =
       state_blue_pot_2 2;
   ]
 
-let set_turn_tests = 
+let state_tests = 
   [
+    init_state_test "init_state should match appropriate state." 
+      expected_init_state;
+    turn_test "In state_red_3, it is Red's turn." state_red_3 Red;
+    board_test "state_red_3 has board red_3" state_red_3 red_3;
+    moves_test "state_red_3 has the appropriate moves list" state_red_3
+      [2; 3; 4; 5; 4; 6; 5; 6; 7; 7; 6; 1; 7];
+    wins_test "state_red_3 has the 3 red wins, 2 blue wins, 1 tie." state_red_3
+      (3, 2, 1);
+    red_wins_test "state_red_3 has the 3 red wins." state_red_3 3;
+    blue_wins_test "state_red_3 has the 2 red wins." state_red_3 2;
+    num_ties_test "state_red_3 has the 1 tie." state_red_3 1;
     set_turn_test "Set state_blue_3 to color blue" 
       state_blue_3 Blue state_blue_3_blue_turn;
     set_turn_test "Set state_red_3 to color blue" 
@@ -411,13 +515,14 @@ let set_turn_tests =
 
 let suite =
   "test suite for connect four"  >::: List.flatten [
+    empty_tests;
     win_tests;
     check_full_tests;
     color_tests;
     drop_height_tests;
-    update_tests;
+    board_update_tests;
     move_tests;
-    set_turn_tests
+    state_tests
   ]
 
 let _ = run_test_tt_main suite
