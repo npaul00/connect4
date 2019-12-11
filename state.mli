@@ -25,6 +25,8 @@ type board = (position * status) list
 (** The type for the number of wins for the red and blue players respectively. *)
 type num_wins = int * int * int
 
+(** The type for a list of previously seen boards and the score found at that 
+    board*)
 type visited = (board * int) list
 
 (** The type for the list of moves. *)
