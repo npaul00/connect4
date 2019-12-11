@@ -27,9 +27,6 @@ let wins t =
 let moves t =
   t.moves
 
-let visit t = 
-  t.visit
-
 let red_wins t =
   match t.wins with
   | (r, _, _) -> r
@@ -78,10 +75,11 @@ let half_board =
       b
   in half_board_aux empty 1 1
 
+(** [half_board_moves] is the list of moves for [half_board]. *)
 let half_board_moves = 
   [1; 2; 3; 4; 5; 6; 7; 2; 3; 4; 5; 6; 7; 7; 1; 1; 2; 3; 4; 5; 6]
 
-(* set testing to true to start with a half board, false for an empty board *)
+(** [testing] is true to start with a half board, false for an empty board *)
 let testing = false
 
 let init_state = 
@@ -261,7 +259,6 @@ let get_pos = function
   | Pos lst -> lst
   | Truth _ -> failwith "Not a position list"
 
-(** [check_win b clr] is true if [clr] is winning and false otherwise*)
 let check_win b clr =
   let positions = pos_by_color b clr in
   get_truth (check_right_diag b clr positions true) ||
@@ -316,7 +313,7 @@ let rec display_win clr b r =
   if r < 7 then begin display_win clr b (r + 1); print_row_win b b r 1 clr; end;
   if r = 1 then print_string bot
 
-(* [get_team_win_d s win] is [get_team_win] in day mode. *)
+(** [get_team_win_d s win] is [get_team_win] in day mode. *)
 let get_team_win_d s win =
   match s with
   | Some Red -> 
@@ -327,7 +324,7 @@ let get_team_win_d s win =
     else ANSITerminal.(print_string [cyan; Background White] "O")
   | None -> ANSITerminal.(print_string [cyan ; Background White] " ")
 
-(* [print_row_win_d b temp r c clr] is [print_row_win] in day mode. *)
+(** [print_row_win_d b temp r c clr] is [print_row_win] in day mode. *)
 let rec print_row_win_d b temp r c clr =
   match temp with
   | [] -> 
@@ -363,7 +360,6 @@ let rec display_win_d clr b r =
   end;
   if r = 1 then ANSITerminal.(print_string [black; Background White] bot)
 
-(** [winning_player t] is the winner at state [t] *)
 let winning_player t = 
   if check_win t.board Red then Some Red
   else if check_win t.board Blue then Some Blue
@@ -373,8 +369,6 @@ let new_color wins =
   match wins with
   | (r, b, t) -> if (r + b + t) mod 2 = 0 then Blue else Red 
 
-(** [update_wins t] is the state made by resetting [t], with an empty board, the
-    other player starting, and the win counts updated.*)
 let update_wins t =
   match winning_player t, t.wins with
   | Some Red, (red, blue, ties) -> 
@@ -415,16 +409,12 @@ let rec pieces_in_col c b =
     else pieces_in_col c t
   | h :: t -> pieces_in_col c t
 
-(**[drop_height c b] is the height at which a piece would be dropped if it were 
-   placed in column [c] on board [b]. If [c] is empty, [drop_height c b] is 1.*)
 let drop_height c b =
   let rows = pieces_in_col c b in
   match rows |> List.sort compare |> List.rev with
   | [] -> 1
   | h :: t -> h + 1
 
-(**[update x y clr b] is [b] but with the value for the [x,y] key replaced with 
-   Some [clr]. *)
 let rec update x y clr = function
   | [] -> []
   | ((x', y'), _) as pair :: t -> 
@@ -486,7 +476,6 @@ let move_anim_d t c=
     end
   else t
 
-(** returns true if the board is full*)
 let rec check_full b =
   match b with
   | [] -> true

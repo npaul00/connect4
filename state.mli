@@ -85,14 +85,16 @@ val get_truth : bool_or_pos -> bool
     [b] is a Pos, not a Truth. *)
 val get_pos : bool_or_pos -> position list
 
-(** [check_win b clr] checks if there are 4 pieces with color [clr] in a row. *)
+(** [check_win b clr] is true if [clr] has 4 pieces in a row and 
+    false otherwise. *)
 val check_win : board -> color -> bool
 
 (** [winning_player t] is Some [clr] if that color won, or [None] if no one is 
     winning. *)
 val winning_player : t -> color option
 
-(** [update_wins t wins] is the game state after someone wins. *)
+(** [update_wins t] is the state made by resetting [t], with an empty board, the
+    other player starting, and the win counts updated.*)
 val update_wins : t -> t
 
 (** [empty_board] is an empty board with 6 rows and 7 columns.*)
@@ -123,11 +125,12 @@ val cpu_move_easy : t -> int * visited
 (** [cpu_move_hard t] is move chosen by the hard bot *)
 val cpu_move_hard : t -> int * visited
 
-(** [drop_height c b] is the highest open spot in column [c] on board [b] *)
+(**[drop_height c b] is the height at which a piece would be dropped if it were 
+   placed in column [c] on board [b]. If [c] is empty, [drop_height c b] is 1.*)
 val drop_height : int -> board -> int
 
-(** [update x y clr] is the board but with a piece in [x], [y] with color 
-    [clr] *)
+(**[update x y clr b] is [b] but with the value for the [x,y] key replaced with 
+   Some [clr]. *)
 val update : int -> int -> color -> board -> board
 
 (** [new_color wins] is the new starting color of a new game*)
