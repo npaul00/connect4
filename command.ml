@@ -43,6 +43,10 @@ let rec words = function
   | "" :: t -> words t 
   | h :: t -> h :: words t
 
+(**[parse str] parses the player's input into a relevant [command] for 
+   during game play.
+   Requires: [str] contains only (A-Z, a-z, 0-9), and space characters.
+   Raises: [Invalid] if the input doesn't match a valid command. *)
 let parse str = 
   match words (String.split_on_char ' ' (String.lowercase_ascii str)) with
   | "quit" :: [] -> Quit
@@ -66,6 +70,11 @@ let parse str =
   | "nightmode" :: [] | "night" :: [] | "night" :: "mode" :: [] -> Night 
   | _ -> raise Invalid
 
+(**[parse_menu str] parses the player's input into a relevant [command] for 
+   interacting with the start menu.
+   Requires: [str] contains only (A-Z, a-z, 0-9), and space characters.
+   Raises: [Invalid] if the input doesn't match [One], [Two], [Three], or 
+   [Quit]. *)
 let parse_menu str =
   match words (String.split_on_char ' ' (String.lowercase_ascii str)) with
   | "1" :: [] -> One
@@ -375,7 +384,7 @@ and two_play_invalid st last mov dis () =
   two_play st false last () mov dis
 
 (** [one_play st d () mov dis] is the start of one player mode and asks the 
-    user for a difficulty*)
+    user for a difficulty. The game board of [st] is displayed if [d] is true.*)
 and one_play st d () mov dis = 
   difficulty_msg ();
   try match parse (read_line ()) with
