@@ -19,6 +19,8 @@ type command =
   | Night
 
 exception Invalid
+
+(**Raised when a user no longer wants to quit or return to the menu. *)
 exception Cancel
 
 (** [menu ()] is the display of options for the start menu. *)
@@ -73,6 +75,10 @@ let parse_menu str =
   | "quit" :: [] -> Quit
   | _ -> raise Invalid
 
+(** [parse_are_you_sure str] parses the player's input into a relevant [command] 
+    for interacting with the Are you sure menu.
+    Requires: [str] contains only (A-Z, a-z, 0-9), and space characters.
+    Raises: [Invalid] if the input doesn't match [AgainYes] or [AgainNo]. *)
 let parse_are_you_sure str = 
   match words (String.split_on_char ' ' (String.lowercase_ascii str)) with
   | "yes" :: [] -> AgainYes
@@ -101,7 +107,7 @@ let red_blue_stats r b =
   print_string (blue_stats ^ "%");
   print_endline ""
 
-(** [stats_messages st] prints all stats at [st]*)
+(** [stats_messages () st] prints all stats at [st]*)
 let stats_messages () st =
   let r = State.red_wins st in
   let b = State.blue_wins st in 
@@ -126,6 +132,7 @@ let stats_messages () st =
     ANSITerminal.(print_string [yellow; Bold] "It's a tie!");
     print_endline ""
 
+(** [help_message ()] is the help message for during game play. *)
 let help_message () = 
   ANSITerminal.(print_string [yellow; Underlined] "Instructions: "); 
   ANSITerminal.(print_string [yellow] "\n - Type 'go' followed by a column number to drop a piece of your color in that column.");
@@ -136,6 +143,7 @@ let help_message () =
   ANSITerminal.(print_string [yellow] "\n   settings, 'stats' to view the score, or 'help' to bring up these instructions again.");
   print_endline ""
 
+(** [instructions_message ()] is the instructions message for during the menu. *)
 let instructions_message () =
   ANSITerminal.(print_string [yellow; Underlined] "   Instructions    ");
   ANSITerminal.(print_string [yellow] "\n Object of the Game: ");
@@ -149,12 +157,15 @@ let instructions_message () =
   ANSITerminal.(print_string [yellow] "\n    Enter '2' to go to two player mode.");
   print_endline " "
 
+(** [starting_one_msg () d] is the message when one player mode is started with
+    difficulty [d]. *)
 let starting_one_msg () d = 
   let diff_str = if d = 1 then "Easy" else if d = 2 then "Medium" else "Hard" in 
   ANSITerminal.(print_string [red] ("Starting One Player Mode: " ^ diff_str));
   ANSITerminal.(print_string [cyan] "\nType 'help' for help or 'settings' to adjust the settings at any time");
   print_endline " "
 
+(** [difficulty_msg ()] is the message for choosing a difficulty. *)
 let difficulty_msg () =
   ANSITerminal.(print_string [yellow; Bold] "  CHOOSE DIFFICULTY  ");
   print_endline "";

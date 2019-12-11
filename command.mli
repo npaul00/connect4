@@ -54,7 +54,7 @@ val one_play:
 val two_play: State.t -> bool -> int -> unit -> (State.t -> int -> State.t) -> 
   (State.board -> int -> unit) -> unit
 
-(**[execute_menu_command ()] executes the player's input [i] at the start menu
-   by executing the command resulting from [parse_menu i] *)
+(**[execute_menu_command () mov dis] executes the player's input [i] at the 
+   start menu by executing the command resulting from [parse_menu i] *)
 val execute_menu_command: unit -> (State.t -> int -> State.t) -> 
   (State.board -> int -> unit) -> unit
