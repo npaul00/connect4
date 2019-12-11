@@ -106,7 +106,7 @@ let get_team s =
   | Some Blue -> ANSITerminal.(print_string [cyan] "O")
   | None -> print_string " "
 
-(** [print_row b temp r c] is the unit that prints the piece at [r] and [c]*)
+(** [print_row b temp r c] is the unit that prints the piece at [r] and [c]. *)
 let rec print_row b temp r c =
   match temp with
   | [] -> 
@@ -281,20 +281,9 @@ let get_win_pos b clr  =
     get_pos (check_vert b clr positions false) else
     failwith "Not a winning board or color"
 
-(** [string_tuple (x,y)] is the string ([x], [y])*)
-let string_tuple (x, y) = 
-  "(" ^ string_of_int x ^ ", " ^ string_of_int y ^ ")"
-
-(** ADD DOCS*)
-let rec string_tuples = function
-  | [] -> ""
-  | s :: t -> string_tuple s ^ ", " ^ string_tuples t
-
-(** ADD DOCS*)
-let print_pos_lst b clr =
-  clr |> get_win_pos b |> string_tuples |> print_string
-
-(** ADD DOCS*)
+(** [get_team_win s win] is the representation of the position [s] on the 
+    winning board. The piece is "X" if [s] is a winning piece, "O" if [s] is a 
+    regular piece, and " " if [s] is an empty position. *)
 let get_team_win s win =
   match s with
   | Some Red -> if win then ANSITerminal.(print_string [red; Blink] "X") else 
@@ -303,14 +292,15 @@ let get_team_win s win =
       ANSITerminal.(print_string [cyan] "O")
   | None -> print_string " "
 
-(** ADD DOCS*)
+(** [print_row_win b temp r c clr] is the unit that prints the piece at [r] and 
+    [c] in a winning board. *)
 let rec print_row_win b temp r c clr =
   match temp with
   | [] -> 
     if c > 7 then begin print_string "\n"; print_string line; print_string "\n"; 
       if r < 7 then print_string "| "; end 
   | ((x,y), s) :: t -> 
-    if x = c && y = r then 
+    if x = c && y = r then
       (if (List.mem (x, y) (get_win_pos b clr)) then
          (get_team_win s true; (print_string " | "); 
           print_row_win b b r (c + 1) clr;)
@@ -320,13 +310,12 @@ let rec print_row_win b temp r c clr =
       )
     else print_row_win b t r c clr
 
-
 let rec display_win clr b r = 
   if r = 1 then begin print_string "\n"; print_string "| "; end;
   if r < 7 then begin display_win clr b (r + 1); print_row_win b b r 1 clr; end;
   if r = 1 then print_string bot
 
-(* ADD DOCS*)
+(* [get_team_win_d s win] is [get_team_win] in day mode. *)
 let get_team_win_d s win =
   match s with
   | Some Red -> 
@@ -337,47 +326,46 @@ let get_team_win_d s win =
     else ANSITerminal.(print_string [cyan; Background White] "O")
   | None -> ANSITerminal.(print_string [cyan ; Background White] " ")
 
-(** ADD DOCS*)
+(* [print_row_win_d b temp r c clr] is [print_row_win] in day mode. *)
 let rec print_row_win_d b temp r c clr =
   match temp with
   | [] -> 
     if c > 7 then begin 
       print_string "\n"; 
-      ANSITerminal.(print_string [black ; Background White] line); 
+      ANSITerminal.(print_string [black; Background White] line); 
       print_string "\n"; 
-      if r < 7 then ANSITerminal.(print_string [black ; Background White] "| "); 
+      if r < 7 then ANSITerminal.(print_string [black; Background White] "| "); 
     end 
   | ((x,y), s) :: t -> 
     if x = c && y = r then begin
       if (List.mem (x, y) (get_win_pos b clr)) then begin
         get_team_win_d s true; 
-        (ANSITerminal.(print_string [black ; Background White] " | ")); 
+        (ANSITerminal.(print_string [black; Background White] " | ")); 
         print_row_win_d b b r (c + 1) clr;
       end
       else begin
         get_team_win_d s false; 
-        (ANSITerminal.(print_string [black ; Background White] " | ")); 
+        (ANSITerminal.(print_string [black; Background White] " | ")); 
         print_row_win_d b b r (c + 1) clr;
       end
     end
     else print_row_win_d b t r c clr
 
-
 let rec display_win_d clr b r = 
   if r = 1 then begin 
     print_string "\n"; 
-    ANSITerminal.(print_string [black ; Background White] "| "); 
+    ANSITerminal.(print_string [black; Background White] "| "); 
   end;
   if r < 7 then begin 
     display_win_d clr b (r + 1); 
     print_row_win_d b b r 1 clr; 
   end;
-  if r = 1 then ANSITerminal.(print_string [black ; Background White] bot)
+  if r = 1 then ANSITerminal.(print_string [black; Background White] bot)
 
 (** [winning_player t] is the winner at state [t] *)
 let winning_player t = 
-  if (check_win t.board Red) then Some Red
-  else if (check_win t.board Blue) then Some Blue
+  if check_win t.board Red then Some Red
+  else if check_win t.board Blue then Some Blue
   else None 
 
 let new_color wins = 
@@ -450,9 +438,9 @@ let rec anim t c low high dis =
       dis (update c high t.turn t.board) 1;
       Unix.sleepf 0.5;
       print_newline ();
-      anim t c low (high-1) dis;  end
-  else 
-    ()
+      anim t c low (high-1) dis;  
+    end
+  else ()
 
 (** [update_moves_list lst c] is [lst] with [c] concatinated *)
 let update_moves_list lst c = 
@@ -525,7 +513,8 @@ let possible_moves t =
    would block a potential 4 in a row of the opponent by putting a piece in 
    column [c]. *)
 let block_four t c =
-  (not (check_win (move t c).board (other_color t.turn))) &&
+  let new_bd = (move t c).board in
+  (not (check_win new_bd (other_color t.turn))) &&
   let state_if_other_went = move (state_w_other_color t) c in
   check_win state_if_other_went.board (other_color t.turn)
 
@@ -560,7 +549,7 @@ let moves_that_win t =
    by placing a piece on top of that one. *)
 let will_cause_four t c =
   let new_st = move t c in
-  will_win new_st c (new_st.turn)
+  will_win new_st c new_st.turn
 
 (**[safe_moves t lst] is a list of positions from [lst] that wouldn't cause the 
    current player of [t] to allow the opponent to win next turn by placing a 
@@ -584,8 +573,8 @@ let rec safer_moves t = function
     if will_eliminate_potential t x then safer_moves t tl
     else (x, y) :: safer_moves t tl
 
-(** [cpu_choose_move t i count lst] is the column the computer should play in, 
-    found by choosing the [ith] element of [lst], a list of possible positions.*)
+(** [cpu_choose_move t i lst] is the column the computer should play in, found
+    by choosing the [ith] element of [lst], a list of possible positions.*)
 let rec cpu_choose_move t i lst = 
   let rec cpu_choose_move_aux t' i' count' = function 
     | (x, y) :: tl -> 
@@ -603,7 +592,7 @@ let rec num_pieces_on_board = function
   | ((x, y), Some clr) :: tl -> 1 + num_pieces_on_board tl
   | ((x, y), None) :: tl -> num_pieces_on_board tl
 
-(** [piece_on_board b] is the firs piece's column or -1 if there are no
+(** [piece_on_board b] is the first piece's column or -1 if there are no
     pieces *)
 let rec piece_on_board = function
   | ((x, y), Some clr) :: tl -> x
@@ -619,7 +608,7 @@ let next_to loc =
     let rand = Random.int 2 in
     if rand = 0 then loc - 1 else loc + 1
 
-let cpu_move_med t =
+let rec cpu_move_med t =
   if num_pieces_on_board t.board <= 1 then
     (next_to (piece_on_board t.board), t.visit) else
     match moves_that_win t with
@@ -627,19 +616,23 @@ let cpu_move_med t =
     | [] -> 
       match moves_that_block t with 
       | (x, y) :: tl -> Unix.sleepf 1.0; (x, t.visit)
-      | [] -> 
-        let p_moves = possible_moves t in
-        let s_moves = safe_moves t p_moves in 
-        let safer = safer_moves t s_moves in
-        match safer with
-        | (x, y) :: tl -> 
-          (cpu_choose_move t (Random.int (List.length safer)) safer, t.visit)
-        | [] ->
-          match s_moves with
-          | (x, y) :: tl -> 
-            (cpu_choose_move t (Random.int (List.length s_moves)) s_moves, t.visit)
-          | [] -> 
-            (cpu_choose_move t (Random.int (List.length p_moves)) p_moves, t.visit)
+      | [] -> no_immediate t
+
+(** [no_immediate t] computes the computer's next move during medium mode 
+    when there are no columns they could immediately win in or block in. *)
+and no_immediate t = 
+  let p_moves = possible_moves t in
+  let s_moves = safe_moves t p_moves in 
+  let safer = safer_moves t s_moves in
+  match safer with
+  | (x, y) :: tl -> 
+    (cpu_choose_move t (Random.int (List.length safer)) safer, t.visit)
+  | [] ->
+    match s_moves with
+    | (x, y) :: tl -> 
+      (cpu_choose_move t (Random.int (List.length s_moves)) s_moves, t.visit)
+    | [] -> 
+      (cpu_choose_move t (Random.int (List.length p_moves)) p_moves, t.visit)
 
 let cpu_move_easy t =
   match moves_that_win t with
@@ -742,14 +735,14 @@ let rec solve st =
       let med' = if med <= 0 && min/2 < med then min/2
         else if med >= 0 && max/2 > med then max/2 
         else med in
-      let (col, r, v) = get_score3 st med' (med'+ 1) st.visit c i in
+      let (col, r, v) = get_score st med' (med'+ 1) st.visit c i in
       if r <= med' then solve_aux min r col (update_vis st v) else
         solve_aux r max col (update_vis st v)
   in solve_aux (-1) 1 4 st
 
-(** [get_score3 st alpha beta vis col i] is a potential column, corresponding 
+(** [get_score st alpha beta vis col i] is a potential column, corresponding 
     score, and boards visited at a depth of [i]*)
-and get_score3 st alpha beta vis col i = 
+and get_score st alpha beta vis col i = 
   if check_full st.board then (1, 0, vis) else
     match moves_that_win st with
     | (x, y) :: tl -> (x, (43 - (count_moves st.board))/2, vis)
@@ -757,12 +750,12 @@ and get_score3 st alpha beta vis col i =
       let max = (41 - (count_moves st.board))/2 in
       let bm = if beta > max then max else beta in
       if alpha >= bm then (col, bm, vis) else
-        calc_scores3 st alpha bm vis i
+        calc_scores st alpha bm vis i
 
-(** [calc_scores3 st a bm v i] is the best best column, score, and boards 
+(** [calc_scores st a bm v i] is the best best column, score, and boards 
     visited respectfully with a depth of [i]*)
-and calc_scores3 st a bm v i =
-  let rec calc_scores3_aux st c alpha beta vis col i = 
+and calc_scores st a bm v i =
+  let rec calc_scores_aux st c alpha beta vis col i = 
     if i < 1 then (1, 0, vis) else
     if c > 7 then (col, alpha, vis) else
     if playable st.board c && check_safe st c then
@@ -770,17 +763,24 @@ and calc_scores3 st a bm v i =
       let score = if List.mem_assoc new_st.board vis then 
           List.assoc new_st.board vis else
           let neg = 
-            match (get_score3 new_st (-beta) (-alpha) vis col (i-1)) with
-            | (cc, ss, vis) -> (cc, -ss)
+            match (get_score new_st (-beta) (-alpha) vis col (i-1)) with
+            | (c', s', _) -> (c', -s')
           in match neg with
-          | (c', s') -> s'
+          | (_, ss) -> ss
       in
       if score >= beta then (c, score, vis) else
       if score > alpha then 
-        calc_scores3_aux st (new_next_col c (get_score_list st)) score beta (put vis new_st.board score) c i
-      else calc_scores3_aux st (new_next_col c (get_score_list st)) alpha beta (put vis new_st.board score) col i
-    else calc_scores3_aux st (new_next_col c (get_score_list st)) alpha beta vis col i
-  in calc_scores3_aux st 4 a bm v 4 i
+        let new_vis = put vis new_st.board score in
+        let new_c = new_next_col c (get_score_list st) in
+        calc_scores_aux st new_c score beta new_vis c i
+      else 
+        let new_vis' = put vis new_st.board score in
+        let new_c' = new_next_col c (get_score_list st) in
+        calc_scores_aux st new_c' alpha beta new_vis' col i
+    else 
+      let new_c'' = new_next_col c (get_score_list st) in
+      calc_scores_aux st new_c'' alpha beta vis col i
+  in calc_scores_aux st 4 a bm v 4 i
 
 (** [pick_rand_from lst] is a random element of [lst]. *)
 let pick_rand_from lst =
