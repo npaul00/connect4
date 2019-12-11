@@ -1,16 +1,25 @@
 (** TEST PLAN
     We tested most parts of our system using OUnit to make sure all of our 
     functions work properly. We manually created boards and tested to make sure 
-    the A.I. made the appropriate move. We tested functions that update the 
-    state, determine winning players, boards, scores, etc. We left off helper 
-    functions as the functions we test use the helper functions and validate 
-    their functionality. We also left off functions from the file command.ml, 
-    main.ml, and the functions display, display_d, display_win, and 
-    display_win_d from state.ml, because those are display functions which we 
-    manually tested by running 'make play' in our terminal. We left off move, 
-    move_anim, and move_anim_d from state.ml because it updates the "visited" 
-    property of the state which is algorithmically complex and inconvenient to 
-    test in OUnit; instead we tested them by playing the game for ourselves. *)
+    the A.I. made the appropriate move. We did a lot of glass-box testing to 
+    make sure the individual parts of our system, i.e. functions that update the 
+    state, determine winning players, boards, scores, etc., work properly.  We 
+    left off testing helper functions, such as get_truth and get_pos in state.ml,
+    as the functions we test use the helper functions and validate their 
+    functionality. We also left off functions from the files command.ml, main.ml, 
+    and the functions display, display_d, display_win, and display_win_d from 
+    state.ml, because those are display functions which we manually tested by 
+    running 'make play' in our terminal. We left off move, move_anim, and 
+    move_anim_d from state.ml because it updates the "visited" property of the 
+    state which is algorithmically complex and inconvenient to test in OUnit; 
+    instead we tested them by playing the game for ourselves. We didn't make 
+    OUnit tests for situations that induce errors (such as trying to place a 
+    piece in a full column) because we tested them in our terminal. Our testing 
+    approach demonstrates the correctness of our system because we conducted 
+    glass-box testing by testing individual functions, as well as black-box 
+    testing by playing the game for ourselves several times and making sure the 
+    A.I. makes the correct move in different situations, all the main menu and 
+    settings features work, and the U.I. functions properly. *)
 
 open OUnit2
 open State
@@ -251,18 +260,25 @@ let cmp_set_like_lists lst1 lst2 =
   &&
   uniq1 = uniq2
 
+(** [empty_board_test name expected_output] constructs an OUnit test named 
+    [name] that asserts the quality of [expected_output] with [empty_board]. *)
 let empty_board_test
     (name: string)
     (expected_output: State.board) : test = 
   name >:: (fun _ ->
       assert_equal ~cmp:cmp_set_like_lists expected_output empty_board)
 
+(** [empty_test name expected_output] constructs an OUnit test named [name] that 
+    asserts the quality of [expected_output] with [empty]. *)
 let empty_test
     (name: string)
     (expected_output: State.board) : test = 
   name >:: (fun _ ->
       assert_equal expected_output empty)
 
+(** [check_full_test name input1 expected_output] constructs an OUnit test named 
+    [name] that asserts the quality of [expected_output] with 
+    [check_full input1]. *)
 let check_full_test
     (name: string)
     (input1: State.board)
@@ -270,6 +286,9 @@ let check_full_test
   name >:: (fun _ ->
       assert_equal expected_output (check_full input1))
 
+(** [check_win_test name input1 input2 expected_output] constructs an OUnit test 
+    named [name] that asserts the quality of [expected_output] with 
+    [check_win input1 input2]. *)
 let check_win_test
     (name: string)
     (input1: State.board)
@@ -278,6 +297,9 @@ let check_win_test
   name >:: (fun _ ->
       assert_equal expected_output (check_win input1 input2))
 
+(** [winning_player_test name input1 expected_output] constructs an OUnit test 
+    named [name] that asserts the quality of [expected_output] with 
+    [winning_player input1]. *)
 let winning_player_test
     (name: string)
     (input1: State.t)
@@ -285,6 +307,9 @@ let winning_player_test
   name >:: (fun _ ->
       assert_equal expected_output (winning_player input1))
 
+(** [color_to_string_test name input1 expected_output] constructs an OUnit test 
+    named [name] that asserts the quality of [expected_output] with 
+    [color_to_string input1]. *)
 let color_to_string_test
     (name: string)
     (input1: State.color)
@@ -292,6 +317,9 @@ let color_to_string_test
   name >:: (fun _ ->
       assert_equal expected_output (color_to_string input1))
 
+(** [other_color_test name input1 expected_output] constructs an OUnit test 
+    named [name] that asserts the quality of [expected_output] with 
+    [other_color input1]. *)
 let other_color_test
     (name: string)
     (input1: State.color)
@@ -299,6 +327,9 @@ let other_color_test
   name >:: (fun _ ->
       assert_equal expected_output (other_color input1))
 
+(** [drop_height_test name input1 input2 expected_output] constructs an OUnit 
+    test named [name] that asserts the quality of [expected_output] with 
+    [drop_height input1 input2]. *)
 let drop_height_test
     (name: string)
     (input1: int)
@@ -307,6 +338,9 @@ let drop_height_test
   name >:: (fun _ ->
       assert_equal expected_output (drop_height input1 input2))
 
+(** [update_test name input1 input2 input3 input4 expected_output] constructs an 
+    OUnit test named [name] that asserts the quality of [expected_output] with 
+    [update input1 input2 input3 input4]. *)
 let update_test
     (name: string)
     (input1: int)
@@ -317,27 +351,29 @@ let update_test
   name >:: (fun _ ->
       assert_equal expected_output (update input1 input2 input3 input4))
 
-let cpu_move_test
+(** [cpu_move_med_test name input1 expected_output] constructs an OUnit test 
+    named [name] that asserts the quality of [expected_output] with 
+    [cpu_move_med input1]. *)
+let cpu_move_med_test
     (name: string)
     (input1: State.t)
     (expected_output: int) : test = 
   name >:: (fun _ -> 
       assert_equal expected_output (let (c, _) = cpu_move_med input1 in c))
 
-let cpu_move_test_notequals
+(** [cpu_move_med_test_notequals name input1 wrong_output] constructs an OUnit 
+    test named [name] that asserts that [wrong_output] does not equal 
+    [cpu_move_med input1]. *)
+let cpu_move_med_test_notequals
     (name: string)
     (input1: State.t)
     (wrong_output: int) : test = 
   name >:: (fun _ -> 
       assert_equal false (let (c, _) = cpu_move_med input1 in c = wrong_output))
 
-let cpu_move_hard_test_notequals
-    (name: string)
-    (input1: State.t)
-    (wrong_output: int) : test = 
-  name >:: (fun _ -> 
-      assert_equal false (let (c, _) = cpu_move_hard input1 in c = wrong_output))
-
+(** [cpu_move_easy_test name input1 expected_output] constructs an OUnit test 
+    named [name] that asserts the quality of [expected_output] with 
+    [cpu_move_easy input1]. *)
 let cpu_move_easy_test
     (name: string)
     (input1: State.t)
@@ -345,6 +381,9 @@ let cpu_move_easy_test
   name >:: (fun _ -> 
       assert_equal expected_output (let (c, _) = cpu_move_easy input1 in c))
 
+(** [cpu_move_hard_test name input1 expected_output] constructs an OUnit test 
+    named [name] that asserts the quality of [expected_output] with 
+    [cpu_move_hard input1]. *)
 let cpu_move_hard_test
     (name: string)
     (input1: State.t)
@@ -352,6 +391,19 @@ let cpu_move_hard_test
   name >:: (fun _ -> 
       assert_equal expected_output (let (c, _) = cpu_move_hard input1 in c))
 
+(** [cpu_move_hard_test_notequals name input1 wrong_output] constructs an OUnit 
+    test named [name] that asserts that [wrong_output] does not equal 
+    [cpu_move_hard input1]. *)
+let cpu_move_hard_test_notequals
+    (name: string)
+    (input1: State.t)
+    (wrong_output: int) : test = 
+  name >:: (fun _ -> 
+      assert_equal false (let (c, _) = cpu_move_hard input1 in c = wrong_output))
+
+(** [set_turn_test name input1 input2 expected_output] constructs an OUnit test 
+    named [name] that asserts the quality of [expected_output] with 
+    [set_turn input1 input2]. *)
 let set_turn_test
     (name: string)
     (input1: State.t)
@@ -359,52 +411,73 @@ let set_turn_test
     (expected_output: State.t) : test =
   name >:: (fun _ -> assert_equal expected_output (set_turn input1 input2))
 
+(** [init_state_test name expected_output] constructs an OUnit test named [name] 
+    that asserts the quality of [expected_output] with [init_state]. *)
 let init_state_test
     (name: string)
     (expected_output: State.t) : test =
   name >:: (fun _ -> assert_equal expected_output init_state)
 
+(** [board_test name input1 expected_output] constructs an OUnit test named 
+    [name] that asserts the quality of [expected_output] with [board input1]. *)
 let board_test
     (name: string)
     (input1: State.t)
     (expected_output: State.board) : test =
   name >:: (fun _ -> assert_equal expected_output (board input1))
 
+(** [turn_test name input1 expected_output] constructs an OUnit test named 
+    [name] that asserts the quality of [expected_output] with [turn input1]. *)
 let turn_test
     (name: string)
     (input1: State.t)
     (expected_output: State.color) : test =
   name >:: (fun _ -> assert_equal expected_output (turn input1))
 
+(** [moves_test name input1 expected_output] constructs an OUnit test named 
+    [name] that asserts the quality of [expected_output] with [moves input1]. *)
 let moves_test
     (name: string)
     (input1: State.t)
     (expected_output: State.moves_list) : test =
   name >:: (fun _ -> assert_equal expected_output (moves input1))
 
+(** [wins_test name input1 expected_output] constructs an OUnit test named 
+    [name] that asserts the quality of [expected_output] with [wins input1]. *)
 let wins_test
     (name: string)
     (input1: State.t)
     (expected_output: State.num_wins) : test =
   name >:: (fun _ -> assert_equal expected_output (wins input1))
 
+(** [red_wins_test name input1 expected_output] constructs an OUnit test named 
+    [name] that asserts the quality of [expected_output] with 
+    [red_wins input1]. *)
 let red_wins_test
     (name: string)
     (input1: State.t)
     (expected_output: int) : test =
   name >:: (fun _ -> assert_equal expected_output (red_wins input1))
 
+(** [blue_wins_test name input1 expected_output] constructs an OUnit test named 
+    [name] that asserts the quality of [expected_output] with 
+    [blue_wins input1]. *)
 let blue_wins_test
     (name: string)
     (input1: State.t)
     (expected_output: int) : test =
   name >:: (fun _ -> assert_equal expected_output (blue_wins input1))
 
+(** [bum_ties_test name input1 expected_output] constructs an OUnit test named 
+    [name] that asserts the quality of [expected_output] with 
+    [num_ties input1]. *)
 let num_ties_test
     (name: string)
     (input1: State.t)
     (expected_output: int) : test =
   name >:: (fun _ -> assert_equal expected_output (num_ties input1))
+
+(* Test Suites *)
 
 let empty_tests = 
   [
@@ -492,19 +565,19 @@ let board_update_tests =
 
 let move_tests = 
   [
-    cpu_move_test 
+    cpu_move_med_test 
       "Medium AI should play column 1 to block blue win in board blue_3" 
       state_blue_3 1;
-    cpu_move_test 
+    cpu_move_med_test 
       "Medium AI should play column 7 to win diagonally in board red_3" 
       state_red_3 7;
-    cpu_move_test 
+    cpu_move_med_test 
       "Medium AI should play column 1 to win vertically in board blue_3" 
       state_blue_3 1;
-    cpu_move_test_notequals 
+    cpu_move_med_test_notequals 
       "Medium AI should not play column 7 as it would trigger blue win" 
       state_blue_pot 7;
-    cpu_move_test_notequals 
+    cpu_move_med_test_notequals 
       "Medium AI should not play column 2 as it would trigger blue win" 
       state_blue_pot_2 2;
     cpu_move_easy_test 
