@@ -1,25 +1,30 @@
 (** TEST PLAN
-    We tested most parts of our system using OUnit to make sure all of our 
-    functions work properly. We manually created boards and tested to make sure 
-    the A.I. made the appropriate move. We did a lot of glass-box testing to 
-    make sure the individual parts of our system, i.e. functions that update the 
-    state, determine winning players, boards, scores, etc., work properly.  We 
-    left off testing helper functions, such as get_truth and get_pos in state.ml,
-    as the functions we test use the helper functions and validate their 
-    functionality. We also left off functions from the files command.ml, main.ml, 
-    and the functions display, display_d, display_win, and display_win_d from 
-    state.ml, because those are display functions which we manually tested by 
-    running 'make play' in our terminal. We left off move, move_anim, and 
-    move_anim_d from state.ml because it updates the "visited" property of the 
-    state which is algorithmically complex and inconvenient to test in OUnit; 
-    instead we tested them by playing the game for ourselves. We didn't make 
-    OUnit tests for situations that induce errors (such as trying to place a 
-    piece in a full column) because we tested them in our terminal. Our testing 
-    approach demonstrates the correctness of our system because we conducted 
-    glass-box testing by testing individual functions, as well as black-box 
-    testing by playing the game for ourselves several times and making sure the 
-    A.I. makes the correct move in different situations, all the main menu and 
-    settings features work, and the U.I. functions properly. *)
+    - We tested most parts of our system using OUnit to make sure all of our 
+      functions work properly. 
+    - We manually created boards and tested to make sure 
+      the A.I. made the appropriate move. We did a lot of glass-box testing to 
+      make sure the individual parts of our system, i.e. functions that update 
+      the state, determine winning players, boards, scores, etc., work properly.  
+    - We left off testing helper functions, such as get_truth and get_pos in 
+      state.ml, as the features we test, both in OUnit and manually, use the 
+      helper functions and validate their functionality. 
+    - We also left off functions from the files command.ml, main.ml, and the 
+      functions display, display_d, display_win, and display_win_d from state.ml, 
+      because those are display functions which we manually tested by running 
+      'make play' in our terminal. 
+    - We left off the functions move, move_anim, and move_anim_d from state.ml 
+      because they update the "visited" property of the state which is 
+      algorithmically complex and inconvenient to test in OUnit; instead we 
+      tested their functionality by playing the game for ourselves. 
+    - We didn't make OUnit tests for situations that induce errors (such as 
+      trying to place a piece in a full column) because we tested them manually
+      in the terminal. 
+    - Our testing approach demonstrates the correctness of our system because we 
+      conducted glass-box testing by testing individual functions, as well as 
+      black-box testing by playing the game for ourselves several times and 
+      making sure the A.I. makes the correct move in different situations, all 
+      the main menu and settings features work, and the U.I. functions 
+      properly. *)
 
 open OUnit2
 open State
