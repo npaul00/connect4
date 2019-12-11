@@ -440,21 +440,24 @@ and cpu_play st d last () i mov dis =
     two player mode. *)
 and cpu_play_win last_clr st i mov dis () = 
   print_endline "";
-  if last_clr = State.Red then 
-    (if dis == State.display then
-       (State.display_win Red (State.board st) 1;)
-     else
-       State.display_win_d Red (State.board st) 1;
-     ANSITerminal.(print_string [red; Blink] ("\nComputer wins!\n"));
-     print_endline ""; 
-     play_again () (State.update_wins st) i mov dis)
-  else (if dis == State.display then
-          (State.display_win Blue (State.board st) 1;)
-        else
-          State.display_win_d Blue (State.board st) 1;
-        ANSITerminal.(print_string [blue; Blink] ("\nYou win!\n"));
-        print_endline "";
-        play_again () (State.update_wins st) i mov dis)
+  if last_clr = State.Red then begin
+    if dis == State.display then
+      (State.display_win Red (State.board st) 1;)
+    else
+      State.display_win_d Red (State.board st) 1;
+    ANSITerminal.(print_string [red; Blink] ("\nComputer wins!\n"));
+    print_endline ""; 
+    play_again () (State.update_wins st) i mov dis
+  end
+  else begin
+    if dis == State.display then
+      (State.display_win Blue (State.board st) 1;)
+    else
+      State.display_win_d Blue (State.board st) 1;
+    ANSITerminal.(print_string [blue; Bold; Blink] ("\nYou win!\n"));
+    print_endline "";
+    play_again () (State.update_wins st) i mov dis
+  end
 
 (** [cpu_play_last_and_turn last turn last_clr ()] displays the last move if at 
     least one move has been taken, and then displays whose turn it is. *)
