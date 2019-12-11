@@ -268,7 +268,7 @@ and two_play st d last () mov dis =
     play_again () (State.update_wins st) 2 mov dis
   end
   else begin
-    display_last_and_turn st d last last_clr ();
+    if d then display_last_and_turn st last last_clr ();
     print_string "> ";
     exec_two_play_cmd st last mov dis ()
   end
@@ -296,13 +296,12 @@ and colored_win_msg clr st mov dis () =
       play_again () (State.update_wins st) 2 mov dis
     end
 
-(** [display_last_and_turn st d last last_clr ()] displays the last move if at 
+(** [display_last_and_turn st last last_clr ()] displays the last move if at 
     least one move has been taken, and then displays whose turn it is. *)
-and display_last_and_turn st d last last_clr () = 
-  if d then
-    if last <> 0 then print_string 
-        ( "\nLast move: " ^ (State.color_to_string last_clr) ^ " in column " 
-          ^ string_of_int last);
+and display_last_and_turn st last last_clr () = 
+  if last <> 0 then print_string 
+      ( "\nLast move: " ^ (State.color_to_string last_clr) ^ " in column " 
+        ^ string_of_int last);
   let turn = State.turn st in
   print_endline ("\n" ^ State.color_to_string turn ^ "'s turn")
 
@@ -403,96 +402,115 @@ and one_play_invalid st mov dis () =
     prints if [d] is true. [last] is the column of the most recent piece played,
     and is 0 if no pieces have been played.*)
 and cpu_play st d last () i mov dis = 
-  let op = if i = 1 then (State.cpu_move_easy)
-    else if i = 3 then (State.cpu_move_med)
-    else if i = 4 then (State.cpu_move_hard)
-    else (State.cpu_move_med) in
+  let op = if i = 1 then State.cpu_move_easy
+    else if i = 4 then State.cpu_move_hard
+    else State.cpu_move_med in
   let turn = State.turn st in
   let board = State.board st in
   let last_clr = State.other_color turn in
-  let move = if mov == State.move then mov
-    else if dis == State.display then State.move_anim
-    else State.move_anim_d in
   if d then dis board 1;
-  let person_string = (if turn = State.Red then "Computer" else "You") in
-  if State.check_win board last_clr then begin
-    print_endline "";
-    if last_clr = State.Red then 
-      (if dis == State.display then
-         (State.display_win Red (State.board st) 1;)
-       else
-         State.display_win_d Red (State.board st) 1;
-       ANSITerminal.(print_string [red; Blink] ("\nComputer wins!\n"));
-       print_endline ""; 
-       play_again () (State.update_wins st) i mov dis)
-    else (if dis == State.display then
-            (State.display_win Blue (State.board st) 1;)
-          else
-            State.display_win_d Blue (State.board st) 1;
-          ANSITerminal.(print_string [blue; Blink] ("\nYou win!\n"));
-          print_endline "";
-          play_again () (State.update_wins st) i mov dis)
-  end
-  else if (State.check_full board) then
+  if State.check_win board last_clr then 
+    cpu_play_win last_clr st i mov dis ()
+  else if State.check_full board then
     (ANSITerminal.(print_string [Blink] ("\nIt's a tie!\n")); 
      play_again () (State.update_wins st) i mov dis)
   else begin
-    if d then begin
-      if last <> 0 then begin
-        let last_person_string = 
-          (if turn = State.Blue then "Computer" else "You") in
-        print_string ("\nLast move: " ^ (State.color_to_string last_clr) ^ 
-                      " (" ^ last_person_string ^ ") in column " ^ 
-                      string_of_int last)
-      end;
-      print_string 
-        ("\n" ^ State.color_to_string turn ^ "'s turn (" ^ person_string ^")");
-    end;
+    if d then cpu_play_last_and_turn last turn last_clr ();
     match turn with 
     | State.Red -> 
       print_endline "";
       let (move_col, vis) = op st in
-      cpu_play (State.update_vis (move st move_col) vis) true (move_col) () i mov dis;
-    | State.Blue -> 
-      print_string "\n> ";
-      try match parse (read_line()) with
-        | Go col -> 
-          let new_state =  move st col in
-          if new_state = st then begin
-            print_string "That column is full, try another!";
-            cpu_play st false last () i mov dis
-          end
-          else cpu_play new_state true col () i mov dis
-        | Help -> 
-          help_message ();
-          cpu_play st true last () i mov dis
-        | Stats -> stats_messages () st;
-          cpu_play st true last () i mov dis
-        | MainMenu -> begin 
-            ANSITerminal.(print_string [red] 
-                            "Are you sure you want to exit to the main menu? All stats will be reset.");
-            print_endline "";
-            try are_you_sure () mov dis 1
-            with | Cancel -> cpu_play st true last () i mov dis
-          end
-        | Easy | Medium | Hard -> 
-          print_string "Invalid move! Hint: type 'go' and a column number"; 
-          cpu_play st false last () i mov dis
-        | Settings -> settings_menu () mov dis (cpu_play st true last () i)
-        | Quit -> begin
-            ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
-            print_endline "";
-            try are_you_sure () mov dis 0 
-            with | Cancel -> cpu_play st true last () i mov dis
-          end
-        | _ -> print_string "Invalid move! Hint: type 'go' and a column number";
-          cpu_play st false last () i mov dis
-      with 
-      | Invalid -> 
-        print_string "Invalid move! Hint: type 'go' and a column number";
-        cpu_play st false last () i mov dis
+      let move = select_anim mov dis in
+      cpu_play (State.update_vis (move st move_col) vis) true (move_col) () i mov dis
+    | State.Blue -> cpu_play_blue_move st d last () i mov dis
   end
 
+(** [cpu_play_win last_clr st i mov dis ()] displays the winning message for 
+    two player mode. *)
+and cpu_play_win last_clr st i mov dis () = 
+  print_endline "";
+  if last_clr = State.Red then 
+    (if dis == State.display then
+       (State.display_win Red (State.board st) 1;)
+     else
+       State.display_win_d Red (State.board st) 1;
+     ANSITerminal.(print_string [red; Blink] ("\nComputer wins!\n"));
+     print_endline ""; 
+     play_again () (State.update_wins st) i mov dis)
+  else (if dis == State.display then
+          (State.display_win Blue (State.board st) 1;)
+        else
+          State.display_win_d Blue (State.board st) 1;
+        ANSITerminal.(print_string [blue; Blink] ("\nYou win!\n"));
+        print_endline "";
+        play_again () (State.update_wins st) i mov dis)
+
+(** [cpu_play_last_and_turn last turn last_clr ()] displays the last move if at 
+    least one move has been taken, and then displays whose turn it is. *)
+and cpu_play_last_and_turn last turn last_clr () =
+  if last <> 0 then begin
+    let last_person_string = 
+      if turn = State.Blue then "Computer" else "You" in
+    print_string ("\nLast move: " ^ (State.color_to_string last_clr) ^ 
+                  " (" ^ last_person_string ^ ") in column " ^ 
+                  string_of_int last)
+  end;
+  let person_string = 
+    if turn = State.Red then "Computer" else "You" in
+  print_string 
+    ("\n" ^ State.color_to_string turn ^ "'s turn (" ^ person_string ^")")
+
+(** [cpu_play_blue_move st d last () i mov dis] parses the user's input during a 
+    two player game to a command and carries out the correct action. *)
+and cpu_play_blue_move st d last () i mov dis = 
+  print_string "\n> ";
+  try match parse (read_line()) with
+    | Go col -> cpu_play_go i col st last mov dis ()
+    | Help -> 
+      help_message ();
+      cpu_play st true last () i mov dis
+    | Stats -> 
+      stats_messages () st;
+      cpu_play st true last () i mov dis
+    | MainMenu -> cpu_play_qm 1 st last i mov dis ()
+    | Settings -> settings_menu () mov dis (cpu_play st true last () i)
+    | Quit -> cpu_play_qm 0 st last i mov dis ()
+    | _ -> cpu_play_invalid st last i mov dis ()
+  with 
+  | Invalid -> cpu_play_invalid st last i mov dis ()
+
+(** [cpu_play_go i col st last mov dis ()] is the result of [cpu_play_blue_move] 
+    when the user input parses to Go [col]. It places a piece in [col] if it's 
+    not full. Else, it asks the user to try again. *)
+and cpu_play_go i col st last mov dis () = 
+  let move = select_anim mov dis in
+  let new_state =  move st col in
+  if new_state = st then begin
+    print_string "That column is full, try another!";
+    cpu_play st false last () i mov dis
+  end
+  else cpu_play new_state true col () i mov dis
+
+(** [cpu_play_qm qm st last i mov dis ()] is the result of [cpu_play_blue_move] 
+    when the user input parses to Quit or Menu. It prompts the Are you sure 
+    message for quit if [qm]=0 or menu if [qm]=1. *)
+and cpu_play_qm qm st last i mov dis () = 
+  if qm = 0 then ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.")
+  else ANSITerminal.(print_string [red] 
+                       "Are you sure you want to exit to the main menu? All stats will be reset.");
+  print_endline "";
+  try are_you_sure () mov dis qm
+  with | Cancel -> cpu_play st true last () i mov dis
+
+(** [cpu_play_invalid st last i mov dis ()] is the result of 
+    [cpu_play_blue_move] when the user input parses to Invalid. It asks the user 
+    for a new input.*)
+and cpu_play_invalid st last i mov dis () = 
+  print_string "Invalid move! Hint: type 'go' and a column number";
+  cpu_play st false last () i mov dis
+
+(** [settings_menu () mov dis next] is the settings menu that is used to 
+    toggle animation and night mode. *)
 and settings_menu () mov dis next =
   ANSITerminal.(print_string [cyan] 
                   "Enter a setting to toggle or type 'back' to go back: \n");
