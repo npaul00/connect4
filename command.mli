@@ -29,8 +29,7 @@ exception Invalid
 (**[parse str] parses the player's input into a relevant [command] for 
    during game play.
    Requires: [str] contains only (A-Z, a-z, 0-9), and space characters.
-   Raises: [Invalid] if the input doesn't match [Go of int], [Quit], or [Help]
-   or if the integer following go is not between 1 and 7. *)
+   Raises: [Invalid] if the input doesn't match a valid command. *)
 val parse: string -> command
 
 (**[parse_menu str] parses the player's input into a relevant [command] for 

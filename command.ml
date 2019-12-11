@@ -79,10 +79,10 @@ let parse_are_you_sure str =
   | "no" :: [] -> AgainNo
   | _ -> raise Invalid
 
-(** [greater wins t] prints who has the most wins in state [t]*)
+(** [greater wins t] is who has the most wins in state [t]*)
 let greater_wins t =
-  if (State.red_wins t > State.blue_wins t) then Some "Red" 
-  else if (State.red_wins t < State.blue_wins t) then Some "Blue"
+  if State.red_wins t > State.blue_wins t then Some "Red" 
+  else if State.red_wins t < State.blue_wins t then Some "Blue"
   else None
 
 (** [red_blue_stats r b] prints the stats between team [r] and team [b]*)
@@ -94,10 +94,10 @@ let red_blue_stats r b =
   let blue_stats = (blue /. total *. 100.0) |> int_of_float |> string_of_int in
   print_endline "";
   print_endline "";
-  ANSITerminal.(print_string [yellow; Underlined; Bold] ("Win Percentage"));
-  ANSITerminal.(print_string [red] ("\nRed: "));
+  ANSITerminal.(print_string [yellow; Underlined; Bold] "Win Percentage");
+  ANSITerminal.(print_string [red] "\nRed: ");
   print_string (red_stats ^ "%");
-  ANSITerminal.(print_string [cyan] ("\nBlue: "));
+  ANSITerminal.(print_string [cyan] "\nBlue: ");
   print_string (blue_stats ^ "%");
   print_endline ""
 
@@ -166,10 +166,11 @@ let difficulty_msg () =
   print_endline "";
   print_string "\n> "
 
-(** [play_again () st one_two mov dis ] asks the user if they want to play again 
-    and starts a new game if the anser is yes. [one_two] is 1 for one player 
-    easy mode, 2 for two player, 3 for medium one player, 4 for hard one player*)
-let rec play_again () st one_two mov dis=
+(** [play_again () st one_two mov dis] is the menu when a game ends that asks 
+    the user if they want to play again, quit, return to the menu, or see stats.
+    [one_two] is 1 for one player easy mode, 2 for two player, 3 for medium 
+    one player, 4 for hard one player*)
+let rec play_again () st one_two mov dis =
   print_endline "Would you like to play again?";
   ANSITerminal.(print_string [yellow] "\n   yes | no | menu | stats"); 
   print_endline "";
@@ -177,9 +178,9 @@ let rec play_again () st one_two mov dis=
   try match parse (read_line ()), one_two with
     | AgainYes, i -> play_again_yes i st mov dis ()
     | AgainNo, i -> play_again_no ()
-    | Quit, i -> play_again_quit i st mov dis ()
+    | Quit, i -> play_again_qm 0 i st mov dis ()
     | Stats, i -> play_again_stats i st mov dis ()
-    | MainMenu, i -> play_again_menu i st mov dis ()
+    | MainMenu, i -> play_again_qm 1 i st mov dis ()
     | _, i -> play_again_invalid i st mov dis ()
   with
   | Invalid -> play_again_invalid one_two st mov dis ()
@@ -199,14 +200,6 @@ and play_again_no () =
   print_endline "";
   exit 0
 
-(** [play_again_quit i st mov dis ()] is the result of [play_again] when the 
-    user input parses to Quit. It prompts the Are you sure message for quit. *)
-and play_again_quit i st mov dis () =
-  ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
-  print_endline "";
-  try are_you_sure () mov dis 0 with
-  | Cancel -> play_again () st i mov dis
-
 (** [play_again_stats i st mov dis ()] is the result of [play_again] when the 
     user input parses to Stats. It displays the game statistics. *)
 and play_again_stats i st mov dis () = 
@@ -220,13 +213,17 @@ and play_again_invalid i st mov dis () =
   print_endline "Invalid command! Hint: type 'yes', 'no', 'menu', or 'stats'."; 
   play_again () st i mov dis
 
-(** [play_again_yes i st mov dis ()] is the result of [play_again] when the 
-    user input parses to Menu. It prompts the Are your sure message for menu. *)
-and play_again_menu i st mov dis () = 
-  ANSITerminal.(print_string [red] 
-                  "Are you sure you want to exit to the main menu? All stats will be reset.");
+(** [play_again_qm qm i st mov dis ()] is the result of [play_again] when the 
+    user input parses to Quit or Menu. It prompts the Are you sure message for 
+    quit if [qm]=0 or menu if [qm]=1. *)
+and play_again_qm qm i st mov dis () = 
+  if qm = 0 then
+    ANSITerminal.(print_string [red] 
+                    "Are you sure you want to quit? All data will be lost.")
+  else ANSITerminal.(print_string [red] 
+                       "Are you sure you want to exit to the main menu? All stats will be reset.");
   print_endline "";
-  try are_you_sure () mov dis 1 with
+  try are_you_sure () mov dis qm with
   | Cancel -> play_again () st i mov dis
 
 (** [are_you_sure () mov dis qm] asks the user if they are sure they want to
@@ -253,9 +250,38 @@ and are_you_sure () mov dis qm =
       are_you_sure () mov dis qm
     end
 
-(**[colored_win_msg clr st mov dis ()] displays a colored winning message for 
-   color [clr] and then prompts the play again menu for [st] with updated wins,
-   with settings [mov] and [dis].*)
+(** [two_play st d last () mov dis ] is the start of a two player game in state 
+    [st] and displays the board if [d] is true. [last] is the column of the 
+    most recent piece played, and is 0 if no pieces have been played.*)
+and two_play st d last () mov dis = 
+  let board = State.board st in
+  let last_clr = st |> State.turn |> State.other_color in
+  if d then dis board 1;
+  if State.check_win board last_clr then begin
+    print_endline "";
+    let win_dis = select_win_dis dis in 
+    win_dis last_clr board 1;
+    colored_win_msg last_clr st mov dis ()
+  end
+  else if State.check_full board then begin
+    ANSITerminal.(print_string [Blink] ("\nIt's a tie!\n")); 
+    play_again () (State.update_wins st) 2 mov dis
+  end
+  else begin
+    display_last_and_turn st d last last_clr ();
+    print_string "> ";
+    exec_two_play_cmd st last mov dis ()
+  end
+
+(** [select_win_dis dis] is the display method for the win message based on the
+    night mode setting [dis]. *)
+and select_win_dis dis = 
+  if dis == State.display then State.display_win
+  else State.display_win_d
+
+(** [colored_win_msg clr st mov dis ()] displays a colored winning message for 
+    color [clr] and then prompts the play again menu for [st] with updated wins,
+    with settings [mov] and [dis].*)
 and colored_win_msg clr st mov dis () = 
   if State.color_to_string clr = "Red" then
     begin
@@ -270,81 +296,112 @@ and colored_win_msg clr st mov dis () =
       play_again () (State.update_wins st) 2 mov dis
     end
 
-(** [two_play st d last ()] is the start of a two player game in state [st] and 
-    displays the board if [d] is true. [last] is the column of the most recent 
-    piece played, and is 0 if no pieces have been played.*)
-and two_play st d last () mov dis = 
+(** [display_last_and_turn st d last last_clr ()] displays the last move if at 
+    least one move has been taken, and then displays whose turn it is. *)
+and display_last_and_turn st d last last_clr () = 
+  if d then
+    if last <> 0 then print_string 
+        ( "\nLast move: " ^ (State.color_to_string last_clr) ^ " in column " 
+          ^ string_of_int last);
   let turn = State.turn st in
-  let board = State.board st in
-  let last_clr = State.other_color turn in
-  let move = if mov == State.move then mov
-    else if dis == State.display then State.move_anim
-    else State.move_anim_d in
-  if d then dis board 1;
-  if State.check_win board last_clr then begin
-    print_endline "";
-    (if dis == State.display then 
-       (State.display_win last_clr (State.board st) 1;)
-     else
-       State.display_win_d last_clr (State.board st) 1;
-     colored_win_msg last_clr st mov dis ())
+  print_endline ("\n" ^ State.color_to_string turn ^ "'s turn")
+
+(** [exec_two_play_cmd st last mov dis ()] parses the user's input during a 
+    two player game to a command and carries out the correct action. *)
+and exec_two_play_cmd st last mov dis () = 
+  try match parse (read_line ()) with
+    | Go col -> two_play_go col st last mov dis ()
+    | Help -> 
+      help_message ();
+      two_play st true last () mov dis
+    | Stats -> 
+      stats_messages () st; 
+      two_play st true last () mov dis
+    | MainMenu -> two_play_qm 1 st last mov dis ()
+    | Settings -> settings_menu () mov dis (two_play st true last ())
+    | Quit -> two_play_qm 0 st last mov dis ()
+    | _ -> two_play_invalid st last mov dis ()
+  with 
+  | Invalid -> two_play_invalid st last mov dis ()
+
+(** [select_anim mov dis] selects the move method based on the animation
+    setting [mov] and the night mode setting [dis]. *)
+and select_anim mov dis = 
+  if mov == State.move then mov
+  else if dis == State.display then State.move_anim
+  else State.move_anim_d
+
+(** [two_play_go col st last mov dis ()] is the result of [exec_two_play_cmd] 
+    when the user input parses to Go [col]. It places a piece in [col] if it's 
+    not full. Else, it asks the user to try again. *)
+and two_play_go col st last mov dis () = 
+  let move = select_anim mov dis in
+  let new_state = move st col in
+  if new_state = st then begin
+    print_endline "That column is full, try another!";
+    two_play st false last () mov dis
   end
-  else if (State.check_full board) then
-    (ANSITerminal.(print_string [Blink] ("\nIt's a tie!\n")); 
-     play_again () (State.update_wins st) 2 mov dis)
   else begin
-    if d then begin
-      if last <> 0 then begin
-        print_string 
-          ( "\nLast move: " ^ (State.color_to_string last_clr) ^ " in column " 
-            ^ string_of_int last);
-      end;
-      print_endline ("\n" ^ State.color_to_string turn ^ "'s turn")
-    end;
-    print_string "> ";
-    try match parse (read_line()) with
-      | Go col -> 
-        let new_state = move st col in
-        if new_state = st then begin
-          print_endline "That column is full, try another!";
-          two_play st false last () mov dis
-        end
-        else begin
-          two_play new_state true col () mov dis
-        end
-      | Help -> 
-        help_message ();
-        two_play st true last () mov dis
-      | Stats -> stats_messages () st; 
-        two_play st true last () mov dis
-      | MainMenu -> begin 
-          ANSITerminal.(print_string [red] 
-                          "Are you sure you want to exit to the main menu? All stats will be reset.");
-          print_endline "";
-          try are_you_sure () mov dis 1
-          with | Cancel -> two_play st true last () mov dis
-        end
-      | Easy | Medium | Hard -> 
-        print_endline "Invalid move! Hint: type 'go' and a column number"; 
-        two_play st false last () mov dis
-      | Settings -> settings_menu () mov dis (two_play st true last ())
-      | Quit -> begin
-          ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
-          print_endline "";
-          try are_you_sure () mov dis 0
-          with | Cancel -> two_play st true last () mov dis
-        end
-      | _ -> print_endline "Invalid move! Hint: type 'go' and a column number";
-        two_play st false last () mov dis
-    with 
-    | Invalid -> 
-      print_endline "Invalid move! Hint: type 'go' and a column number";
-      two_play st false last () mov dis
+    two_play new_state true col () mov dis
   end
 
-(** [cpu_play st d last () i] is one player mode at difficulty [i] and prints if 
-    [d] is true. [last] is the column of the most recent piece played, and is 0 
-    if no pieces have been played.*)
+(** [two_play_qm qm st last mov dis ()] is the result of [exec_two_play_cmd] 
+    when the user input parses to Quit or Menu. It prompts the Are you sure 
+    message for quit if [qm]=0 or menu if [qm]=1. *)
+and two_play_qm qm st last mov dis () = 
+  if qm = 0 then 
+    ANSITerminal.(print_string [red] 
+                    "Are you sure you want to quit? All data will be lost.") 
+  else ANSITerminal.(print_string [red] 
+                       "Are you sure you want to exit to the main menu? All stats will be reset.");
+  print_endline "";
+  try are_you_sure () mov dis qm
+  with | Cancel -> two_play st true last () mov dis
+
+(** [two_play_invalid st last mov dis ()] is the result of [exec_two_play_cmd] 
+    when the user input parses to Invalid. It asks the user for a new input. *)
+and two_play_invalid st last mov dis () = 
+  print_endline "Invalid move! Hint: type 'go' and a column number"; 
+  two_play st false last () mov dis
+
+(** [one_play st d () mov dis] is the start of one player mode and asks the 
+    user for a difficulty*)
+and one_play st d () mov dis = 
+  difficulty_msg ();
+  try match parse (read_line ()) with
+    | Easy -> 
+      starting_one_msg () 1;
+      cpu_play st d 0 () 1 mov dis
+    | Medium -> 
+      starting_one_msg () 2;
+      cpu_play st d 0 () 3 mov dis
+    | Hard -> 
+      starting_one_msg () 3;
+      cpu_play st d 0 () 4 mov dis
+    | Quit -> one_play_quit st mov dis ()
+    | _ -> one_play_invalid st mov dis ()
+  with
+  | Invalid -> one_play_invalid st mov dis ()
+
+(** [one_play_quit st mov dis ()] is the result of [one_play] when the user 
+    input parses to Quit. It prompts the Are you sure message.*)
+and one_play_quit st mov dis () = 
+  ANSITerminal.(print_string [red] 
+                  "Are you sure you want to quit? All data will be lost.");
+  print_endline "";
+  try are_you_sure () mov dis 0
+  with | Cancel -> one_play st true () mov dis
+
+(** [one_play_invalid st mov dis ()] is the result of [one_play] when the user 
+    input parses to Invalid. It asks the user for a new input.*)
+and one_play_invalid st mov dis () = 
+  print_endline "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
+  print_string "> ";
+  one_play st true () mov dis
+
+(** [cpu_play st d last () i mov dis] is one player mode at difficulty [i] and 
+    prints if [d] is true. [last] is the column of the most recent piece played,
+    and is 0 if no pieces have been played.*)
 and cpu_play st d last () i mov dis = 
   let op = if i = 1 then (State.cpu_move_easy)
     else if i = 3 then (State.cpu_move_med)
@@ -436,67 +493,51 @@ and cpu_play st d last () i mov dis =
         cpu_play st false last () i mov dis
   end
 
-(** [one_play st d ()] is the start of one player mode and asks the user for a 
-    difficulty*)
-and one_play st d () mov dis = 
-  difficulty_msg ();
-  try match parse (read_line ()) with
-    | Easy -> 
-      starting_one_msg () 1;
-      cpu_play st d 0 () 1 mov dis
-    | Medium -> 
-      starting_one_msg () 2;
-      cpu_play st d 0 () 3 mov dis
-    | Hard -> 
-      starting_one_msg () 3;
-      cpu_play st d 0 () 4 mov dis
-    | Quit -> begin 
-        ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
-        print_endline "";
-        try are_you_sure () mov dis 0
-        with | Cancel -> one_play st true () mov dis 
-      end
-    | _ -> 
-      print_endline "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
-      print_string "> ";
-      one_play st true () mov dis
-  with
-  | Invalid -> 
-    print_endline "Invalid command! Hint: type 'easy', 'medium', or 'hard'."; 
-    print_string "> ";
-    one_play st true () mov dis
-
 and settings_menu () mov dis next =
   ANSITerminal.(print_string [cyan] 
                   "Enter a setting to toggle or type 'back' to go back: \n");
   print_endline "";
-  let next_mov = if (mov == State.move_anim) then 
-      begin ANSITerminal.(print_string [green] "  Animation "); 
-        State.move end
-    else begin ANSITerminal.(print_string [red] "  Animation "); 
-      State.move_anim end in
+  let next_mov = settings_next_mov mov in
   print_endline "";
-  let next_dis = if (dis == State.display) then 
-      begin ANSITerminal.(print_string [green] "  Night mode "); 
-        State.display_d end
-    else begin ANSITerminal.(print_string [red] "  Night mode ");
-      State.display end in
+  let next_dis = settings_next_dis dis in
   print_string "\n> ";
   try match parse (read_line()) with
     | Back -> next mov dis
     | Animation -> settings_menu () next_mov dis next
     | Night -> settings_menu () mov next_dis next
-    | Quit -> begin
-        ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
-        print_endline "";
-        try are_you_sure () mov dis 0
-        with | Cancel -> settings_menu () mov dis next
-      end
+    | Quit -> settings_menu_quit mov dis next ()
     | _ -> print_endline "Invalid command!";
       settings_menu () mov dis next
   with
   | Invalid -> print_endline "Invalid command!";
     settings_menu () mov dis next
+
+(** [settings_next_mov mov] is the animation setting if [mov] is changed. *)
+and settings_next_mov mov = 
+  if mov == State.move_anim then begin
+    ANSITerminal.(print_string [green] "  Animation "); 
+    State.move end
+  else begin 
+    ANSITerminal.(print_string [red] "  Animation "); 
+    State.move_anim end
+
+(** [settings_next_dis dis] is the night mode setting if [dis] is changed. *)
+and settings_next_dis dis = 
+  if dis == State.display then begin
+    ANSITerminal.(print_string [green] "  Night mode "); 
+    State.display_d end
+  else begin 
+    ANSITerminal.(print_string [red] "  Night mode ");
+    State.display end
+
+(** [settings_menu_quit mov dis next ()] is the result of [settings_menu]
+    when the user input parses to Quit. It prompts the Are you sure message. *)
+and settings_menu_quit mov dis next () = 
+  ANSITerminal.(print_string [red] 
+                  "Are you sure you want to quit? All data will be lost.");
+  print_endline "";
+  try are_you_sure () mov dis 0
+  with | Cancel -> settings_menu () mov dis next
 
 and execute_menu_command () mov dis =
   print_endline "";
@@ -508,38 +549,37 @@ and execute_menu_command () mov dis =
       one_play State.init_state true () mov dis
     | Two -> 
       ANSITerminal.(print_string [red] "Starting Two Player Mode");
-      ANSITerminal.(print_string [cyan] "\nType 'help' for help or 'settings' to adjust the settings at any time");
+      ANSITerminal.(print_string [cyan] 
+                      "\nType 'help' for help or 'settings' to adjust the settings at any time");
       print_endline " ";
       two_play State.init_state true 0 () mov dis
     | Three -> 
       instructions_message ();
       execute_menu_command () mov dis
     | Four -> settings_menu () mov dis (execute_menu_command ())
-    | Quit -> begin
-        ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
-        print_endline "";
-        try are_you_sure () mov dis 0 
-        with | Cancel -> execute_menu_command () mov dis
-      end
-    | _ -> print_string "Invalid. Please enter "; 
-      ANSITerminal.(print_string [cyan] "1");
-      print_string " for One Player Mode, ";
-      ANSITerminal.(print_string [cyan] "2");
-      print_endline " for Two Player Mode, ";
-      ANSITerminal.(print_string [cyan] "3");
-      print_string " to view the instructions, or ";
-      ANSITerminal.(print_string [cyan] "4");
-      print_string " to adjust the settings.";
-      execute_menu_command () mov dis
+    | Quit -> exec_menu_cmd_quit mov dis ()
+    | _ -> exec_menu_cmd_invalid mov dis ()
   with
-  | Invalid -> 
-    print_string "Invalid. Please enter "; 
-    ANSITerminal.(print_string [cyan] "1");
-    print_string " for One Player Mode, ";
-    ANSITerminal.(print_string [cyan] "2");
-    print_endline " for Two Player Mode, ";
-    ANSITerminal.(print_string [cyan] "3");
-    print_string " to view the instructions, or ";
-    ANSITerminal.(print_string [cyan] "4");
-    print_string " to adjust the settings.";
-    execute_menu_command () mov dis
+  | Invalid -> exec_menu_cmd_invalid mov dis ()
+
+(** [exec_menu_cmd_quit mov dis ()] is the result of [execute_menu_command]
+    when the user input parses to Quit. It prompts the Are you sure message. *)
+and exec_menu_cmd_quit mov dis () = 
+  ANSITerminal.(print_string [red] "Are you sure you want to quit? All data will be lost.");
+  print_endline "";
+  try are_you_sure () mov dis 0 
+  with | Cancel -> execute_menu_command () mov dis
+
+(** [exec_menu_cmd_invalid mov dis ()] is the result of [execute_menu_command]
+    when the user input parses to Invalid. It asks the user for a new input.*)
+and exec_menu_cmd_invalid mov dis () = 
+  print_string "Invalid. Please enter "; 
+  ANSITerminal.(print_string [cyan] "1");
+  print_string " for One Player Mode, ";
+  ANSITerminal.(print_string [cyan] "2");
+  print_endline " for Two Player Mode, ";
+  ANSITerminal.(print_string [cyan] "3");
+  print_string " to view the instructions, or ";
+  ANSITerminal.(print_string [cyan] "4");
+  print_string " to adjust the settings.";
+  execute_menu_command () mov dis
