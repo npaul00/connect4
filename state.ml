@@ -78,13 +78,6 @@ let half_board =
       b
   in half_board_aux empty 1 1
 
-let man_test : board =        [((1,6), None); ((2,6), None); ((3,6), None); ((4,6), None); ((5,6), None); ((6,6), None); ((7,6), None);
-                               ((1,5), None); ((2,5), None); ((3,5), None); ((4,5), None); ((5,5), None); ((6,5), None); ((7,5), None);
-                               ((1,4), None); ((2,4), None); ((3,4), None); ((4,4), Some Red); ((5,4), None); ((6,4), None); ((7,4), None);
-                               ((1,3), None); ((2,3), None); ((3,3), None); ((4,3), Some Blue); ((5,3), None); ((6,3), None); ((7,3), None);
-                               ((1,2), None); ((2,2), None); ((3,2), None); ((4,2), Some Red); ((5,2), Some Red); ((6,2), None); ((7,2), None);
-                               ((1,1), None); ((2,1), Some Blue); ((3,1), Some Red); ((4,1), Some Blue); ((5,1), Some Blue); ((6,1), Some Red); ((7,1), None)]
-
 let half_board_moves = 
   [1; 2; 3; 4; 5; 6; 7; 2; 3; 4; 5; 6; 7; 7; 1; 1; 2; 3; 4; 5; 6]
 
@@ -132,9 +125,9 @@ let rec display b r =
 (** [get_team_d s] is the team or empty of [s] in day mode*)
 let get_team_d s =
   match s with
-  | Some Red -> ANSITerminal.(print_string [red ; Background White] "O")
-  | Some Blue -> ANSITerminal.(print_string [cyan ; Background White] "O")
-  | None ->  ANSITerminal.(print_string [cyan ; Background White] " ")
+  | Some Red -> ANSITerminal.(print_string [red; Background White] "O")
+  | Some Blue -> ANSITerminal.(print_string [cyan; Background White] "O")
+  | None ->  ANSITerminal.(print_string [cyan; Background White] " ")
 
 (** [print_row_d b temp r c] is the unit that prints the piece at [r] and [c] 
     in day mode*)
@@ -143,28 +136,28 @@ let rec print_row_d b temp r c =
   | [] -> 
     if c > 7 then begin 
       print_string "\n"; 
-      ANSITerminal.(print_string [black ; Background White] line); 
+      ANSITerminal.(print_string [black; Background White] line); 
       print_string "\n"; 
-      if r < 7 then ANSITerminal.(print_string [black ; Background White] "| "); 
+      if r < 7 then ANSITerminal.(print_string [black; Background White] "| "); 
     end 
   | ((x,y), s) :: t -> 
     if x = c && y = r then 
       (get_team_d s; 
-       (ANSITerminal.(print_string [black ; Background White] " | ")); 
+       (ANSITerminal.(print_string [black; Background White] " | ")); 
        print_row_d b b r (c + 1);) 
     else print_row_d b t r c
 
 let rec display_d b r = 
   if r = 1 then begin 
     print_string "\n"; 
-    ANSITerminal.(print_string [black ; Background White] "| "); 
+    ANSITerminal.(print_string [black; Background White] "| "); 
   end;
   if r < 7 then begin 
     display_d b (r + 1); 
     print_row_d b b r 1; 
   end;
   if r = 1 then 
-    ANSITerminal.(print_string [black ; Background White] bot)
+    ANSITerminal.(print_string [black; Background White] bot)
 
 (** [horiz (x, y)] is a list of the four coordinates to the right horizontally 
     starting from (x, y). *)
@@ -191,7 +184,8 @@ let left_diag (x, y) =
 let rec pos_by_color b clr = 
   match b with
   | [] -> []
-  | (pos, Some c) :: t -> if c = clr then pos :: pos_by_color t clr 
+  | (pos, Some c) :: t -> 
+    if c = clr then pos :: pos_by_color t clr 
     else pos_by_color t clr
   | (pos, None) :: t -> pos_by_color t clr
 
@@ -200,9 +194,11 @@ let rec pos_by_color b clr =
 let rec pos_status b (x,y) =
   match b with
   | [] -> None
-  | ((a, b), Some c) :: t -> if a = x && b = y then Some c 
+  | ((a, b), Some c) :: t -> 
+    if a = x && b = y then Some c 
     else pos_status t (x,y)
-  | ((a, b), None) :: t -> if a = x && b = y then None 
+  | ((a, b), None) :: t -> 
+    if a = x && b = y then None 
     else pos_status t (x, y)
 
 (** [four_in_a_row lst b clr] is true if the pieces in the coordinate positions 
@@ -220,10 +216,10 @@ let rec four_in_a_row lst b clr =
     four pieces of color [clr] in a row. *) 
 let rec check_right_diag b clr lst op =
   match lst with
-  | [] -> if op then (Truth false) else Pos []
+  | [] -> if op then Truth false else Pos []
   | (x, y) :: t -> 
-    if (op && four_in_a_row (right_diag (x, y)) b clr) then Truth true else
-    if (four_in_a_row (right_diag (x, y)) b clr) then Pos (right_diag (x, y))
+    if op && four_in_a_row (right_diag (x, y)) b clr then Truth true else
+    if four_in_a_row (right_diag (x, y)) b clr then Pos (right_diag (x, y))
     else check_right_diag b clr t op
 
 (** [check_left_diag b clr lst] checks if any left diagonal in board [b] has
@@ -286,7 +282,7 @@ let get_win_pos b clr  =
     failwith "Not a winning board or color"
 
 (** [string_tuple (x,y)] is the string ([x], [y])*)
-let string_tuple (x,y) = 
+let string_tuple (x, y) = 
   "(" ^ string_of_int x ^ ", " ^ string_of_int y ^ ")"
 
 (** ADD DOCS*)
