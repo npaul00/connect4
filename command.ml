@@ -1,3 +1,4 @@
+
 type command = 
   | Go of int
   | Quit
@@ -18,6 +19,7 @@ type command =
   | Settings
   | Night
 
+(**Raised when an invalid command is entered. *)
 exception Invalid
 
 (**Raised when a user no longer wants to quit or return to the menu. *)
