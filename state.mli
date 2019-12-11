@@ -102,8 +102,6 @@ val empty : board
 (** [color_to_string clr] is the string representation of color [clr]. *)
 val color_to_string : color -> string
 
-val print_pos_lst : board -> color -> unit
-
 (** [other_color clr] is [Blue] if [clr] is [Red], and [Red] if [clr] is 
     [Blue]. *)
 val other_color : color -> color

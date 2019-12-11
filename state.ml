@@ -285,19 +285,6 @@ let get_win_pos b clr  =
     get_pos (check_vert b clr positions false) else
     failwith "Not a winning board or color"
 
-(** [string_tuple (x,y)] is the string ([x], [y])*)
-let string_tuple (x,y) = 
-  "(" ^ string_of_int x ^ ", " ^ string_of_int y ^ ")"
-
-(** ADD DOCS*)
-let rec string_tuples = function
-  | [] -> ""
-  | s :: t -> string_tuple s ^ ", " ^ string_tuples t
-
-(** ADD DOCS*)
-let print_pos_lst b clr =
-  clr |> get_win_pos b |> string_tuples |> print_string
-
 (** ADD DOCS*)
 let get_team_win s win =
   match s with
