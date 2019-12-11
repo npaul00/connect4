@@ -1,10 +1,10 @@
 (** TEST PLAN
     - We tested most parts of our system using OUnit to make sure all of our 
       functions work properly. 
-    - We manually created boards and tested to make sure 
-      the A.I. made the appropriate move. We did a lot of glass-box testing to 
-      make sure the individual parts of our system, i.e. functions that update 
-      the state, determine winning players, boards, scores, etc., work properly.  
+    - We manually created boards and tested to make sure the A.I. made the 
+      appropriate move. We did a lot of glass-box testing to make sure the 
+      individual parts of our system, i.e. functions that update the state, 
+      determine winning players, boards, scores, etc., work properly.  
     - We left off testing helper functions, such as get_truth and get_pos in 
       state.ml, as the features we test, both in OUnit and manually, use the 
       helper functions and validate their functionality. 
