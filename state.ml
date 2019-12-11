@@ -113,7 +113,7 @@ let get_team s =
   | Some Blue -> ANSITerminal.(print_string [cyan] "O")
   | None -> print_string " "
 
-(** [print_row b temp r c] is the unit that prints the piece at [r] and [c]*)
+(** [print_row b temp r c] is the unit that prints the piece at [r] and [c]. *)
 let rec print_row b temp r c =
   match temp with
   | [] -> 
@@ -285,7 +285,9 @@ let get_win_pos b clr  =
     get_pos (check_vert b clr positions false) else
     failwith "Not a winning board or color"
 
-(** ADD DOCS*)
+(** [get_team_win s win] is the representation of the position [s] on the 
+    winning board. The piece is "X" if [s] is a winning piece, "O" if [s] is a 
+    regular piece, and " " if [s] is an empty position. *)
 let get_team_win s win =
   match s with
   | Some Red -> if win then ANSITerminal.(print_string [red; Blink] "X") else 
@@ -294,7 +296,8 @@ let get_team_win s win =
       ANSITerminal.(print_string [cyan] "O")
   | None -> print_string " "
 
-(** ADD DOCS*)
+(** [print_row_win b temp r c clr] is the unit that prints the piece at [r] and 
+    [c] in a winning board. *)
 let rec print_row_win b temp r c clr =
   match temp with
   | [] -> 
@@ -311,13 +314,12 @@ let rec print_row_win b temp r c clr =
       )
     else print_row_win b t r c clr
 
-
 let rec display_win clr b r = 
   if r = 1 then begin print_string "\n"; print_string "| "; end;
   if r < 7 then begin display_win clr b (r + 1); print_row_win b b r 1 clr; end;
   if r = 1 then print_string bot
 
-(* ADD DOCS*)
+(* [get_team_win_d s win] is [get_team_win] in day mode. *)
 let get_team_win_d s win =
   match s with
   | Some Red -> 
@@ -328,7 +330,7 @@ let get_team_win_d s win =
     else ANSITerminal.(print_string [cyan; Background White] "O")
   | None -> ANSITerminal.(print_string [cyan ; Background White] " ")
 
-(** ADD DOCS*)
+(* [print_row_win_d b temp r c clr] is [print_row_win] in day mode. *)
 let rec print_row_win_d b temp r c clr =
   match temp with
   | [] -> 

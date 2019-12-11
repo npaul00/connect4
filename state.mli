@@ -137,10 +137,10 @@ val display : board -> int -> unit
 (** [display b i] displays the board [b] in night mode. *)
 val display_d : board -> int -> unit
 
-(** ADD DOCS*)
+(** [display_win clr b r] displays the winning board [b] in night mode. *)
 val display_win : color -> board -> int -> unit
 
-(** ADD DOCS*)
+(** [display_win_d clr b r] displays the winning board [b] in day mode. *)
 val display_win_d : color -> board -> int -> unit
 
 (** [make_state b t w m v] is a state with [b] as a board, [t] as a turn, [w] 
