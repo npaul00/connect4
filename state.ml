@@ -141,10 +141,11 @@ let rec print_row_d b temp r c =
       if r < 7 then ANSITerminal.(print_string [black; Background White] "| "); 
     end 
   | ((x,y), s) :: t -> 
-    if x = c && y = r then 
+    if x = c && y = r then begin
       (get_team_d s; 
        (ANSITerminal.(print_string [black; Background White] " | ")); 
        print_row_d b b r (c + 1);) 
+    end
     else print_row_d b t r c
 
 let rec display_d b r = 
@@ -212,8 +213,8 @@ let rec four_in_a_row lst b clr =
       | Some c -> if c = clr then four_in_a_row t b clr else false  
     end
 
-(** [check_right_diag b clr lst] checks if any right diagonal in board [b] has
-    four pieces of color [clr] in a row. *) 
+(** [check_right_diag b clr lst op] checks if any right diagonal in board [b] 
+    has four pieces of color [clr] in a row. *) 
 let rec check_right_diag b clr lst op =
   match lst with
   | [] -> if op then Truth false else Pos []
@@ -222,7 +223,7 @@ let rec check_right_diag b clr lst op =
     if four_in_a_row (right_diag (x, y)) b clr then Pos (right_diag (x, y))
     else check_right_diag b clr t op
 
-(** [check_left_diag b clr lst] checks if any left diagonal in board [b] has
+(** [check_left_diag b clr lst op] checks if any left diagonal in board [b] has
     four pieces of color [clr] in a row. *)
 let rec check_left_diag b clr lst op = 
   match lst with
@@ -232,8 +233,8 @@ let rec check_left_diag b clr lst op =
     else if (four_in_a_row (left_diag (x, y)) b clr) then Pos (left_diag (x, y))
     else check_left_diag b clr t op
 
-(** [check_horiz b clr lst] checks if any horizontal sequence in board [b] has 
-    four pieces of color [clr] in a row. *)
+(** [check_horiz b clr lst op] checks if any horizontal sequence in board [b] 
+    has four pieces of color [clr] in a row. *)
 let rec check_horiz b clr lst op = 
   match lst with
   | [] -> if op then (Truth false) else Pos []
@@ -242,8 +243,8 @@ let rec check_horiz b clr lst op =
     else if (four_in_a_row (horiz (x, y)) b clr) then Pos (horiz (x, y))
     else check_horiz b clr t op
 
-(** [check_vert b clr lst] checks if any vertical sequence in board [b] has four 
-    pieces of color [clr] in a row. *)
+(** [check_vert b clr lst op] checks if any vertical sequence in board [b] has 
+    four pieces of color [clr] in a row. *)
 let rec check_vert b clr lst op = 
   match lst with
   | [] -> if op then (Truth false) else Pos []
@@ -613,10 +614,11 @@ let rec cpu_move_med t =
     (next_to (piece_on_board t.board), t.visit) else
     match moves_that_win t with
     | (x, y) :: tl -> Unix.sleepf 1.0; (x, t.visit)
-    | [] -> 
-      match moves_that_block t with 
-      | (x, y) :: tl -> Unix.sleepf 1.0; (x, t.visit)
-      | [] -> no_immediate t
+    | [] -> begin
+        match moves_that_block t with 
+        | (x, y) :: tl -> Unix.sleepf 1.0; (x, t.visit)
+        | [] -> no_immediate t
+      end
 
 (** [no_immediate t] computes the computer's next move during medium mode 
     when there are no columns they could immediately win in or block in. *)
@@ -627,22 +629,24 @@ and no_immediate t =
   match safer with
   | (x, y) :: tl -> 
     (cpu_choose_move t (Random.int (List.length safer)) safer, t.visit)
-  | [] ->
-    match s_moves with
-    | (x, y) :: tl -> 
-      (cpu_choose_move t (Random.int (List.length s_moves)) s_moves, t.visit)
-    | [] -> 
-      (cpu_choose_move t (Random.int (List.length p_moves)) p_moves, t.visit)
+  | [] -> begin
+      match s_moves with
+      | (x, y) :: tl -> 
+        (cpu_choose_move t (Random.int (List.length s_moves)) s_moves, t.visit)
+      | [] -> 
+        (cpu_choose_move t (Random.int (List.length p_moves)) p_moves, t.visit)
+    end
 
 let cpu_move_easy t =
   match moves_that_win t with
   | (x, y) :: tl -> Unix.sleepf 1.0; (x, t.visit)
-  | [] -> 
-    match moves_that_block t with 
-    | (x, y) :: tl -> Unix.sleepf 1.0; (x, t.visit)
-    | [] -> 
-      let p_moves = possible_moves t in
-      (cpu_choose_move t (Random.int (List.length p_moves)) p_moves, t.visit)
+  | [] -> begin
+      match moves_that_block t with 
+      | (x, y) :: tl -> Unix.sleepf 1.0; (x, t.visit)
+      | [] -> 
+        let p_moves = possible_moves t in
+        (cpu_choose_move t (Random.int (List.length p_moves)) p_moves, t.visit)
+    end
 
 (** [count_moves b] is the amount of times a piece has been placed in [b] *)
 let rec count_moves b =
@@ -950,17 +954,20 @@ let start_solve st =
     if check_safe st c then (c, v) else 
     if playable st.board c then (c, v) else
       let moves = safe_moves st (possible_moves st) in
-      match moves with
-      | [] -> let (c', _) = pick_rand_from (possible_moves st) in (c', v)
-      | h::t -> let (c', _) = pick_rand_from moves in (c', v)
+      begin
+        match moves with
+        | [] -> let (c', _) = pick_rand_from (possible_moves st) in (c', v)
+        | h::t -> let (c', _) = pick_rand_from moves in (c', v)
+      end
 
 let cpu_move_hard st =
   match moves_that_win st with  
   | (x, y) :: tl -> Unix.sleepf 1.0; (x, st.visit)
-  | [] -> 
-    match moves_that_block st with 
-    | (x, y) :: tl -> Unix.sleepf 1.0; (x, st.visit)
-    | [] -> start_solve st
+  | [] -> begin
+      match moves_that_block st with 
+      | (x, y) :: tl -> Unix.sleepf 1.0; (x, st.visit)
+      | [] -> start_solve st
+    end
 
 let make_state b t w m v = 
   {board = b; turn = t; wins = w; moves = m; visit = v}
